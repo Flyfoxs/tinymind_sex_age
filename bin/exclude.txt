@@ -1,0 +1,15 @@
+#input
+*.zip
+.git
+.idea
+**/*.pyc
+**/*.h5
+**/*.json
+**/__pycache__
+**/*.log
+**/*.out
+**/*.h5
+**/*.hdf5
+**/*.csv
+output
+
