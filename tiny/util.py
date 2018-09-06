@@ -53,14 +53,47 @@ def get_package_label():
     package.columns = ['package', 'p_type', 'p_sub_type']
     return package
 
-def get_package_max_week(df):
-    df = df.groupby(['device', 'weekbegin']).weekday.nunique().to_frame().reset_index()
+@timed()
+def get_max_week(df):
+    """
+    到到每个Device使用的最多的那一周
+    :param df:
+    :return:
+    """
+    df = df.groupby(['device', 'weekbegin']).agg({'weekday':'nunique','package':'nunique'}).reset_index()
 
     # .to_frame().reset_index()
     # df.sort_values(['device', 'package'])
 
-    df = df.sort_values(by=['device', 'weekday', 'weekbegin'], ascending=False).groupby('device').nth(0)
-    return df.reset_index()
+    df = df.sort_values(by=['device', 'weekday','package', 'weekbegin'], ascending=False).groupby('device').nth(0)
+    df = df.reset_index()
+    df.rename({'package':'package_count'}, axis=1, inplace=True)
+
+    return df
+
+
+@timed()
+def get_percent_duration(df, groupby=['device', 'weekday'], prefix=None):
+    prefix = groupby[-1] if prefix is None else prefix
+    columns = [key for key in df.columns if 'span_' in key]
+    gp_map = [(key, 'sum') for key in columns if 'span_' in key]
+    gp_map = dict(gp_map)
+    # print(gp_map)
+
+    gp_map['package'] = 'nunique'
+    gp_map['start_base'] = 'nunique'
+    df = df.groupby(groupby).agg(gp_map)
+    #     df = df.groupby(groupby).agg({'span_0':'sum','span_1':'sum','span_2':'sum',
+    #                                                  'span_3':'sum','package':'nunique' })
+    df['total'] = df[[key for key in columns if 'span_' in key]].sum(axis=1)
+
+    for col in columns:
+        df[f'{col}_p'] = round(df[col] / df['total'], 3)
+
+    df.rename({'package':'pkg_cnt', 'start_base':'day_cnt'}, axis=1, inplace=True)
+
+    df.columns = [f'{prefix}_{key}' for key in df.columns]
+    return df
 
 
 def get_train():
@@ -121,20 +154,20 @@ def extend_cols(tmp):
     return tmp
 
 @timed()
-def extend_time(df):
-    df['weekday'] = df.start.dt.weekday
-    df['weekbegin'] = (df['start'] - df['start'].dt.weekday.astype('timedelta64[D]')).dt.date
-    # mini.start = pd.to_datetime(mini.start)
+def extend_time(df, span_no=4):
+     # mini.start = pd.to_datetime(mini.start)
     #df['dayname'] = df.start.dt.weekday_name
 
+    span_len = 24//span_no
+
     #把一天分为4个时间段
-    for sn in range(0, 4):
+    for sn in range(0, span_no):
         # df[f'span_{sn}'] = df.apply(lambda row: get_duration(row['start'], row['close'], sn), axis=1)
 
         print(f'Try to cal for range#{sn}')
         df['start_base']  = df['start'].dt.date
-        df['check_start'] = df['start'].dt.date + pd.DateOffset(hours=6 * (sn))
-        df['check_close'] = df['start'].dt.date + pd.DateOffset(hours=6 * (sn + 1))
+        df['check_start'] = df['start'].dt.date + pd.DateOffset(hours=span_len * (sn))
+        df['check_close'] = df['start'].dt.date + pd.DateOffset(hours=span_len * (sn + 1))
 
         df['merge_begin'] = df[['check_start', 'start']].max(axis=1)
         df['merge_end'] = df[['check_close', 'close']].min(axis=1)
@@ -147,6 +180,18 @@ def extend_time(df):
     df.drop(columns = ['check_start', 'check_close', 'merge_begin','merge_end'], inplace=True)
 
     return df
+
+def extend_percent(df):
+    total = get_percent_duration(df, ['device'], 'total')
+
+    max_week = get_max_week(df)
+
+    merge = df.merge(max_week, on=['device', 'weekbegin'])
+
+    max = get_percent_duration(merge, ['device'], prefix='max')
+
+    return pd.concat( [total, max], axis=1 )
+
 
 def split_days(tmp):
     max_duration = 60
@@ -190,6 +235,9 @@ def get_start_closed(type='long'):
         tmp[tmp.start.dt.date != tmp.close.dt.date].duration = 0
 
         tmp['duration'] = tmp.close - tmp.start
+        df = tmp
+        df['weekday'] = df.start.dt.weekday
+        df['weekbegin'] = (df['start'] - df['start'].dt.weekday.astype('timedelta64[D]')).dt.date
 
         # tmp[tmp.duration>17]
         # tmp.duration = tmp.duration.astype('timedelta64[D]')
@@ -204,6 +252,9 @@ def get_start_closed(type='long'):
 
 
         tmp['duration'] = tmp.close - tmp.start
+        df = tmp
+        df['weekday'] = df.start.dt.weekday
+        df['weekbegin'] = (df['start'] - df['start'].dt.weekday.astype('timedelta64[D]')).dt.date
 
         # tmp[tmp.duration>17]
         # tmp.duration = tmp.duration.astype('timedelta64[D]')
@@ -237,6 +288,11 @@ def get_start_closed(type='long'):
 
     # start_close.groupby('device')[['package']].count()
     start_close['duration'] = start_close.close - start_close.start
+
+    #df = start_close
+    start_close['weekday'] = start_close.start.dt.weekday
+    start_close['weekbegin'] = (start_close['start'] -
+                                start_close['start'].dt.weekday.astype('timedelta64[D]')).dt.date
 
     start_close.duration = start_close.duration / np.timedelta64(1, 's')
 
