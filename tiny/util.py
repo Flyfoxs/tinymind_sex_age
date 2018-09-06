@@ -3,9 +3,15 @@ import os
 import matplotlib.pyplot as plt
 from functools import lru_cache
 import numpy as np
+from utils_.util_log import *
+from utils_.util_cache import *
+from utils_.util_date import *
+
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 
-
+@timed()
 def get_brand():
     brand = pd.read_csv('input/deviceid_brand.tsv', sep='\t', header=None)
 
@@ -13,6 +19,8 @@ def get_brand():
     return brand
 
 
+# Performance issue
+@timed()
 def get_package(limit=None):
     cache_file = './output/deviceid_package.tsv'
     if os.path.exists(cache_file):
@@ -39,19 +47,62 @@ def get_package(limit=None):
         return tmp
 
 
+@timed()
 def get_package_label():
     package = pd.read_csv('input/package_label.tsv', sep='\t', header=None, )
-    package.columns = ['package', 'type', 'sub_type']
+    package.columns = ['package', 'p_type', 'p_sub_type']
     return package
+
+def get_package_max_week(df):
+    df = df.groupby(['device', 'weekbegin']).weekday.nunique().to_frame().reset_index()
+
+    # .to_frame().reset_index()
+    # df.sort_values(['device', 'package'])
+
+    df = df.sort_values(by=['device', 'weekday', 'weekbegin'], ascending=False).groupby('device').nth(0)
+    return df.reset_index()
 
 
 def get_train():
+    columns_1  =[ #sum and percentage
+        'total_day_00_0_du',
+        'total_day_00_1_du',
+        'total_day_00_2_du',
+        'total_day_00_3_du',
+        '......'
+        'total_day_07_3_du',
+
+
+        'maxmax_day_00_0_du',
+        'max_day_00_1_du',
+        'max_day_00_2_du',
+        'max_day_00_3_du',
+        '......'
+        'max_day_07_3_du',
+    ]
+
+    columns_2 =    [
+
+        #指定时间段,打开pak的统计时长
+        'max_package_du_1',  'max_package_du_1_type', 'max_package_du_1_sub_type',
+        'max_package_du_2',  'max_package_du_2_type', 'max_package_du_2_sub_type',
+        'max_package_du_3',  'max_package_du_3_type', 'max_package_du_3_sub_type',
+
+        #指定时间段,打开pak的次数
+        'max_package_cnt_1',  'max_package_cnt_1_type', 'max_package_cnt_1_sub_type',
+        'max_package_cnt_2',  'max_package_cnt_2_type', 'max_package_cnt_2_sub_type',
+        'max_package_cnt_3',  'max_package_cnt_3_type', 'max_package_cnt_3_sub_type',
+
+        'total_used_package_count', 'per_total_install',
+        'weekly_used_package_count', 'per_weekly_install',
+        'total_install_package_count',
+
+        'package_top1 ,,,, package_top10',
+        'device_brand', 'device_type'
+
+    ]
     pass
 
-
-def get_test():
-    test = pd.read_csv('input/deviceid_test.tsv', sep='\t', header=None)
-    return test
 
 
 
@@ -59,7 +110,7 @@ def get_test():
     test = pd.read_csv('input/deviceid_test.tsv', sep='\t',header=None)
     return test
 
-
+@timed()
 def extend_cols(tmp):
     package = get_package_label()
     tmp = tmp.merge(package, how='left')
@@ -69,6 +120,33 @@ def extend_cols(tmp):
 
     return tmp
 
+@timed()
+def extend_time(df):
+    df['weekday'] = df.start.dt.weekday
+    df['weekbegin'] = (df['start'] - df['start'].dt.weekday.astype('timedelta64[D]')).dt.date
+    # mini.start = pd.to_datetime(mini.start)
+    #df['dayname'] = df.start.dt.weekday_name
+
+    #把一天分为4个时间段
+    for sn in range(0, 4):
+        # df[f'span_{sn}'] = df.apply(lambda row: get_duration(row['start'], row['close'], sn), axis=1)
+
+        print(f'Try to cal for range#{sn}')
+        df['start_base']  = df['start'].dt.date
+        df['check_start'] = df['start'].dt.date + pd.DateOffset(hours=6 * (sn))
+        df['check_close'] = df['start'].dt.date + pd.DateOffset(hours=6 * (sn + 1))
+
+        df['merge_begin'] = df[['check_start', 'start']].max(axis=1)
+        df['merge_end'] = df[['check_close', 'close']].min(axis=1)
+
+        df[f'span_{sn}'] = (df['merge_end'] - df['merge_begin']) / np.timedelta64(1, 's')
+
+        df[f'span_{sn}'][df[f'span_{sn}'] <= 0] = 0
+        df
+
+    df.drop(columns = ['check_start', 'check_close', 'merge_begin','merge_end'], inplace=True)
+
+    return df
 
 def split_days(tmp):
     max_duration = 60
@@ -100,7 +178,7 @@ def split_days(tmp):
 
     return tmp, tmp_new
 
-
+@timed()
 def get_start_closed(type='long'):
     if type == 'long':
         tmp = pd.read_csv('./output/tem_long_duration.csv', parse_dates=['start', 'close'])
@@ -110,6 +188,20 @@ def get_start_closed(type='long'):
         del tmp['close_d']
 
         tmp[tmp.start.dt.date != tmp.close.dt.date].duration = 0
+
+        tmp['duration'] = tmp.close - tmp.start
+
+        # tmp[tmp.duration>17]
+        # tmp.duration = tmp.duration.astype('timedelta64[D]')
+        tmp.duration = tmp.duration / np.timedelta64(1, 'D')
+        return tmp
+    if type == 'mini':
+        tmp = pd.read_csv('./output/mini_start_closed_2.csv', parse_dates=['start', 'close'])
+        # tmp = tmp[tmp.device == '225f189c7c214711d483eb3e55743e73']
+        # tmp.groupby('device').agg({'duration':['count', 'sum']}) .sort_values(('duration','count'), ascending=False)
+
+        tmp[tmp.start.dt.date != tmp.close.dt.date].duration = 0
+
 
         tmp['duration'] = tmp.close - tmp.start
 
@@ -132,6 +224,10 @@ def get_start_closed(type='long'):
 
     # start_close.index.name = 'device'
 
+    start_close = start_close[start_close.start < pd.to_datetime('now')]
+
+    start_close['start_base'] = start_close['start'].dt.date
+
     start_close['start'] = pd.to_datetime(start_close.iloc[:, 2], unit='ms')
     start_close['close'] = pd.to_datetime(start_close.iloc[:, 3], unit='ms')
 
@@ -142,9 +238,22 @@ def get_start_closed(type='long'):
     # start_close.groupby('device')[['package']].count()
     start_close['duration'] = start_close.close - start_close.start
 
-    start_close.duration = start_close.duration / np.timedelta64(1, 'D')
+    start_close.duration = start_close.duration / np.timedelta64(1, 's')
 
     return start_close
+
+# @timed()
+@DeprecationWarning
+def get_duration(start, close, sn=0):
+    check_point_start = pd.to_datetime(start.date()) + pd.DateOffset(hours=6 * sn)
+    check_point_close = pd.to_datetime(start.date()) + pd.DateOffset(hours=6 * (sn + 1))
+
+    # print(check_point_start, start,  close  ,check_point_close )
+
+    # print(min(check_point_close, close), max(check_point_start,start) )
+
+    gap = (min(check_point_close, close) - max(check_point_start, start)) / np.timedelta64(1, 'D')
+    return max(gap, 0)
 
     # package = get_package()
     # package[package['package']=='225f189c7c214711d483eb3e55743e73']
