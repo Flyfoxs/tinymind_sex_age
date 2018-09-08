@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from functools import lru_cache
 import numpy as np
 from utils_.util_log import *
-from utils_.util_cache import *
 from utils_.util_date import *
+from utils_.util_cache_file import *
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -154,6 +154,7 @@ def extend_cols(tmp):
     return tmp
 
 @timed()
+@file_cache()
 def extend_time(df, span_no=4):
      # mini.start = pd.to_datetime(mini.start)
     #df['dayname'] = df.start.dt.weekday_name
@@ -165,7 +166,7 @@ def extend_time(df, span_no=4):
         # df[f'span_{sn}'] = df.apply(lambda row: get_duration(row['start'], row['close'], sn), axis=1)
 
         print(f'Try to cal for range#{sn}')
-        df['start_base']  = df['start'].dt.date
+        # df['start_base']  = df['start'].dt.date
         df['check_start'] = df['start'].dt.date + pd.DateOffset(hours=span_len * (sn))
         df['check_close'] = df['start'].dt.date + pd.DateOffset(hours=span_len * (sn + 1))
 
@@ -193,37 +194,58 @@ def extend_percent(df):
     return pd.concat( [total, max], axis=1 )
 
 
-def split_days(tmp):
-    max_duration = 60
-    # 超长记录,截取后面的数据
+@file_cache()
+def split_days_all(tmp):
+    max_duration = 31
+    # 超长记录,截取后面的数据, 截断为最后N天
     tmp.loc[tmp.duration > max_duration, 'start'] = \
         tmp.loc[tmp.duration > max_duration, 'close'].dt.date - pd.DateOffset(max_duration)
     tmp.loc[tmp.duration > max_duration, 'duration'] = max_duration
 
-    # 创建新记录,截取后面的时间段
-    tmp_new = tmp[tmp.duration > 1]
-    tmp_new.start = tmp_new.start.dt.date + pd.DateOffset(1)
-    tmp.start = tmp.start.astype('datetime64[ns]')
-    tmp_new.duration = tmp_new.duration - 1
+    print(f'Out loop: The original Df size is {len(tmp)}')
+    tmp = split_days(tmp)
+    print(f'Out loop: The new Df size is {len(tmp)}')
 
-    # 旧记录,保留前面的时间段
-    tmp.close = tmp.start.dt.date + pd.DateOffset(1)
-    tmp.duration = 0
+    tmp['start_base'] = tmp['start'].dt.date
 
-    # print(len(tmp))
-    tmp = tmp.append(tmp_new)
-    # print(len(tmp))
+    tmp.duration = round(tmp.duration, 6)
 
-    tmp.duration = (tmp.close - tmp.start) / np.timedelta64(1, 'D')
-    # tmp['duration'] = (tmp.close - tmp.start).apply(lambda value: value.days)
+    tmp = tmp.sort_values(by = ['device','package','start'])
 
-    tmp = tmp.sort_values('duration', ascending=False)
-
-    tmp.reset_index(drop=True, inplace=True)
-
-    return tmp, tmp_new
+    return tmp
 
 @timed()
+def split_days(tmp):
+    print(f'The original df#{len(tmp)} before split')
+
+    # 创建新记录,截取后面的时间段
+    tmp_new_big = tmp[tmp.duration > 1]
+    if len(tmp_new_big) == 0:
+        return tmp
+
+    tmp_new_big.start = tmp_new_big.start.dt.date + pd.DateOffset(1)
+    tmp_new_big.duration = tmp_new_big.duration - 1
+
+    # 旧记录,保留前面的时间段
+    tmp             = tmp[tmp.duration <= 1]
+    tmp_new_small   = tmp[tmp.duration > 1]
+    tmp_new_small.close    = tmp_new_small.start.dt.date + pd.DateOffset(1)
+    tmp_new_small.duration = (tmp_new_small.close - tmp_new_small.start) / np.timedelta64(1, 'D')
+
+    tmp = tmp.append(tmp_new_small)
+
+    tmp_new_big = split_days(tmp_new_big)
+    tmp = tmp.append(tmp_new_big)
+
+    #tmp = tmp.sort_values('duration', ascending=False)
+    tmp.reset_index(drop=True, inplace=True)
+
+    print(f'The new df#{len(tmp)} after split')
+
+    return tmp
+
+@timed()
+@file_cache()
 def get_start_closed(type='long'):
     if type == 'long':
         tmp = pd.read_csv('./output/tem_long_duration.csv', parse_dates=['start', 'close'])
@@ -235,9 +257,9 @@ def get_start_closed(type='long'):
         tmp[tmp.start.dt.date != tmp.close.dt.date].duration = 0
 
         tmp['duration'] = tmp.close - tmp.start
-        df = tmp
-        df['weekday'] = df.start.dt.weekday
-        df['weekbegin'] = (df['start'] - df['start'].dt.weekday.astype('timedelta64[D]')).dt.date
+
+        tmp['weekday'] = tmp.start.dt.weekday
+        tmp['weekbegin'] = (tmp['start'] - tmp['start'].dt.weekday.astype('timedelta64[D]')).dt.date
 
         # tmp[tmp.duration>17]
         # tmp.duration = tmp.duration.astype('timedelta64[D]')
@@ -261,10 +283,10 @@ def get_start_closed(type='long'):
         tmp.duration = tmp.duration / np.timedelta64(1, 'D')
         return tmp
 
-    if type == 'full':
+    if type == 'all':
         limit = None
     else:
-        limit = 10000
+        limit = type
 
     start_close = pd.read_csv('input/deviceid_package_start_close.tsv', sep='\t',
                               # index_col=0 ,
@@ -273,18 +295,20 @@ def get_start_closed(type='long'):
 
     start_close.columns = ['device', 'package', 'start_t', 'close_t']
 
+    print(f'Sort the df#{len(start_close)} by device(begin)')
+    start_close.sort_values('device', inplace=True)
+    print(f'Sort the df by device(end)')
+
     # start_close.index.name = 'device'
 
+
+    start_close['start'] = pd.to_datetime(start_close.loc[:, 'start_t'], unit='ms')
+    start_close['close'] = pd.to_datetime(start_close.loc[:, 'close_t'], unit='ms')
+
+    len_original = len(start_close)
     start_close = start_close[start_close.start < pd.to_datetime('now')]
-
-    start_close['start_base'] = start_close['start'].dt.date
-
-    start_close['start'] = pd.to_datetime(start_close.iloc[:, 2], unit='ms')
-    start_close['close'] = pd.to_datetime(start_close.iloc[:, 3], unit='ms')
-
-    #     start_close['start_d'] = pd.to_datetime(start_close.iloc[:,2], unit='ms').dt.date
-    #     start_close['close_d'] = pd.to_datetime(start_close.iloc[:,3], unit='ms').dt.date
-
+    #去除部分异常数据
+    print(f'Remove {len_original-len(start_close)} records data')
 
     # start_close.groupby('device')[['package']].count()
     start_close['duration'] = start_close.close - start_close.start
@@ -297,6 +321,33 @@ def get_start_closed(type='long'):
     start_close.duration = start_close.duration / np.timedelta64(1, 's')
 
     return start_close
+
+def split_df(df, split_no=10, prefix='default'):
+    df.reset_index(drop=True, inplace=True)
+    begin=0
+    end=len(df)
+
+    if len(df)%split_no == 0:
+        size = len(df) //split_no
+    else:
+        size = len(df) // (split_no -1)
+
+    begin_adjust = 0
+    end_adjust = 0
+    for i in range(0,split_no):
+        begin_adjust = end_adjust
+        end_adjust = adjust_split_end(df,  size*(i+1))
+        file = f'output/{prefix}_{split_no}_{str(i).rjust(2,"0")}_{begin_adjust}_{end_adjust}.csv'
+        print(f'Split df to file#{i}:{file}')
+        df[begin_adjust : end_adjust].to_csv(file, index=None)
+
+def adjust_split_end(df,  end):
+    id = df.iat[end, 0]
+    end_adjust = 1 + df[df.iloc[:,0]==id].index.max()
+    print(f'Adjust original end from {end} to {end_adjust} for id:{id}')
+    return end_adjust
+
+
 
 # @timed()
 @DeprecationWarning

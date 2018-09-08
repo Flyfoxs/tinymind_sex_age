@@ -2,8 +2,6 @@ import pandas as pd
 import os
 import logging
 
-from monthdelta import monthdelta
-
 import datetime
 from utils_.util_log import *
 from functools import lru_cache
@@ -94,6 +92,7 @@ def convert_sunday(date):
 
 
 def datetime_offset_by_month(datetime1, n = 1):
+    from monthdelta import monthdelta
 
     if type(datetime1) is str:
         datetime1 = convert_date(datetime1)
@@ -111,6 +110,7 @@ def convert_to_month_end(date):
     return nextMonth - delta
 
 def shift_month_4_csm(range_to,shift):
+    from monthdelta import monthdelta
     original_type = type(range_to)
 
     range_to = convert_date(range_to, datetime)
