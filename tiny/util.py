@@ -7,6 +7,7 @@ from utils_.util_log import *
 from utils_.util_date import *
 from utils_.util_cache_file import *
 from pandas.tseries.offsets import *
+from utils_.util_pandas import *
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -17,7 +18,7 @@ def get_brand():
     brand = pd.read_csv('input/deviceid_brand.tsv', sep='\t', header=None)
 
     brand.columns = ['device', 'brand', 'phone_type']
-    return brand
+    return convert_label_encode(brand, ['device'])
 
 
 # Performance issue
@@ -146,8 +147,10 @@ def get_test():
 
 @timed()
 def extend_cols(tmp):
-    package = get_package_label()
-    tmp = tmp.merge(package, how='left')
+    # package = get_package_label()
+    # print(f'input df col:{tmp.columns}')
+    # print(f'packae col:{package.columns}')
+    # tmp = tmp.merge(package, how='left')
 
     brand = get_brand()
     tmp = tmp.merge(brand, how='left')
@@ -183,7 +186,7 @@ def extend_time(df, span_no=4):
 
     return df
 
-def extend_percent(df):
+def extend_percent_df(df):
     total = get_percent_duration(df, ['device'], 'total')
 
     max_week = get_max_week(df)
@@ -192,12 +195,27 @@ def extend_percent(df):
 
     max = get_percent_duration(merge, ['device'], prefix='max')
 
-    return pd.concat( [total, max], axis=1 )
+    return pd.concat( [total, max], axis=1 ).reset_index()
+
+
+def extend_package_df(df):
+    p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
+    p = p.pivot(index='device', columns='package', values='start_base').reset_index()
+    print(f'Device_Package: convert {df.shape} to {p.shape} ')
+    return p
+
+
+def extend_feature(version, span_no=4, input=None):
+    df = extend_percent(version, span_no)
+    df = extend_cols(df)
+    if input is not None:
+        df = input.merge(df, how='left')
+    return df
 
 
 @timed()
 @file_cache()
-def extend_feature(version, span_no=4):
+def extend_percent(version, span_no):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -210,16 +228,13 @@ def extend_feature(version, span_no=4):
             df = get_start_closed(path)
             df = split_days_all(df)
             df = extend_time(df,span_no=span_no)
-            df = extend_percent(df)
+            df = extend_percent_df(df)
             if len(df) > 0 :
                 percentage.append(df)
             else:
                 print(f'The df is None for file:{path}')
 
-    per = pd.concat(percentage)
-    feature = extend_cols(per)
-
-    return feature
+    return pd.concat(percentage)
 
 
 @timed()
@@ -250,7 +265,7 @@ def split_days_all(tmp):
 
     return tmp
 
-@timed()
+#@timed()
 def split_days(tmp):
     print(f'The input df#{len(tmp)} before split')
 
@@ -356,19 +371,3 @@ def adjust_split_end(df,  end):
     return end_adjust
 
 
-
-# @timed()
-@DeprecationWarning
-def get_duration(start, close, sn=0):
-    check_point_start = pd.to_datetime(start.date()) + pd.DateOffset(hours=6 * sn)
-    check_point_close = pd.to_datetime(start.date()) + pd.DateOffset(hours=6 * (sn + 1))
-
-    # print(check_point_start, start,  close  ,check_point_close )
-
-    # print(min(check_point_close, close), max(check_point_start,start) )
-
-    gap = (min(check_point_close, close) - max(check_point_start, start)) / np.timedelta64(1, 'D')
-    return max(gap, 0)
-
-    # package = get_package()
-    # package[package['package']=='225f189c7c214711d483eb3e55743e73']

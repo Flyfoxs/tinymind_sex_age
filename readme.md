@@ -26,6 +26,8 @@
 # 每小时的分布, 最多的那一周和所有的数据,2个维度
 # LDA 安装,和使用分别计算
 
+# 一款应用超过2天算一次,有多少个应用属于这种情况
+
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 
