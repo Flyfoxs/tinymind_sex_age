@@ -237,6 +237,30 @@ def extend_percent(version, span_no):
     return pd.concat(percentage)
 
 
+
+@timed()
+@file_cache()
+def extend_package(version):
+    rootdir = './output/start_close/'
+    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
+    list = sorted(list, reverse=True)
+
+    tmp_list = []
+    for i in range(0, len(list)):
+        path = os.path.join(rootdir, list[i])
+        if os.path.isfile(path) and 'csv' in path:
+            print(f"Try to summary file:{path}")
+            df = get_start_closed(path)
+            df = split_days_all(df)
+            df = extend_package_df(df)
+            if len(df) > 0 :
+                tmp_list.append(df)
+            else:
+                print(f'The df is None for file:{path}')
+
+    return pd.concat(tmp_list)
+
+
 @timed()
 #@file_cache()
 def split_days_all(tmp):
