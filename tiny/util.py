@@ -6,6 +6,7 @@ import numpy as np
 from utils_.util_log import *
 from utils_.util_date import *
 from utils_.util_cache_file import *
+from pandas.tseries.offsets import *
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -154,7 +155,7 @@ def extend_cols(tmp):
     return tmp
 
 @timed()
-@file_cache()
+#@file_cache()
 def extend_time(df, span_no=4):
      # mini.start = pd.to_datetime(mini.start)
     #df['dayname'] = df.start.dt.weekday_name
@@ -173,7 +174,7 @@ def extend_time(df, span_no=4):
         df['merge_begin'] = df[['check_start', 'start']].max(axis=1)
         df['merge_end'] = df[['check_close', 'close']].min(axis=1)
 
-        df[f'span_{sn}'] = (df['merge_end'] - df['merge_begin']) / np.timedelta64(1, 's')
+        df[f'span_{sn}'] = (df['merge_end'] - df['merge_begin']) / np.timedelta64(1, 'D')
 
         df[f'span_{sn}'][df[f'span_{sn}'] <= 0] = 0
         df
@@ -194,19 +195,54 @@ def extend_percent(df):
     return pd.concat( [total, max], axis=1 )
 
 
+@timed()
 @file_cache()
+def extend_feature(version, span_no=4):
+    rootdir = './output/start_close/'
+    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
+    list = sorted(list, reverse=True)
+
+    percentage = []
+    for i in range(0, len(list)):
+        path = os.path.join(rootdir, list[i])
+        if os.path.isfile(path) and 'csv' in path:
+            print(f"Try to summary file:{path}")
+            df = get_start_closed(path)
+            df = split_days_all(df)
+            df = extend_time(df,span_no=span_no)
+            df = extend_percent(df)
+            if len(df) > 0 :
+                percentage.append(df)
+            else:
+                print(f'The df is None for file:{path}')
+
+    per = pd.concat(percentage)
+    feature = extend_cols(per)
+
+    return feature
+
+
+@timed()
+#@file_cache()
 def split_days_all(tmp):
-    max_duration = 31
-    # 超长记录,截取后面的数据, 截断为最后N天
-    tmp.loc[tmp.duration > max_duration, 'start'] = \
-        tmp.loc[tmp.duration > max_duration, 'close'].dt.date - pd.DateOffset(max_duration)
-    tmp.loc[tmp.duration > max_duration, 'duration'] = max_duration
+
+    offset = Week(weekday=0)
+    # 超长记录,截取后面的数据, 最多保留2个星期,最少保留一个完整的星期
+    tmp['start_tmp'] = (tmp.close - Week(2, weekday=0)).dt.date.astype('datetime64[ns]')
+    tmp.start = tmp[['start', 'start_tmp']].max(axis=1)
+    tmp.drop( columns=['start_tmp'] , inplace=True )
+
+    tmp.duration = (tmp.close - tmp.start) / np.timedelta64(1, 'D')
 
     print(f'Out loop: The original Df size is {len(tmp)}')
     tmp = split_days(tmp)
     print(f'Out loop: The new Df size is {len(tmp)}')
 
     tmp['start_base'] = tmp['start'].dt.date
+    tmp['weekday'] = tmp.start.dt.weekday
+    tmp['weekbegin'] = (tmp['start'] -
+                        tmp['start'].dt.weekday.astype('timedelta64[D]')).dt.date
+
 
     tmp.duration = round(tmp.duration, 6)
 
@@ -216,7 +252,7 @@ def split_days_all(tmp):
 
 @timed()
 def split_days(tmp):
-    print(f'The original df#{len(tmp)} before split')
+    print(f'The input df#{len(tmp)} before split')
 
     # 创建新记录,截取后面的时间段
     tmp_new_big = tmp[tmp.duration > 1]
@@ -224,15 +260,15 @@ def split_days(tmp):
         return tmp
 
     tmp_new_big.start = tmp_new_big.start.dt.date + pd.DateOffset(1)
-    tmp_new_big.duration = tmp_new_big.duration - 1
+    tmp_new_big.duration = (tmp_new_big.close - tmp_new_big.start) / np.timedelta64(1, 'D')
 
     # 旧记录,保留前面的时间段
-    tmp             = tmp[tmp.duration <= 1]
+    tmp_old         = tmp[tmp.duration <= 1]
     tmp_new_small   = tmp[tmp.duration > 1]
     tmp_new_small.close    = tmp_new_small.start.dt.date + pd.DateOffset(1)
     tmp_new_small.duration = (tmp_new_small.close - tmp_new_small.start) / np.timedelta64(1, 'D')
 
-    tmp = tmp.append(tmp_new_small)
+    tmp = tmp_old.append(tmp_new_small)
 
     tmp_new_big = split_days(tmp_new_big)
     tmp = tmp.append(tmp_new_big)
@@ -240,58 +276,22 @@ def split_days(tmp):
     #tmp = tmp.sort_values('duration', ascending=False)
     tmp.reset_index(drop=True, inplace=True)
 
-    print(f'The new df#{len(tmp)} after split')
+    print(f'The output df#{len(tmp)} after split')
 
     return tmp
 
 @timed()
-@file_cache()
-def get_start_closed(type='long'):
-    if type == 'long':
-        tmp = pd.read_csv('./output/tem_long_duration.csv', parse_dates=['start', 'close'])
-        # tmp = tmp[tmp.device == '225f189c7c214711d483eb3e55743e73']
-        # tmp.groupby('device').agg({'duration':['count', 'sum']}) .sort_values(('duration','count'), ascending=False)
-        del tmp['start_d']
-        del tmp['close_d']
-
-        tmp[tmp.start.dt.date != tmp.close.dt.date].duration = 0
-
-        tmp['duration'] = tmp.close - tmp.start
-
-        tmp['weekday'] = tmp.start.dt.weekday
-        tmp['weekbegin'] = (tmp['start'] - tmp['start'].dt.weekday.astype('timedelta64[D]')).dt.date
-
-        # tmp[tmp.duration>17]
-        # tmp.duration = tmp.duration.astype('timedelta64[D]')
-        tmp.duration = tmp.duration / np.timedelta64(1, 'D')
-        return tmp
-    if type == 'mini':
-        tmp = pd.read_csv('./output/mini_start_closed_2.csv', parse_dates=['start', 'close'])
-        # tmp = tmp[tmp.device == '225f189c7c214711d483eb3e55743e73']
-        # tmp.groupby('device').agg({'duration':['count', 'sum']}) .sort_values(('duration','count'), ascending=False)
-
-        tmp[tmp.start.dt.date != tmp.close.dt.date].duration = 0
+#@file_cache()
+def get_start_closed(file=None):
 
 
-        tmp['duration'] = tmp.close - tmp.start
-        df = tmp
-        df['weekday'] = df.start.dt.weekday
-        df['weekbegin'] = (df['start'] - df['start'].dt.weekday.astype('timedelta64[D]')).dt.date
-
-        # tmp[tmp.duration>17]
-        # tmp.duration = tmp.duration.astype('timedelta64[D]')
-        tmp.duration = tmp.duration / np.timedelta64(1, 'D')
-        return tmp
-
-    if type == 'all':
-        limit = None
-    else:
-        limit = type
-
-    start_close = pd.read_csv('input/deviceid_package_start_close.tsv', sep='\t',
+    start_close = pd.read_csv(file,
                               # index_col=0 ,
-                              nrows=limit,
+                              nrows=None,
                               header=None )
+
+    if len(start_close) == 0 :
+        return pd.DataFrame()
 
     start_close.columns = ['device', 'package', 'start_t', 'close_t']
 
@@ -311,39 +311,47 @@ def get_start_closed(type='long'):
     print(f'Remove {len_original-len(start_close)} records data')
 
     # start_close.groupby('device')[['package']].count()
-    start_close['duration'] = start_close.close - start_close.start
-
-    #df = start_close
-    start_close['weekday'] = start_close.start.dt.weekday
-    start_close['weekbegin'] = (start_close['start'] -
-                                start_close['start'].dt.weekday.astype('timedelta64[D]')).dt.date
-
-    start_close.duration = start_close.duration / np.timedelta64(1, 's')
+    start_close['duration'] = (start_close.close - start_close.start) / np.timedelta64(1, 'D')
 
     return start_close
 
-def split_df(df, split_no=10, prefix='default'):
+def split_start_close(split_no=40, prefix='deviceid_package_start_close'):
+
+    file = 'input/deviceid_package_start_close.tsv'
+
+    df = pd.read_csv(file, sep='\t',
+                              # index_col=0 ,
+                              nrows=None,
+                              header=None )
+    df.columns = ['device', 'package', 'start_t', 'close_t']
+
+    print(f'Sort the df#{len(df)} by device(begin)')
+    df.sort_values(by=['device', 'package', 'start_t'], inplace=True)
     df.reset_index(drop=True, inplace=True)
-    begin=0
-    end=len(df)
+    print(f'Sort the df by device(end)')
+
 
     if len(df)%split_no == 0:
         size = len(df) //split_no
     else:
         size = len(df) // (split_no -1)
 
-    begin_adjust = 0
+    print(f'The default size of the file is {size}')
+
     end_adjust = 0
     for i in range(0,split_no):
         begin_adjust = end_adjust
-        end_adjust = adjust_split_end(df,  size*(i+1))
-        file = f'output/{prefix}_{split_no}_{str(i).rjust(2,"0")}_{begin_adjust}_{end_adjust}.csv'
+        end_adjust = adjust_split_end(df,  min(size*(i+1), len(df)) )
+        file = f'output/start_close/{prefix}_{split_no}_{str(i).rjust(2,"0")}_{begin_adjust}_{end_adjust}.csv'
         print(f'Split df to file#{i}:{file}')
-        df[begin_adjust : end_adjust].to_csv(file, index=None)
+        if end_adjust > begin_adjust:
+            df[begin_adjust : end_adjust].to_csv(file, index=None, header=False )
 
 def adjust_split_end(df,  end):
-    id = df.iat[end, 0]
-    end_adjust = 1 + df[df.iloc[:,0]==id].index.max()
+    id = df.iat[end-1, 0]
+    id_rec = df[df.iloc[:,0]==id]
+    print(f'{len(id_rec)} , {id_rec.index.max()}, {id_rec.index.max()} ')
+    end_adjust = id_rec.index.max() + 1
     print(f'Adjust original end from {end} to {end_adjust} for id:{id}')
     return end_adjust
 

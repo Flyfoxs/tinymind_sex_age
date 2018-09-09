@@ -69,10 +69,13 @@ def file_cache(overwrite=False):
     return decorator
 
 def get_mini_args(args):
-    args_mini = [item for item in args
-                     if (type(item) in (tuple, list, dict) and len(item) <= 5)
-                        or type(item) not in (tuple, list, dict, pd.DataFrame)
+    args_mini = [item.split('/')[-1] if isinstance(item, str) else item
+                    for item in args
+                        if (type(item) in (tuple, list, dict) and len(item) <= 5)
+                            or type(item) not in (tuple, list, dict, pd.DataFrame)
                  ]
+
+
 
     df_list  =  [item for item in args if isinstance( item, pd.DataFrame) ]
 
