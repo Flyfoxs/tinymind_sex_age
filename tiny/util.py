@@ -206,7 +206,7 @@ def extend_package_df(df):
     return p
 
 
-def extend_feature(version, span_no=6, input=None, trunc_long_time=True):
+def extend_feature(version, span_no=6, input=None, trunc_long_time=None):
     df = extend_percent(version, span_no, trunc_long_time)
     df = extend_cols(df)
     if input is not None:
@@ -265,13 +265,15 @@ def extend_package(version):
 
 @timed()
 #@file_cache()
-def split_days_all(tmp, trunc_long_time=True):
+def split_days_all(tmp, trunc_long_time=None):
     if trunc_long_time:
-        offset = Week(weekday=0)
         # 超长记录,截取后面的数据, 最多保留2个星期,最少保留一个完整的星期
         tmp['start_tmp'] = (tmp.close - Week(2, weekday=0)).dt.date.astype('datetime64[ns]')
-        tmp.start = tmp[['start', 'start_tmp']].max(axis=1)
-        tmp.drop( columns=['start_tmp'] , inplace=True )
+    else:
+        tmp['start_tmp'] = (tmp.close - pd.DateOffset(trunc_long_time)).dt.date.astype('datetime64[ns]')
+
+    tmp.start = tmp[['start', 'start_tmp']].max(axis=1)
+    tmp.drop( columns=['start_tmp'] , inplace=True )
 
     tmp.duration = (tmp.close - tmp.start) / np.timedelta64(1, 'D')
 
