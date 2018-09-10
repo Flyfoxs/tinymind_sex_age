@@ -147,10 +147,11 @@ def get_test():
 
 @timed()
 def extend_cols(tmp):
-    # package = get_package_label()
-    # print(f'input df col:{tmp.columns}')
-    # print(f'packae col:{package.columns}')
-    # tmp = tmp.merge(package, how='left')
+    if 'package' in tmp:
+        package = get_package_label()
+        print(f'input df col:{tmp.columns}')
+        print(f'packae col:{package.columns}')
+        tmp = tmp.merge(package, how='left')
 
     brand = get_brand()
     tmp = tmp.merge(brand, how='left')
@@ -205,8 +206,8 @@ def extend_package_df(df):
     return p
 
 
-def extend_feature(version, span_no=4, input=None):
-    df = extend_percent(version, span_no)
+def extend_feature(version, span_no=6, input=None, trunc_long_time=True):
+    df = extend_percent(version, span_no, trunc_long_time)
     df = extend_cols(df)
     if input is not None:
         df = input.merge(df, how='left')
@@ -215,7 +216,7 @@ def extend_feature(version, span_no=4, input=None):
 
 @timed()
 @file_cache()
-def extend_percent(version, span_no):
+def extend_percent(version, span_no, trunc_long_time):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -226,7 +227,7 @@ def extend_percent(version, span_no):
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
             df = get_start_closed(path)
-            df = split_days_all(df)
+            df = split_days_all(df, trunc_long_time)
             df = extend_time(df,span_no=span_no)
             df = extend_percent_df(df)
             if len(df) > 0 :
@@ -238,8 +239,9 @@ def extend_percent(version, span_no):
 
 
 
-@timed()
+
 @file_cache()
+@timed()
 def extend_package(version):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -263,13 +265,13 @@ def extend_package(version):
 
 @timed()
 #@file_cache()
-def split_days_all(tmp):
-
-    offset = Week(weekday=0)
-    # 超长记录,截取后面的数据, 最多保留2个星期,最少保留一个完整的星期
-    tmp['start_tmp'] = (tmp.close - Week(2, weekday=0)).dt.date.astype('datetime64[ns]')
-    tmp.start = tmp[['start', 'start_tmp']].max(axis=1)
-    tmp.drop( columns=['start_tmp'] , inplace=True )
+def split_days_all(tmp, trunc_long_time=True):
+    if trunc_long_time:
+        offset = Week(weekday=0)
+        # 超长记录,截取后面的数据, 最多保留2个星期,最少保留一个完整的星期
+        tmp['start_tmp'] = (tmp.close - Week(2, weekday=0)).dt.date.astype('datetime64[ns]')
+        tmp.start = tmp[['start', 'start_tmp']].max(axis=1)
+        tmp.drop( columns=['start_tmp'] , inplace=True )
 
     tmp.duration = (tmp.close - tmp.start) / np.timedelta64(1, 'D')
 
