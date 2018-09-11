@@ -28,6 +28,9 @@
 
 # 一款应用超过2天算一次,有多少个应用属于这种情况
 
+# 去除长Session后,时间分别分布如何
+# 性别和年纪分开预测是否更合适
+
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 

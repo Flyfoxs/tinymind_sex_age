@@ -6,7 +6,7 @@ import numpy as np
 from utils_.util_log import *
 from utils_.util_date import *
 from utils_.util_cache_file import *
-from pandas.tseries.offsets import *
+from pandas.tseries.offsets import Week
 from utils_.util_pandas import *
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
@@ -161,7 +161,7 @@ def extend_cols(tmp):
 @timed()
 #@file_cache()
 def extend_time(df, span_no=4):
-     # mini.start = pd.to_datetime(mini.start)
+    # mini.start = pd.to_datetime(mini.start)
     #df['dayname'] = df.start.dt.weekday_name
 
     span_len = 24//span_no
@@ -266,7 +266,7 @@ def extend_package(version):
 @timed()
 #@file_cache()
 def split_days_all(tmp, trunc_long_time=None):
-    if trunc_long_time:
+    if trunc_long_time is None:
         # 超长记录,截取后面的数据, 最多保留2个星期,最少保留一个完整的星期
         tmp['start_tmp'] = (tmp.close - Week(2, weekday=0)).dt.date.astype('datetime64[ns]')
     else:
