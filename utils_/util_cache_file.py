@@ -1,8 +1,7 @@
-import redis
+
 from utils_.util_log import *
-from redis.sentinel import Sentinel
 import pandas as pd
-import sys, os
+import  os
 class Cache_File:
     def __init__(self):
         self.cache_path='./cache/'

@@ -18,12 +18,16 @@ def timed(logger=logger, level=None, format='%s: %s ms', paras=True):
     if level is None:
         level = logging.DEBUG
 
+
     def decorator(fn):
         @functools.wraps(fn)
         def inner(*args, **kwargs):
             start = time.time()
-
-            args_mini = [item for item in args if (type(item) in (tuple, list, dict) and len(item) <= 20) ]
+            import pandas as pd
+            args_mini = [item for item in args
+                         if (type(item) in (tuple, list, dict) and len(item) <= 20)
+                            or type(item) not in (tuple, list, dict, pd.DataFrame)
+                         ]
 
             if paras:
                 logger.info("Begin to run %s with:%r, %r" % (fn.__name__, args_mini, kwargs))

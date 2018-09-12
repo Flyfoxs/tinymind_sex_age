@@ -75,8 +75,30 @@ def get_max_week(df):
 
 
 @timed()
-def get_percent_duration(df, groupby=['device', 'weekday'], prefix=None):
+def get_percent_duration(df, groupby=['device', 'weekday'], prefix=None, span_no=6):
     prefix = groupby[-1] if prefix is None else prefix
+    sum_duration = get_sum_duration(df, groupby, prefix)
+
+    sum_duration = reduce_time_span(sum_duration, prefix, span_no)
+
+    for col in [item for item in sum_duration.columns if f'{prefix}_span_' in item]:
+        df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total'], 3)
+
+    return df
+
+def reduce_time_span(df, prefix, span_no=4):
+    span_len = 24//span_no
+    for i in range(0, span_no):
+        col_list = [f'{prefix}_span_{sn}' for sn in range(span_len*i, span_len*(i+1))]
+        df[f'{prefix}_span_{sn}'] = df[col_list].sum(axis=1)
+        col_list.remove(f'{prefix}_span_{sn}')
+        df.drop(columns=col_list, inplace=True)
+    return df
+
+@timed()
+@file_cache()
+def get_sum_duration(df, groupby=['device', 'weekday'], prefix=None):
+
     columns = [key for key in df.columns if 'span_' in key]
     gp_map = [(key, 'sum') for key in columns if 'span_' in key]
     gp_map = dict(gp_map)
@@ -85,12 +107,8 @@ def get_percent_duration(df, groupby=['device', 'weekday'], prefix=None):
     gp_map['package'] = 'nunique'
     gp_map['start_base'] = 'nunique'
     df = df.groupby(groupby).agg(gp_map)
-    #     df = df.groupby(groupby).agg({'span_0':'sum','span_1':'sum','span_2':'sum',
-    #                                                  'span_3':'sum','package':'nunique' })
-    df['total'] = df[[key for key in columns if 'span_' in key]].sum(axis=1)
 
-    for col in columns:
-        df[f'{col}_p'] = round(df[col] / df['total'], 3)
+    df['total'] = df[[key for key in columns if 'span_' in key]].sum(axis=1)
 
     df.rename({'package':'pkg_cnt', 'start_base':'day_cnt'}, axis=1, inplace=True)
 
@@ -158,9 +176,12 @@ def extend_cols(tmp):
 
     return tmp
 
+
+
+
 @timed()
 #@file_cache()
-def extend_time(df, span_no=4):
+def extend_time(df, span_no=24):
     # mini.start = pd.to_datetime(mini.start)
     #df['dayname'] = df.start.dt.weekday_name
 
@@ -178,23 +199,23 @@ def extend_time(df, span_no=4):
         df['merge_begin'] = df[['check_start', 'start']].max(axis=1)
         df['merge_end'] = df[['check_close', 'close']].min(axis=1)
 
-        df[f'span_{sn}'] = (df['merge_end'] - df['merge_begin']) / np.timedelta64(1, 'D')
+        df[f'span24_{sn}'] = (df['merge_end'] - df['merge_begin']) / np.timedelta64(1, 'D')
 
-        df[f'span_{sn}'][df[f'span_{sn}'] <= 0] = 0
+        #df[f'span_{sn}'][df[f'span_{sn}'] <= 0] = 0
         df
 
     df.drop(columns = ['check_start', 'check_close', 'merge_begin','merge_end'], inplace=True)
 
     return df
 
-def extend_percent_df(df):
-    total = get_percent_duration(df, ['device'], 'total')
+def extend_sum_duration_df(df):
+    total = get_sum_duration(df, ['device'], 'total')
 
     max_week = get_max_week(df)
 
     merge = df.merge(max_week, on=['device', 'weekbegin'])
 
-    max = get_percent_duration(merge, ['device'], prefix='max')
+    max = get_sum_duration(merge, ['device'], 'max')
 
     return pd.concat( [total, max], axis=1 ).reset_index()
 
@@ -206,36 +227,39 @@ def extend_package_df(df):
     return p
 
 
-def extend_feature(version, span_no=6, input=None, trunc_long_time=None):
+def extend_feature(version, span_no=6, input=None, trunc_long_time=False):
     df = extend_percent(version, span_no, trunc_long_time)
     df = extend_cols(df)
     if input is not None:
         df = input.merge(df, how='left')
     return df
 
+def extend_percent(version, span_no, trunc_long_time):
+    pass
 
 @timed()
 @file_cache()
-def extend_percent(version, span_no, trunc_long_time):
+def extend_time_span(version=1, trunc_long_time=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
 
-    percentage = []
+    duration_list = []
     for i in range(0, len(list)):
         path = os.path.join(rootdir, list[i])
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
             df = get_start_closed(path)
             df = split_days_all(df, trunc_long_time)
-            df = extend_time(df,span_no=span_no)
-            df = extend_percent_df(df)
+            df = extend_time(df, span_no=24)
+            df = extend_sum_duration_df(df,)
             if len(df) > 0 :
-                percentage.append(df)
+                duration_list.append(df)
+                break
             else:
                 print(f'The df is None for file:{path}')
 
-    return pd.concat(percentage)
+    return pd.concat(duration_list)
 
 
 
@@ -266,19 +290,18 @@ def extend_package(version):
 @timed()
 #@file_cache()
 def split_days_all(tmp, trunc_long_time=None):
-    if trunc_long_time is None:
+    if trunc_long_time == True:
+        trunc_week_sn =2
         # 超长记录,截取后面的数据, 最多保留2个星期,最少保留一个完整的星期
-        tmp['start_tmp'] = (tmp.close - Week(2, weekday=0)).dt.date.astype('datetime64[ns]')
-    else:
-        tmp['start_tmp'] = (tmp.close - pd.DateOffset(trunc_long_time)).dt.date.astype('datetime64[ns]')
-
-    tmp.start = tmp[['start', 'start_tmp']].max(axis=1)
-    tmp.drop( columns=['start_tmp'] , inplace=True )
+        tmp['start_tmp'] = (tmp.close - Week(trunc_week_sn, weekday=0)).dt.date.astype('datetime64[ns]')
+        tmp.start = tmp[['start', 'start_tmp']].max(axis=1)
+        tmp.drop( columns=['start_tmp'] , inplace=True )
 
     tmp.duration = (tmp.close - tmp.start) / np.timedelta64(1, 'D')
 
     print(f'Out loop: The original Df size is {len(tmp)}')
-    tmp = split_days(tmp)
+    tmp = split_days(tmp, 50)
+    tmp = split_days(tmp, 1)
     print(f'Out loop: The new Df size is {len(tmp)}')
 
     tmp['start_base'] = tmp['start'].dt.date
@@ -294,27 +317,34 @@ def split_days_all(tmp, trunc_long_time=None):
     return tmp
 
 #@timed()
-def split_days(tmp):
-    print(f'The input df#{len(tmp)} before split')
+def split_days(tmp, threshold_days = 100):
+    threshold_days = max(1,threshold_days)
+    print(f'The input df#{len(tmp)} before split, with max duration:{tmp.duration.max()} '
+                                 f'and  threshold_days@{threshold_days}')
 
-    # 创建新记录,截取后面的时间段
-    tmp_new_big = tmp[tmp.duration > 1]
-    if len(tmp_new_big) == 0:
+    # 检查是否有需要截断的数据, 如果没有直接Return, 或者进入小循环
+    tmp_todo_big = tmp[tmp.duration > threshold_days]
+    if len(tmp_todo_big) == 0 and tmp.duration.max() <= threshold_days:
+        print(f'Final return with:{len(tmp)}')
         return tmp
 
-    tmp_new_big.start = tmp_new_big.start.dt.date + pd.DateOffset(1)
-    tmp_new_big.duration = (tmp_new_big.close - tmp_new_big.start) / np.timedelta64(1, 'D')
 
-    # 旧记录,保留前面的时间段
-    tmp_old         = tmp[tmp.duration <= 1]
-    tmp_new_small   = tmp[tmp.duration > 1]
-    tmp_new_small.close    = tmp_new_small.start.dt.date + pd.DateOffset(1)
-    tmp_new_small.duration = (tmp_new_small.close - tmp_new_small.start) / np.timedelta64(1, 'D')
+    # 创建新记录,截取最近的时间段(大段)
+    tmp_todo_big.start = tmp_todo_big.start.dt.date + pd.DateOffset(threshold_days)
+    tmp_todo_big.duration = (tmp_todo_big.close - tmp_todo_big.start) / np.timedelta64(1, 'D')
+    tmp_big = split_days(tmp_todo_big, threshold_days)
 
-    tmp = tmp_old.append(tmp_new_small)
+    # inpu中,已经小于阀值天的
+    tmp_small_p1         = tmp[tmp.duration <= threshold_days]
+    # 旧记录,保留早期的时间段(小段)
+    tmp_small_p2   = tmp[tmp.duration > threshold_days]
+    tmp_small_p2.close    = tmp_small_p2.start.dt.date + pd.DateOffset(threshold_days)
+    tmp_small_p2.duration = (tmp_small_p2.close - tmp_small_p2.start) / np.timedelta64(1, 'D')
+    tmp_small = pd.concat([tmp_small_p1, tmp_small_p2])
 
-    tmp_new_big = split_days(tmp_new_big)
-    tmp = tmp.append(tmp_new_big)
+    print(f'max duration:{tmp_small_p2.duration.max()} with small threshold:{threshold_days}')
+
+    tmp = tmp_big.append(tmp_small)
 
     #tmp = tmp.sort_values('duration', ascending=False)
     tmp.reset_index(drop=True, inplace=True)

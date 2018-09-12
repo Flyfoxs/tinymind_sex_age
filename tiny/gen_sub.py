@@ -1,23 +1,12 @@
-import pandas as pd
 #import seaborn as sns
-import numpy as np
-from tqdm import tqdm
-from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.cross_validation import train_test_split
-from sklearn.metrics import accuracy_score
 import lightgbm as lgb
-from datetime import datetime,timedelta
-import matplotlib.pyplot as plt
-import time
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.feature_extraction.text import CountVectorizer
-
-#New add
-#deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
+from sklearn.cross_validation import train_test_split
 
 from tiny.lda import *
-
 from  tiny.util import *
+
+# New add
+# deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
 deviceid_train = get_lda_feature()
 deviceid_train = extend_feature(version='1',span_no=6, input=deviceid_train, trunc_long_time=900)
 
@@ -58,6 +47,7 @@ params = {
 }
 
 
+
 gbm = lgb.train(params,
         lgb_train,
         num_boost_round=1000,
@@ -80,3 +70,5 @@ sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8
 file = f'./sub/baseline_{best}.csv'
 print(f'sub file save to {file}')
 sub.to_csv(file,index=False)
+
+
