@@ -98,12 +98,11 @@ def reduce_time_span(df, prefix, span_no=4):
 
 @timed()
 #@file_cache()
-def get_sum_duration(df, groupby=['device', 'weekday'], prefix=None):
+def get_summary_duration(df, groupby=['device', 'weekday'], prefix=None):
     prefix = groupby[-1] if prefix is None else prefix
 
-
     columns = [key for key in df.columns if 'span24_' in key]
-    gp_map = [(key, 'sum') for key in columns if 'span24_' in key]
+    gp_map = [(key, ['sum', 'count']) for key in columns if 'span24_' in key]
     gp_map = dict(gp_map)
     # print(gp_map)
 
@@ -111,11 +110,15 @@ def get_sum_duration(df, groupby=['device', 'weekday'], prefix=None):
     gp_map['start_base'] = 'nunique'
     df = df.groupby(groupby).agg(gp_map)
 
-    df['total'] = df[[key for key in columns if 'span24_' in key]].sum(axis=1)
+    df['total_sum']   = df[[key for key in df.columns if 'sum' in key]].sum(axis=1)
+    df['total_count'] = df[[key for key in df.columns if 'count' in key]].sum(axis=1)
 
-    df.rename({'package':'pkg_cnt', 'start_base':'day_cnt'}, axis=1, inplace=True)
+    df.rename({'package': 'pkg_cnt', 'start_base': 'day_cnt'}, axis=1, inplace=True)
 
-    df.columns = [f'{prefix}_{key}' for key in df.columns]
+    print(type(df.columns[0]))
+    print('_'.join(df.columns[0]))
+    print(f'The latest colums:{df.columns}')
+    df.columns = [f"{prefix}_{'_'.join(key)}" for key in df.columns]
 
     print(f'The latest colums:{df.columns}')
     return df.reset_index()
@@ -208,7 +211,7 @@ def extend_time(df, span_no=24):
         df[f'span24_{sn}'] = (df['merge_end'] - df['merge_begin']) / np.timedelta64(1, 'D')
 
         #去除负值
-        df[f'span24_{sn}'][df[f'span24_{sn}'] <= 0] = 0
+        df[f'span24_{sn}'][df[f'span24_{sn}'] <= 0] = np.nan
         df
 
     df.drop(columns = ['check_start', 'check_close', 'merge_begin','merge_end'], inplace=True)
@@ -236,7 +239,7 @@ def extend_package_df(df):
 
 def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     prefix='tol'
-    df = extend_time_span(version=1, trunc_long_time=trunc_long_time, mini=mini,
+    df = extend_time_span(version=2, trunc_long_time=trunc_long_time, mini=mini,
                           groupby=['device'], prefix=prefix)
     df = reduce_time_span(df, prefix, span_no)
     df = extend_percent(df, prefix)
@@ -247,13 +250,17 @@ def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     return df
 
 def extend_percent(df, prefix):
-    for col in [item for item in df.columns if f'{prefix}_span_' in item]:
-        df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total'], 3)
+    for col in [item for item in df.columns if f'_sum' in item]:
+        df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total_sum_'], 5)
+
+    for col in [item for item in df.columns if f'_count' in item]:
+        df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total_count_'], 5)
+
     return df
 
 @timed()
 @file_cache()
-def extend_time_span(version=1, trunc_long_time=False, mini=False, groupby=['device', 'weekday'], prefix=None):
+def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['device', 'weekday'], prefix=None):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -266,7 +273,7 @@ def extend_time_span(version=1, trunc_long_time=False, mini=False, groupby=['dev
             df = get_start_closed(path)
             df = split_days_all(df, trunc_long_time)
             df = extend_time(df, span_no=24)
-            df = get_sum_duration(df, groupby, prefix=prefix)
+            df = get_summary_duration(df, groupby, prefix=prefix)
             if len(df) > 0 :
                 duration_list.append(df)
                 if mini:
@@ -375,6 +382,7 @@ def split_days(tmp, threshold_days = 100):
 #@file_cache()
 def get_start_closed(file=None):
 
+    file = file if file is not None else './output/start_close/deviceid_package_start_close_40_38_35780089_36720940.csv'
 
     start_close = pd.read_csv(file,
                               # index_col=0 ,
@@ -405,45 +413,4 @@ def get_start_closed(file=None):
     start_close['duration'] = (start_close.close - start_close.start) / np.timedelta64(1, 'D')
 
     return start_close
-
-def split_start_close(split_no=40, prefix='deviceid_package_start_close'):
-
-    file = 'input/deviceid_package_start_close.tsv'
-
-    df = pd.read_csv(file, sep='\t',
-                              # index_col=0 ,
-                              nrows=None,
-                              header=None )
-    df.columns = ['device', 'package', 'start_t', 'close_t']
-
-    print(f'Sort the df#{len(df)} by device(begin)')
-    df.sort_values(by=['device', 'package', 'start_t'], inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    print(f'Sort the df by device(end)')
-
-
-    if len(df)%split_no == 0:
-        size = len(df) //split_no
-    else:
-        size = len(df) // (split_no -1)
-
-    print(f'The default size of the file is {size}')
-
-    end_adjust = 0
-    for i in range(0,split_no):
-        begin_adjust = end_adjust
-        end_adjust = adjust_split_end(df,  min(size*(i+1), len(df)) )
-        file = f'output/start_close/{prefix}_{split_no}_{str(i).rjust(2,"0")}_{begin_adjust}_{end_adjust}.csv'
-        print(f'Split df to file#{i}:{file}')
-        if end_adjust > begin_adjust:
-            df[begin_adjust : end_adjust].to_csv(file, index=None, header=False )
-
-def adjust_split_end(df,  end):
-    id = df.iat[end-1, 0]
-    id_rec = df[df.iloc[:,0]==id]
-    print(f'{len(id_rec)} , {id_rec.index.max()}, {id_rec.index.max()} ')
-    end_adjust = id_rec.index.max() + 1
-    print(f'Adjust original end from {end} to {end_adjust} for id:{id}')
-    return end_adjust
-
 
