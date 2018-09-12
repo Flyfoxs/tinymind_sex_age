@@ -197,7 +197,7 @@ def extend_time(df, span_no=24):
     for sn in range(0, span_no):
         # df[f'span_{sn}'] = df.apply(lambda row: get_duration(row['start'], row['close'], sn), axis=1)
 
-        print(f'Try to cal for range#{sn}')
+        print(f'Try to cal for range#{sn} with span_len: {span_len}')
         # df['start_base']  = df['start'].dt.date
         df['check_start'] = df['start'].dt.date + pd.DateOffset(hours=span_len * (sn))
         df['check_close'] = df['start'].dt.date + pd.DateOffset(hours=span_len * (sn + 1))
@@ -207,7 +207,8 @@ def extend_time(df, span_no=24):
 
         df[f'span24_{sn}'] = (df['merge_end'] - df['merge_begin']) / np.timedelta64(1, 'D')
 
-        #df[f'span_{sn}'][df[f'span_{sn}'] <= 0] = 0
+        #去除负值
+        df[f'span24_{sn}'][df[f'span24_{sn}'] <= 0] = 0
         df
 
     df.drop(columns = ['check_start', 'check_close', 'merge_begin','merge_end'], inplace=True)
@@ -233,9 +234,9 @@ def extend_package_df(df):
     return p
 
 
-def extend_feature( span_no=6, input=None, trunc_long_time=False):
+def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     prefix='tol'
-    df = extend_time_span(version=1, trunc_long_time=trunc_long_time, mini=False,
+    df = extend_time_span(version=1, trunc_long_time=trunc_long_time, mini=mini,
                           groupby=['device'], prefix=prefix)
     df = reduce_time_span(df, prefix, span_no)
     df = extend_percent(df, prefix)
@@ -355,8 +356,9 @@ def split_days(tmp, threshold_days = 100):
     # 旧记录,保留早期的时间段(小段)
     tmp_small_p2   = tmp[tmp.duration > threshold_days]
     tmp_small_p2.close    = tmp_small_p2.start.dt.date + pd.DateOffset(threshold_days)
-    tmp_small_p2.duration = (tmp_small_p2.close - tmp_small_p2.start) / np.timedelta64(1, 'D')
+    #tmp_small_p2.duration = (tmp_small_p2.close - tmp_small_p2.start) / np.timedelta64(1, 'D')
     tmp_small = pd.concat([tmp_small_p1, tmp_small_p2])
+    tmp_small.duration = (tmp_small.close - tmp_small.start) / np.timedelta64(1, 'D')
 
     print(f'max duration:{tmp_small_p2.duration.max()} with small threshold:{threshold_days}')
 
