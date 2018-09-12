@@ -74,33 +74,36 @@ def get_max_week(df):
     return df
 
 
-@timed()
-def get_percent_duration(df, groupby=['device', 'weekday'], prefix=None, span_no=6):
-    prefix = groupby[-1] if prefix is None else prefix
-    sum_duration = get_sum_duration(df, groupby, prefix)
-
-    sum_duration = reduce_time_span(sum_duration, prefix, span_no)
-
-    for col in [item for item in sum_duration.columns if f'{prefix}_span_' in item]:
-        df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total'], 3)
-
-    return df
+# @timed()
+# def get_percent_duration(df, groupby=['device', 'weekday'], prefix=None, span_no=6):
+#     prefix = groupby[-1] if prefix is None else prefix
+#     sum_duration = get_sum_duration(df, groupby, prefix)
+#
+#     sum_duration = reduce_time_span(sum_duration, prefix, span_no)
+#
+#     for col in [item for item in sum_duration.columns if f'{prefix}_span_' in item]:
+#         df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total'], 3)
+#
+#     return df
 
 def reduce_time_span(df, prefix, span_no=4):
     span_len = 24//span_no
-    for i in range(0, span_no):
-        col_list = [f'{prefix}_span_{sn}' for sn in range(span_len*i, span_len*(i+1))]
+    print(f'columns before reduce:{df.columns}')
+    for sn in range(0, span_no):
+        col_list = [f'{prefix}_span24_{sn}' for sn in range(span_len*sn, span_len*(sn+1))]
         df[f'{prefix}_span_{sn}'] = df[col_list].sum(axis=1)
-        col_list.remove(f'{prefix}_span_{sn}')
+        # col_list.remove(f'{prefix}_span_{sn}')
         df.drop(columns=col_list, inplace=True)
     return df
 
 @timed()
-@file_cache()
+#@file_cache()
 def get_sum_duration(df, groupby=['device', 'weekday'], prefix=None):
+    prefix = groupby[-1] if prefix is None else prefix
 
-    columns = [key for key in df.columns if 'span_' in key]
-    gp_map = [(key, 'sum') for key in columns if 'span_' in key]
+
+    columns = [key for key in df.columns if 'span24_' in key]
+    gp_map = [(key, 'sum') for key in columns if 'span24_' in key]
     gp_map = dict(gp_map)
     # print(gp_map)
 
@@ -108,12 +111,14 @@ def get_sum_duration(df, groupby=['device', 'weekday'], prefix=None):
     gp_map['start_base'] = 'nunique'
     df = df.groupby(groupby).agg(gp_map)
 
-    df['total'] = df[[key for key in columns if 'span_' in key]].sum(axis=1)
+    df['total'] = df[[key for key in columns if 'span24_' in key]].sum(axis=1)
 
     df.rename({'package':'pkg_cnt', 'start_base':'day_cnt'}, axis=1, inplace=True)
 
     df.columns = [f'{prefix}_{key}' for key in df.columns]
-    return df
+
+    print(f'The latest colums:{df.columns}')
+    return df.reset_index()
 
 
 def get_train():
@@ -172,6 +177,7 @@ def extend_cols(tmp):
         tmp = tmp.merge(package, how='left')
 
     brand = get_brand()
+    print(f'column list:{tmp.columns}')
     tmp = tmp.merge(brand, how='left')
 
     return tmp
@@ -205,19 +211,19 @@ def extend_time(df, span_no=24):
         df
 
     df.drop(columns = ['check_start', 'check_close', 'merge_begin','merge_end'], inplace=True)
-
+    print(f'Output columns for extend_time is {df.columns}')
     return df
 
-def extend_sum_duration_df(df):
-    total = get_sum_duration(df, ['device'], 'total')
-
-    max_week = get_max_week(df)
-
-    merge = df.merge(max_week, on=['device', 'weekbegin'])
-
-    max = get_sum_duration(merge, ['device'], 'max')
-
-    return pd.concat( [total, max], axis=1 ).reset_index()
+# def extend_sum_duration_df(df, groupby=['device', 'weekday'], prefix=None):
+#     total = get_sum_duration(df, ['device'], 'total')
+#
+#     max_week = get_max_week(df)
+#
+#     merge = df.merge(max_week, on=['device', 'weekbegin'])
+#
+#     max = get_sum_duration(merge, ['device'], 'max')
+#
+#     return pd.concat( [total, max], axis=1 ).reset_index()
 
 
 def extend_package_df(df):
@@ -227,19 +233,26 @@ def extend_package_df(df):
     return p
 
 
-def extend_feature(version, span_no=6, input=None, trunc_long_time=False):
-    df = extend_percent(version, span_no, trunc_long_time)
+def extend_feature( span_no=6, input=None, trunc_long_time=False):
+    prefix='tol'
+    df = extend_time_span(version=1, trunc_long_time=trunc_long_time, mini=False,
+                          groupby=['device'], prefix=prefix)
+    df = reduce_time_span(df, prefix, span_no)
+    df = extend_percent(df, prefix)
+
     df = extend_cols(df)
     if input is not None:
         df = input.merge(df, how='left')
     return df
 
-def extend_percent(version, span_no, trunc_long_time):
-    pass
+def extend_percent(df, prefix):
+    for col in [item for item in df.columns if f'{prefix}_span_' in item]:
+        df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total'], 3)
+    return df
 
 @timed()
 @file_cache()
-def extend_time_span(version=1, trunc_long_time=False):
+def extend_time_span(version=1, trunc_long_time=False, mini=False, groupby=['device', 'weekday'], prefix=None):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -252,10 +265,12 @@ def extend_time_span(version=1, trunc_long_time=False):
             df = get_start_closed(path)
             df = split_days_all(df, trunc_long_time)
             df = extend_time(df, span_no=24)
-            df = extend_sum_duration_df(df,)
+            df = get_sum_duration(df, groupby, prefix=prefix)
             if len(df) > 0 :
                 duration_list.append(df)
-                break
+                if mini:
+                    print('Return mini for testing')
+                    break
             else:
                 print(f'The df is None for file:{path}')
 
@@ -299,10 +314,11 @@ def split_days_all(tmp, trunc_long_time=None):
 
     tmp.duration = (tmp.close - tmp.start) / np.timedelta64(1, 'D')
 
-    print(f'Out loop: The original Df size is {len(tmp)}')
+    old_len = len(tmp)
+    print(f'Out loop: The original Df size is {old_len}')
     tmp = split_days(tmp, 50)
     tmp = split_days(tmp, 1)
-    print(f'Out loop: The new Df size is {len(tmp)}')
+    print(f'Out loop: The new Df size is {len(tmp)}, old df size is {old_len}')
 
     tmp['start_base'] = tmp['start'].dt.date
     tmp['weekday'] = tmp.start.dt.weekday
