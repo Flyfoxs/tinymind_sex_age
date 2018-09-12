@@ -10,17 +10,20 @@ class Cache_File:
         if not os.path.exists(self.cache_path):
             os.mkdir(self.cache_path)
 
-    def get_path(self, key):
-        return f'{self.cache_path}{key}.csv'
+    def get_path(self, key, type):
+        return f'{self.cache_path}{key}.{type}'
 
-    def readFile(self, key):
+    def readFile(self, key, type):
         if self.enable:
-            path = self.get_path(key)
+            path = self.get_path(key, type)
             if os.path.exists(path):
                 logger.debug(f"try to read cache from file:{path}")
 
                 #check if the file have the data type column
-                df = pd.read_csv(path, nrows=1)
+                if type=='pkl':
+                    df = pd.read_pickle(path)
+                else:
+                    df = pd.read_csv(path, nrows=1)
                 tmp_data_list = [item for item in self.date_list if item in df.columns]
 
                 df =pd.read_csv(path, parse_dates = tmp_data_list)
@@ -33,11 +36,16 @@ class Cache_File:
             logger.debug( "disable cache")
 
 
-    def writeFile(self, key, val):
+    def writeFile(self, key, val, type):
         if isinstance(val, pd.DataFrame ) and len(val)>0:
-            path = self.get_path(key)
+            path = self.get_path(key, type)
             logger.debug( f"====Write {len(val)} records to File#{path}" )
-            val.to_csv(path, index=False, )
+            if type == 'pkl':
+                sparse = val.to_sparse()
+                print(f'The sparse.density is {sparse.density}')
+                sparse.to_pickle(path)
+            else:
+                val.to_csv(path, index=False, )
             return val
         else:
             logger.warning('The return is not DataFrame or it is None')
@@ -46,7 +54,7 @@ class Cache_File:
 cache =  Cache_File()
 
 import pickle, functools
-def file_cache(overwrite=False):
+def file_cache(overwrite=False, type='csv'):
     """
     :param time: How long the case can keep, default is 1 week
     :param overwrite: If force overwrite the cache
@@ -59,10 +67,10 @@ def file_cache(overwrite=False):
             logger.debug(f'fn:{f.__name__}, para:{str(mini_args)}, kw:{str(kwargs)}')
             key = '_'.join([f.__name__, str(mini_args), str(kwargs)])
             if overwrite==False:
-                val = cache.readFile(key)
+                val = cache.readFile(key, type)
             if val is None or overwrite:
                 val = f(*args, **kwargs) # call the wrapped function, save in cache
-                cache.writeFile(key, val)
+                cache.writeFile(key, val, type)
             return val # read value from cache
         return wrapper
     return decorator

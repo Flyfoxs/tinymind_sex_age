@@ -172,7 +172,7 @@ def get_test():
     return test
 
 @timed()
-def extend_cols(tmp):
+def extend_brand_pkg(tmp):
     if 'package' in tmp:
         package = get_package_label()
         print(f'input df col:{tmp.columns}')
@@ -190,7 +190,7 @@ def extend_cols(tmp):
 
 @timed()
 #@file_cache()
-def extend_time(df, span_no=24):
+def cal_duration_for_span(df, span_no=24):
     # mini.start = pd.to_datetime(mini.start)
     #df['dayname'] = df.start.dt.weekday_name
 
@@ -234,6 +234,7 @@ def extend_package_df(df):
     p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
     p = p.pivot(index='device', columns='package', values='start_base').reset_index()
     print(f'Device_Package: convert {df.shape} to {p.shape} ')
+    p.set_index('device', inplace=True)
     return p
 
 
@@ -244,7 +245,7 @@ def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     df = reduce_time_span(df, prefix, span_no)
     df = extend_percent(df, prefix)
 
-    df = extend_cols(df)
+    df = extend_brand_pkg(df)
     if input is not None:
         df = input.merge(df, how='left')
     return df
@@ -272,7 +273,7 @@ def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['devic
             print(f"Try to summary file:{path}")
             df = get_start_closed(path)
             df = split_days_all(df, trunc_long_time)
-            df = extend_time(df, span_no=24)
+            df = cal_duration_for_span(df, span_no=24)
             df = get_summary_duration(df, groupby, prefix=prefix)
             if len(df) > 0 :
                 duration_list.append(df)
@@ -287,9 +288,9 @@ def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['devic
 
 
 
-@file_cache()
+@file_cache(type='pkl')
 @timed()
-def extend_package(version):
+def extend_package(version=1):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -307,7 +308,10 @@ def extend_package(version):
             else:
                 print(f'The df is None for file:{path}')
 
-    return pd.concat(tmp_list)
+    df = pd.concat(tmp_list)
+    print(f'Share of device package usage is:{df.shape}')
+
+    return df.sort_index()
 
 
 @timed()
