@@ -68,7 +68,7 @@ def get_lda_feature():
 
 
 
-#@file_cache()
+@file_cache()
 @timed()
 def get_lda_from_usage():
     import pandas as pd
@@ -100,6 +100,7 @@ def get_lda_from_usage():
     transformer = TfidfTransformer()
     #Replace point
     cntTf = extend_package(version=1)
+    cntTf.fillna(0, inplace=True)
     tfidf = transformer.fit_transform(cntTf)
     #word = vectorizer.get_feature_names()
     weight = tfidf.toarray()
@@ -113,7 +114,9 @@ def get_lda_from_usage():
     lda = LatentDirichletAllocation(n_topics=5,
                                     learning_offset=50.,
                                     random_state=666)
+    print('Lda analysis begin')
     docres = lda.fit_transform(cntTf)
+    print('Lda analysis end')
 
     deviceid_packages = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
 
@@ -139,5 +142,7 @@ def get_lda_from_usage():
 
 
 if __name__ == '__main__':
+    get_lda_from_usage()
     extend_package(version=1)
+
 

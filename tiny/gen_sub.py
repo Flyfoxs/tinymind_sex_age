@@ -8,12 +8,15 @@ from  tiny.util import *
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
 deviceid_train = get_lda_feature()
-deviceid_train = extend_feature(version='1',span_no=6, input=deviceid_train, trunc_long_time=900)
+#deviceid_train = get_lda_from_usage()
+
+#deviceid_train[['0','1','2','3','4']] = deviceid_train[['0','1','2','3','4']].replace()
+
+deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False)
 
 #print(len(deviceid_train))
 #deviceid_train.groupby('max_day_cnt')['max_day_cnt'].count()
-deviceid_train.head()
-
+deviceid_train.drop(columns=['tol_day_cnt_min', 'tol_day_cnt_max'], inplace=True)
 
 
 
@@ -70,5 +73,7 @@ sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8
 file = f'./sub/baseline_{best}.csv'
 print(f'sub file save to {file}')
 sub.to_csv(file,index=False)
+
+print(f'=============\nFinal train feature:{deviceid_train.columns}')
 
 

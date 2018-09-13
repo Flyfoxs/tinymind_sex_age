@@ -8,6 +8,10 @@ from utils_.util_date import *
 from utils_.util_cache_file import *
 from pandas.tseries.offsets import Week
 from utils_.util_pandas import *
+try:
+    from tiny.conf import *
+except :
+    mini=True
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -90,10 +94,11 @@ def reduce_time_span(df, prefix, span_no=4):
     span_len = 24//span_no
     print(f'columns before reduce:{df.columns}')
     for sn in range(0, span_no):
-        col_list = [f'{prefix}_span24_{sn}' for sn in range(span_len*sn, span_len*(sn+1))]
-        df[f'{prefix}_span_{sn}'] = df[col_list].sum(axis=1)
-        # col_list.remove(f'{prefix}_span_{sn}')
-        df.drop(columns=col_list, inplace=True)
+        for type in ['sum', 'count']:
+            col_list = [f'{prefix}_span24_{sn}_{type}' for sn in range(span_len*sn, span_len*(sn+1))]
+            df[f'{prefix}_span_{sn}_{type}'] = df[col_list].sum(axis=1)
+            # col_list.remove(f'{prefix}_span_{sn}')
+            df.drop(columns=col_list, inplace=True)
     return df
 
 @timed()
@@ -107,13 +112,14 @@ def get_summary_duration(df, groupby=['device', 'weekday'], prefix=None):
     # print(gp_map)
 
     gp_map['package'] = 'nunique'
-    gp_map['start_base'] = 'nunique'
+    gp_map['start_base'] = ['min','max','nunique']
+
     df = df.groupby(groupby).agg(gp_map)
 
     df['total_sum']   = df[[key for key in df.columns if 'sum' in key]].sum(axis=1)
     df['total_count'] = df[[key for key in df.columns if 'count' in key]].sum(axis=1)
 
-    df.rename({'package': 'pkg_cnt', 'start_base': 'day_cnt'}, axis=1, inplace=True)
+    df.rename({'package': 'pkg', 'start_base': 'day'}, axis=1, inplace=True)
 
     print(type(df.columns[0]))
     print('_'.join(df.columns[0]))
@@ -266,20 +272,25 @@ def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['devic
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
 
+    if mini:
+        list =  list[:3]
+
     duration_list = []
     for i in range(0, len(list)):
         path = os.path.join(rootdir, list[i])
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
             df = get_start_closed(path)
+
+            if mini:
+                print('Return mini result for testing')
+                df = df[0:1000]
+
             df = split_days_all(df, trunc_long_time)
             df = cal_duration_for_span(df, span_no=24)
             df = get_summary_duration(df, groupby, prefix=prefix)
             if len(df) > 0 :
                 duration_list.append(df)
-                if mini:
-                    print('Return mini for testing')
-                    break
             else:
                 print(f'The df is None for file:{path}')
 

@@ -17,16 +17,16 @@ class Cache_File:
         if self.enable:
             path = self.get_path(key, type)
             if os.path.exists(path):
-                logger.debug(f"try to read cache from file:{path}")
+                logger.debug(f"try to read cache from file:{path}, type:{type}")
 
                 #check if the file have the data type column
                 if type=='pkl':
                     df = pd.read_pickle(path)
                 else:
                     df = pd.read_csv(path, nrows=1)
-                tmp_data_list = [item for item in self.date_list if item in df.columns]
+                    tmp_data_list = [item for item in self.date_list if item in df.columns]
 
-                df =pd.read_csv(path, parse_dates = tmp_data_list)
+                    df =pd.read_csv(path, parse_dates = tmp_data_list)
                 logger.debug(f"Return {len(df) } resut from file cache:{path}")
                 return df
             else:
@@ -42,8 +42,9 @@ class Cache_File:
             logger.debug( f"====Write {len(val)} records to File#{path}" )
             if type == 'pkl':
                 sparse = val.to_sparse()
-                print(f'The sparse.density is {sparse.density}')
+
                 sparse.to_pickle(path)
+                logger.debug(f'The sparse.density is {sparse.density}')
             else:
                 val.to_csv(path, index=False, )
             return val
