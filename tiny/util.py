@@ -241,11 +241,31 @@ def cal_duration_for_span(df, span_no=24):
 #     return pd.concat( [total, max], axis=1 ).reset_index()
 
 
-def extend_package_df(df):
+
+def extend_package_merge(df):
+    return pd.concat([
+                     extend_package_count_df(df) ,
+        #extend_package_duration_df(df),
+                      ], axis=1)
+
+@timed()
+def extend_package_count_df(df):
     p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
+    #p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
     p = p.pivot(index='device', columns='package', values='start_base').reset_index()
     print(f'Device_Package: convert {df.shape} to {p.shape} ')
     p.set_index('device', inplace=True)
+    p.columns=[f'count_{item}' for item in p.columns]
+    return p
+
+@timed()
+def extend_package_duration_df(df):
+    #p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
+    p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
+    p = p.pivot(index='device', columns='package', values='duration').reset_index()
+    print(f'Device_Package: convert {df.shape} to {p.shape} ')
+    p.set_index('device', inplace=True)
+    p.columns = [f'duration_{item}' for item in p.columns]
     return p
 
 
@@ -304,12 +324,14 @@ def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['devic
 
 
 
-@file_cache(type='pkl')
+@file_cache(type='pkl', overwrite=True)
 @timed()
-def extend_package(version=1):
+def extend_package(version=1, mini=mini):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
+    if mini:
+        list =  list[:3]
 
     tmp_list = []
     for i in range(0, len(list)):
@@ -317,8 +339,10 @@ def extend_package(version=1):
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
             df = get_start_closed(path)
+            if mini:
+                df = df[:1000]
             df = split_days_all(df)
-            df = extend_package_df(df)
+            df = extend_package_merge(df)
             if len(df) > 0 :
                 tmp_list.append(df)
             else:

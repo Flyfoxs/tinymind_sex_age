@@ -11,6 +11,8 @@ deviceid_train = get_lda_feature()
 deviceid_train_2 = get_lda_from_usage()
 
 core_list = ['0', '1', '2', '3','4']
+# for col in core_list:
+#     deviceid_train_2[col] =  deviceid_train_2[col].apply(lambda val: 1 if val > 0 else 0)
 deviceid_train = pd.concat([deviceid_train, deviceid_train_2[core_list]], axis=1)
 
 deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False)
@@ -75,6 +77,6 @@ file = f'./sub/baseline_{best}.csv'
 print(f'sub file save to {file}')
 sub.to_csv(file,index=False)
 
-print(f'=============\nFinal train feature:{deviceid_train.columns}')
+print(f'============={pd.get_option("display.max_rows")}\nFinal train feature:{deviceid_train.columns}')
 
 

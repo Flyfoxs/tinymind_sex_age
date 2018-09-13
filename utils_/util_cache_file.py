@@ -6,7 +6,7 @@ class Cache_File:
     def __init__(self):
         self.cache_path='./cache/'
         self.enable=True
-        self.date_list = ['start','close','start_base','weekbegin']
+        self.date_list = ['start','close','start_base','weekbegin', 'tol_day_cnt_min',	'tol_day_cnt_max']
         if not os.path.exists(self.cache_path):
             os.mkdir(self.cache_path)
 
@@ -69,7 +69,7 @@ def file_cache(overwrite=False, type='csv'):
             key = '_'.join([f.__name__, str(mini_args), str(kwargs)])
             if overwrite==False:
                 val = cache.readFile(key, type)
-            if val is None or overwrite:
+            if overwrite==True or val is None :
                 val = f(*args, **kwargs) # call the wrapped function, save in cache
                 cache.writeFile(key, val, type)
             return val # read value from cache

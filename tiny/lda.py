@@ -68,7 +68,7 @@ def get_lda_feature():
 
 
 
-@file_cache()
+@file_cache(overwrite=True)
 @timed()
 def get_lda_from_usage():
     import pandas as pd
@@ -100,7 +100,11 @@ def get_lda_from_usage():
     transformer = TfidfTransformer()
     #Replace point
     cntTf = extend_package(version=1)
+    # cntTf = cntTf/cntTf
     cntTf.fillna(0, inplace=True)
+
+    print(f'cntTf column:{cntTf.columns}')
+
     tfidf = transformer.fit_transform(cntTf)
     #word = vectorizer.get_feature_names()
     weight = tfidf.toarray()
@@ -138,6 +142,7 @@ def get_lda_from_usage():
 
     deviceid_train = deviceid_train.replace({'nan': np.NaN, 'nan-nan': np.NaN})
 
+    deviceid_train.columns = [ str(item)  for item in deviceid_train.columns ]
     return deviceid_train
 
 
