@@ -8,9 +8,10 @@ from  tiny.util import *
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
 deviceid_train = get_lda_feature()
-#deviceid_train = get_lda_from_usage()
+deviceid_train_2 = get_lda_from_usage()
 
-#deviceid_train[['0','1','2','3','4']] = deviceid_train[['0','1','2','3','4']].replace()
+core_list = ['0', '1', '2', '3','4']
+deviceid_train = pd.concat([deviceid_train, deviceid_train_2[core_list]], axis=1)
 
 deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False)
 
