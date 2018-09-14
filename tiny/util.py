@@ -31,33 +31,33 @@ def get_brand():
     brand.columns = ['device', 'brand', 'phone_type']
     return convert_label_encode(brand, ['device'])
 
-
-# Performance issue
-@timed()
-def get_package(limit=None):
-    cache_file = './output/deviceid_package.tsv'
-    if os.path.exists(cache_file):
-        print('load package from cache:%s' % cache_file)
-        return pd.read_csv(cache_file, sep=',')
-    else:
-        tmp = pd.read_csv('input/deviceid_packages.tsv', sep='\t', header=None, nrows=limit)
-        tmp.columns = ['device', 'package_list']
-
-        tmp = tmp[tmp.device.isin(get_test().iloc[:, 0])]
-
-        package_list_all = frozenset.union(*tmp.iloc[:, 1].apply(lambda v: frozenset(v.split(','))))
-
-        print(len(package_list_all))
-
-        i = 1
-        for package in package_list_all:
-            i += 1
-            print(f'{i}/{len(package_list_all)}')
-            tmp[package] = tmp.apply(lambda _: int(package in _.package_list), axis=1)
-
-        tmp.to_csv('./output/deviceid_package.tsv', index=False)
-
-        return tmp
+#
+# # Performance issue
+# @timed()
+# def get_package(limit=None):
+#     cache_file = './output/deviceid_package.tsv'
+#     if os.path.exists(cache_file):
+#         print('load package from cache:%s' % cache_file)
+#         return pd.read_csv(cache_file, sep=',')
+#     else:
+#         tmp = pd.read_csv('input/deviceid_packages.tsv', sep='\t', header=None, nrows=limit)
+#         tmp.columns = ['device', 'package_list']
+#
+#         tmp = tmp[tmp.device.isin(get_test().iloc[:, 0])]
+#
+#         package_list_all = frozenset.union(*tmp.iloc[:, 1].apply(lambda v: frozenset(v.split(','))))
+#
+#         print(len(package_list_all))
+#
+#         i = 1
+#         for package in package_list_all:
+#             i += 1
+#             print(f'{i}/{len(package_list_all)}')
+#             tmp[package] = tmp.apply(lambda _: int(package in _.package_list), axis=1)
+#
+#         tmp.to_csv('./output/deviceid_package.tsv', index=False)
+#
+#         return tmp
 
 
 @timed()
@@ -244,34 +244,6 @@ def cal_duration_for_span(df, span_no=24):
 
 
 
-def extend_package_merge(df):
-    return pd.concat([
-                     extend_package_count_df(df) ,
-                      extend_package_duration_df(df),
-                      ], axis=1)
-
-@timed()
-#@file_cache(type='pkl', overwrite=True)
-def extend_package_count_df(df):
-    p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
-    #p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
-    p = p.pivot(index='device', columns='package', values='start_base').reset_index()
-    print(f'Device_Package: convert {df.shape} to {p.shape} ')
-    p.set_index('device', inplace=True)
-    p.columns=[f'count_{item}' for item in p.columns]
-    return p
-
-@timed()
-#@file_cache(type='pkl', overwrite=True)
-def extend_package_duration_df(df):
-    #p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
-    p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
-    p = p.pivot(index='device', columns='package', values='duration').reset_index()
-    print(f'Device_Package: convert {df.shape} to {p.shape} ')
-    p.set_index('device', inplace=True)
-    p.columns = [f'duration_{item}' for item in p.columns]
-    return p
-
 
 def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     prefix='tol'
@@ -283,6 +255,11 @@ def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     df = extend_brand_pkg(df)
     if input is not None:
         df = input.merge(df, how='left')
+
+    drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max']
+    drop_list = [ col for col in df.columns if col in drop_list]
+    df.drop(columns=drop_list, inplace=True)
+
     return df
 
 def extend_percent(df, prefix):
@@ -326,36 +303,6 @@ def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['devic
     return pd.concat(duration_list)
 
 
-
-
-@file_cache(type='pkl', overwrite=False)
-@timed()
-def extend_package(version=1, mini=mini):
-    rootdir = './output/start_close/'
-    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
-    list = sorted(list, reverse=True)
-    if mini:
-        list =  list[:3]
-
-    tmp_list = []
-    for i in range(0, len(list)):
-        path = os.path.join(rootdir, list[i])
-        if os.path.isfile(path) and 'csv' in path:
-            print(f"Try to summary file:{path}")
-            df = get_start_closed(path)
-            if mini:
-                df = df[:1000]
-            df = split_days_all(df)
-            df = extend_package_merge(df)
-            if len(df) > 0 :
-                tmp_list.append(df)
-            else:
-                print(f'The df is None for file:{path}')
-
-    df = pd.concat(tmp_list)
-    print(f'Share of device package usage is:{df.shape}')
-
-    return df.sort_index()
 
 
 @timed()

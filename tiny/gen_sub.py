@@ -19,7 +19,6 @@ deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_tim
 
 #print(len(deviceid_train))
 #deviceid_train.groupby('max_day_cnt')['max_day_cnt'].count()
-deviceid_train.drop(columns=['tol_day_cnt_min', 'tol_day_cnt_max'], inplace=True)
 
 
 

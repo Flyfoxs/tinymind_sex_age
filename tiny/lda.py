@@ -8,7 +8,7 @@ from sklearn.decomposition import LatentDirichletAllocation
 
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
-
+from tiny.package import *
 
 @file_cache()
 @timed()
@@ -16,7 +16,7 @@ def get_lda_feature():
 
     path = './input/'
     data = pd.DataFrame()
-    sex_age = pd.read_excel('./input/性别年龄对照表.xlsx')
+    sex_age = pd.read_excel('./input/sex.xlsx')
     deviceid_packages = pd.read_csv(path + 'deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
     deviceid_test = pd.read_csv(path + 'deviceid_test.tsv', sep='\t', names=['device'])
     deviceid_train = pd.read_csv(path + 'deviceid_train.tsv', sep='\t', names=['device', 'sex', 'age'])
@@ -83,7 +83,7 @@ def get_lda_from_usage(mini):
 
     path = './input/'
     data = pd.DataFrame()
-    sex_age = pd.read_excel('./input/性别年龄对照表.xlsx')
+    sex_age = pd.read_excel('./input/sex.xlsx')
     deviceid_test = pd.read_csv(path + 'deviceid_test.tsv', sep='\t', names=['device'])
     deviceid_train = pd.read_csv(path + 'deviceid_train.tsv', sep='\t', names=['device', 'sex', 'age'])
 
@@ -113,9 +113,9 @@ def get_lda_from_usage(mini):
 
 
 def get_device_pkg_all():
-    app = get_device_pkg('app')
-    count = get_device_pkg('count')
-    duration = get_device_pkg('duration')
+    app = get_device_pkg('app', drop=True)
+    count = get_device_pkg('count', drop=True)
+    duration = get_device_pkg('duration', drop=True)
 
     app.set_index('device', inplace=True)
     count.set_index('device', inplace=True)
@@ -134,7 +134,7 @@ def get_device_pkg_all():
 
 @timed()
 @file_cache()
-def get_device_pkg(type='app'):
+def get_device_pkg(type='app', drop=False):
     deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
     deviceid_packages['apps'] = deviceid_packages['apps'].apply(lambda x: x.split(','))
     if type=='app':
@@ -147,6 +147,9 @@ def get_device_pkg(type='app'):
     deviceid_packages.drop(columns=['apps'], inplace=True)
     vectorizer = CountVectorizer()
     cntTf_app = vectorizer.fit_transform(apps)
+    cntTf_app = pd.DataFrame(cntTf_app,
+                             columns=vectorizer.get_feature_names(),
+                             index=deviceid_packages.device)
 
     cntTf_all = extend_package(version=version, mini=mini)
     cntTf_count = cntTf_all[[col for col in cntTf_all.columns if 'count_' in col]]
@@ -158,6 +161,10 @@ def get_device_pkg(type='app'):
                  }
 
     cntTf = cntf_map[type]
+
+    if drop:
+        cntTf = drop_useless_package(cntTf)
+
     docres = get_lda_docres(cntTf)
     df_weight = get_tfidf(cntTf)
     deviceid_packages = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
@@ -186,15 +193,15 @@ def get_tfidf(cntTf):
 def get_lda_docres(cntTf):
     # Replace point
     print(f'cntTf type:{type(cntTf)}')
-    if not isinstance(cntTf, pd.DataFrame):
-        cntTf = pd.DataFrame(cntTf.toarray())
+    # if not isinstance(cntTf, pd.DataFrame):
+    #     cntTf = pd.DataFrame(cntTf.toarray())
     cntTf.fillna(0, inplace=True)
     lda = LatentDirichletAllocation(n_topics=5,
                                     learning_offset=50.,
                                     random_state=666)
     #print(f'cntTf column:{cntTf.columns}')
     print('Lda analysis begin')
-    docres = lda.fit_transform(cntTf)
+    docres = lda.fit_transform(cntTf.values)
     print('Lda analysis end')
     return docres
 
