@@ -7,17 +7,18 @@ from  tiny.util import *
 
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
-deviceid_train = get_lda_from_app_install()
+deviceid_train = get_lda_from_app_install(drop=False)
 deviceid_train.set_index('device',inplace=True)
 
 deviceid_train2 = get_lda_from_usage(mini=mini)
 deviceid_train2.set_index('device',inplace=True)
 #deviceid_train2.drop(columns=['device', 'sex', 'sex_age', 'age'], inplace=True)
-print(deviceid_train.shape)
+
 
 #print(deviceid_train2.shape)
 
 core_list = ['0', '1', '2', '3','4']
+print(f'========={deviceid_train3[core_list].columns}')
 # for col in core_list:
 #     deviceid_train_2[col] =  deviceid_train_2[col].apply(lambda val: 1 if val > 0 else 0)
 deviceid_train = pd.concat([deviceid_train,deviceid_train2[core_list] ], axis=1)
@@ -89,6 +90,6 @@ sub.to_csv(file,index=False)
 
 #lgb.plot_importance(gbm, max_num_features=20)
 
-print(f'=============Final train feature({len(deviceid_train.columns)}):\n{list(deviceid_train.columns)}')
+print(f'=============Final train feature({len(deviceid_train.columns)}):\n{list(deviceid_train.columns)} \n {len(deviceid_train.columns)}')
 
 

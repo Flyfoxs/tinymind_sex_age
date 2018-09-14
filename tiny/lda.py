@@ -12,7 +12,7 @@ from tiny.package import *
 
 @file_cache()
 @timed()
-def get_lda_from_app_install():
+def get_lda_from_app_install(drop=False):
 
     path = './input/'
     data = pd.DataFrame()
@@ -30,6 +30,13 @@ def get_lda_from_app_install():
     vectorizer = CountVectorizer()
     transformer = TfidfTransformer()
     cntTf = vectorizer.fit_transform(apps)
+    if drop:
+        cntTf = pd.DataFrame(data=cntTf.toarray(), index=deviceid_packages.device,
+                                 columns=vectorizer.get_feature_names())
+        cntTf = drop_useless_package(cntTf)
+        import scipy
+        cntTf = scipy.sparse.csr_matrix(cntTf.values)
+
     tfidf = transformer.fit_transform(cntTf)
     #word = vectorizer.get_feature_names()
     weight = tfidf.toarray()
@@ -117,18 +124,20 @@ def get_lda_from_usage(mini):
 
 def get_device_pkg_all():
     drop =True
-    app = get_device_pkg('app', drop=drop)
-    count = get_device_pkg('count', drop=drop)
-    duration = get_device_pkg('duration', drop=drop)
 
-    app.set_index('device', inplace=True)
-    count.set_index('device', inplace=True)
-    duration.set_index('device', inplace=True)
+    df_list = [#get_device_pkg('app', drop=False),
+               get_device_pkg('count', drop=False),
+               get_device_pkg('duration', drop=False),
+               get_device_pkg('app', drop=drop),
+               get_device_pkg('count', drop=drop),
+               get_device_pkg('duration', drop=drop),
+               ]
 
-    all = pd.concat([app,
-                     count,
-                     duration,
-                     ], axis=1)
+    for df in df_list:
+        df.set_index('device', inplace=True)
+
+
+    all = pd.concat(df_list, axis=1)
 
     print(f'Device_pkg all column:{all.columns}')
 
