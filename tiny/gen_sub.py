@@ -17,13 +17,17 @@ deviceid_train = pd.concat([deviceid_train,deviceid_train2[core_list] ], axis=1)
 
 deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False)
 
+#deviceid_train = extend_feature(span_no=4,input=deviceid_train,  trunc_long_time=False)
+
+
+
 #print(len(deviceid_train))
 #deviceid_train.groupby('max_day_cnt')['max_day_cnt'].count()
 
-
-
-col_drop = [item for item in deviceid_train.columns if 'max_' in str(item)]
-deviceid_train.drop(columns=col_drop, inplace=True )
+#
+#
+# col_drop = [item for item in deviceid_train.columns if 'max_' in str(item)]
+# deviceid_train.drop(columns=col_drop, inplace=True )
 
 #deviceid_train.drop(columns=['tfidf_sum'], inplace=True )
 deviceid_train.head()
@@ -57,7 +61,7 @@ gbm = lgb.train(params,
         lgb_train,
         num_boost_round=1000,
         valid_sets=lgb_eval,
-        early_stopping_rounds=300)
+        early_stopping_rounds=100)
 
 
 best = round(gbm.best_score.get('valid_0').get('multi_logloss'), 5)

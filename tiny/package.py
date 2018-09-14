@@ -57,19 +57,19 @@ def drop_useless_package(df):
     print(f'There are {len(columns)} will be droped:{columns[:10]}')
     df.drop(columns=columns, inplace=True)
     return df
-
-@timed()
-def get_drop_list_for_usage():
-    df = extend_package(version=1, mini=False)
-    count = df[[col for col in df.columns if 'count_' in col]]
-
-    deviceid_test = pd.read_csv('./input/deviceid_test.tsv', sep='\t', names=['device'])
-
-    device_usage_test = count[count.index.isin(deviceid_test.device)]
-
-    tmp = device_usage_test.sum()
-    return tmp[tmp==0]
-
+#
+# @timed()
+# def get_drop_list_for_usage():
+#     df = extend_package(version=1, mini=False)
+#     count = df[[col for col in df.columns if 'count_' in col]]
+#
+#     deviceid_test = pd.read_csv('./input/deviceid_test.tsv', sep='\t', names=['device'])
+#
+#     device_usage_test = count[count.index.isin(deviceid_test.device)]
+#
+#     tmp = device_usage_test.sum()
+#     return tmp[tmp==0]
+#
 
 
 

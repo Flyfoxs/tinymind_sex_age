@@ -103,7 +103,7 @@ def reduce_time_span(df, prefix, span_no=4):
     for sn in range(0, span_no):
         for type in ['sum', 'count']:
             col_list = [f'{prefix}_span24_{sn}_{type}' for sn in range(span_len*sn, span_len*(sn+1))]
-            df[f'{prefix}_span_{sn}_{type}'] = df[col_list].sum(axis=1)
+            df[f'{prefix}_{span_no}span_{sn}_{type}'] = df[col_list].sum(axis=1)
             # col_list.remove(f'{prefix}_span_{sn}')
             df.drop(columns=col_list, inplace=True)
     return df
@@ -254,7 +254,7 @@ def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
 
     df = extend_brand_pkg(df)
     if input is not None:
-        df = input.merge(df, how='left')
+        df = input.merge(df, on='device', how='left')
 
     drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max']
     drop_list = [ col for col in df.columns if col in drop_list]
