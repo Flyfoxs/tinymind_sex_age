@@ -7,8 +7,15 @@ from  tiny.util import *
 
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
-deviceid_train = get_lda_feature()
+deviceid_train = get_lda_from_app_install()
+deviceid_train.set_index('device',inplace=True)
+
 deviceid_train2 = get_lda_from_usage(mini=mini)
+deviceid_train2.set_index('device',inplace=True)
+#deviceid_train2.drop(columns=['device', 'sex', 'sex_age', 'age'], inplace=True)
+print(deviceid_train.shape)
+
+#print(deviceid_train2.shape)
 
 core_list = ['0', '1', '2', '3','4']
 # for col in core_list:
@@ -82,6 +89,6 @@ sub.to_csv(file,index=False)
 
 #lgb.plot_importance(gbm, max_num_features=20)
 
-print(f'=============\nFinal train feature:{list(deviceid_train.columns)}')
+print(f'=============Final train feature({len(deviceid_train.columns)}):\n{list(deviceid_train.columns)}')
 
 

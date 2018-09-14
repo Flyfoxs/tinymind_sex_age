@@ -8,7 +8,7 @@ from  tiny.util import *
 
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
-deviceid_train = get_lda_feature()
+deviceid_train = get_lda_from_app_install()
 deviceid_train2 = get_lda_from_usage(mini=mini)
 
 core_list = ['0', '1', '2', '3','4']
@@ -58,7 +58,7 @@ params = {
 gbm = LGBMClassifier(n_estimators=1000,
                      boosting_type='gbdt',
                      objective='multiclass',
-                     num_leaves=22,
+                     num_class=22,
                      random_state=47,
                      eval_metric='multi_logloss'
                     )

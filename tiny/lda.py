@@ -12,7 +12,7 @@ from tiny.package import *
 
 @file_cache()
 @timed()
-def get_lda_feature():
+def get_lda_from_app_install():
 
     path = './input/'
     data = pd.DataFrame()
@@ -64,7 +64,7 @@ def get_lda_feature():
     deviceid_train['sex_age'] = deviceid_train['sex'] + '-' + deviceid_train['age']
 
     deviceid_train = deviceid_train.replace({'nan': np.NaN, 'nan-nan': np.NaN})
-
+    deviceid_train.sort_values('device', inplace=True)
     return deviceid_train
 
 
@@ -89,6 +89,8 @@ def get_lda_from_usage(mini):
 
     deviceid_train = pd.concat([deviceid_train, deviceid_test])
 
+
+    #Merge all device pkg
     pkg = get_device_pkg_all()
 
     deviceid_train = pd.merge(deviceid_train, pkg, on='device', how='left')
@@ -109,6 +111,7 @@ def get_lda_from_usage(mini):
     deviceid_train = deviceid_train.replace({'nan': np.NaN, 'nan-nan': np.NaN})
 
     deviceid_train.columns = [ str(item)  for item in deviceid_train.columns ]
+    deviceid_train.sort_values('device', inplace=True)
     return deviceid_train
 
 
@@ -169,8 +172,11 @@ def get_device_pkg(type='app', drop=False):
 
     print(f'Try to lda for type#{type}')
     docres = get_lda_docres(cntTf)
-    df_weight = get_tfidf(cntTf)
+
     deviceid_packages = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
+
+
+    df_weight = get_tfidf(cntTf)
     deviceid_packages[f'tfidf_sum_{type}'] = df_weight['sum']
 
     print(f'Already calculate lda for {type} DF')

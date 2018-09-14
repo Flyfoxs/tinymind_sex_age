@@ -32,6 +32,9 @@
 # 性别和年纪分开预测是否更合适
 # 每个分组,app的个数以及各个时间段的时长
 # 模型融合
+# 每个字段对应的TFIDF
+# 平均Package Duration
+# 安装却不使用,方向指标
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb

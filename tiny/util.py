@@ -254,6 +254,13 @@ def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
 
     df = extend_brand_pkg(df)
     if input is not None:
+        if 'device' not in list(input.columns):
+            input.index.name = 'device'
+            input = input.reset_index()
+        print(f'({list(input.columns)}')
+
+        print(f'({list(df.columns)}')
+
         df = input.merge(df, on='device', how='left')
 
     drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max']

@@ -7,7 +7,7 @@ from  tiny.util import *
 
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
-deviceid_train = get_lda_feature()
+deviceid_train = get_lda_from_app_install()
 deviceid_train = extend_feature(version='1',span_no=6, input=deviceid_train, trunc_long_time=900)
 
 
