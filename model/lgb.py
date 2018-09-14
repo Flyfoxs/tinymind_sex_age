@@ -44,20 +44,24 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels, test_size=0
 # lgb_train = lgb.Dataset(X_train, label=y_train)
 # lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
 params = {
-    'boosting_type': 'gbdt',
+    #'boosting_type': 'gbdt',
     'max_depth': 3,
-    'metric': {'multi_logloss'},
-    'num_class': 22,
-    'objective': 'multiclass',
-    'random_state': 47,
-
+    #'metric': {'multi_logloss'},
+    #'num_class': 22,
+    #'objective': 'multiclass',
+    #'random_state': 47,
     "min_data_in_leaf":1000,
     'verbose': -1
-
 }
 
 
-gbm = LGBMClassifier(n_estimators=1000,)
+gbm = LGBMClassifier(n_estimators=1000,
+                     boosting_type='gbdt',
+                     objective='multiclass',
+                     num_leaves=22,
+                     random_state=47,
+                     eval_metric='multi_logloss'
+                    )
 
 gbm.set_params(**params)
 
