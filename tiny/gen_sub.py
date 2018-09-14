@@ -82,6 +82,6 @@ sub.to_csv(file,index=False)
 
 #lgb.plot_importance(gbm, max_num_features=20)
 
-print(f'============={type(deviceid_train.columns)}{pd.get_option("display.max_rows")}\nFinal train feature:{deviceid_train.columns}')
+print(f'=============\nFinal train feature:{list(deviceid_train.columns)}')
 
 

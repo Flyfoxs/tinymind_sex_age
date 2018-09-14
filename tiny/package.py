@@ -13,7 +13,7 @@ from utils_.util_pandas import *
 from tiny.util import *
 
 
-#@file_cache()
+@file_cache(overwrite=True)
 @timed()
 def get_drop_list_for_install(reverse=False):
     deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
