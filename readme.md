@@ -30,6 +30,8 @@
 
 # 去除长Session后,时间分别分布如何
 # 性别和年纪分开预测是否更合适
+# 每个分组,app的个数以及各个时间段的时长
+# 模型融合
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb

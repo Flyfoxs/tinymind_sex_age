@@ -8,12 +8,12 @@ from  tiny.util import *
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
 deviceid_train = get_lda_feature()
-deviceid_train_2 = get_lda_from_usage()
+deviceid_train2 = get_lda_from_usage(mini=mini)
 
 core_list = ['0', '1', '2', '3','4']
 # for col in core_list:
 #     deviceid_train_2[col] =  deviceid_train_2[col].apply(lambda val: 1 if val > 0 else 0)
-deviceid_train = pd.concat([deviceid_train, deviceid_train_2[core_list]], axis=1)
+deviceid_train = pd.concat([deviceid_train,deviceid_train2[core_list] ], axis=1)
 
 deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False)
 
@@ -77,6 +77,8 @@ file = f'./sub/baseline_{best}.csv'
 print(f'sub file save to {file}')
 sub.to_csv(file,index=False)
 
-print(f'============={pd.get_option("display.max_rows")}\nFinal train feature:{deviceid_train.columns}')
+lgb.plot_importance(gbm, max_num_features=20)
+
+print(f'============={type(deviceid_train.columns)}{pd.get_option("display.max_rows")}\nFinal train feature:{deviceid_train.columns}')
 
 

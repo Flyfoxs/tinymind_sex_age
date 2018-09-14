@@ -11,7 +11,9 @@ from utils_.util_pandas import *
 try:
     from tiny.conf import *
 except :
-    mini=True
+    mini=False
+    version=1
+
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -245,10 +247,11 @@ def cal_duration_for_span(df, span_no=24):
 def extend_package_merge(df):
     return pd.concat([
                      extend_package_count_df(df) ,
-        #extend_package_duration_df(df),
+                      extend_package_duration_df(df),
                       ], axis=1)
 
 @timed()
+#@file_cache(type='pkl', overwrite=True)
 def extend_package_count_df(df):
     p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
     #p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
@@ -259,6 +262,7 @@ def extend_package_count_df(df):
     return p
 
 @timed()
+#@file_cache(type='pkl', overwrite=True)
 def extend_package_duration_df(df):
     #p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
     p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
@@ -324,7 +328,7 @@ def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['devic
 
 
 
-@file_cache(type='pkl', overwrite=True)
+@file_cache(type='pkl', overwrite=False)
 @timed()
 def extend_package(version=1, mini=mini):
     rootdir = './output/start_close/'
@@ -387,8 +391,8 @@ def split_days_all(tmp, trunc_long_time=None):
 #@timed()
 def split_days(tmp, threshold_days = 100):
     threshold_days = max(1,threshold_days)
-    print(f'The input df#{len(tmp)} before split, with max duration:{tmp.duration.max()} '
-                                 f'and  threshold_days@{threshold_days}')
+    # print(f'The input df#{len(tmp)} before split, with max duration:{tmp.duration.max()} '
+    #                              f'and  threshold_days@{threshold_days}')
 
     # 检查是否有需要截断的数据, 如果没有直接Return, 或者进入小循环
     tmp_todo_big = tmp[tmp.duration > threshold_days]
@@ -411,14 +415,14 @@ def split_days(tmp, threshold_days = 100):
     tmp_small = pd.concat([tmp_small_p1, tmp_small_p2])
     tmp_small.duration = (tmp_small.close - tmp_small.start) / np.timedelta64(1, 'D')
 
-    print(f'max duration:{tmp_small_p2.duration.max()} with small threshold:{threshold_days}')
+    # print(f'max duration:{tmp_small_p2.duration.max()} with small threshold:{threshold_days}')
 
     tmp = tmp_big.append(tmp_small)
 
     #tmp = tmp.sort_values('duration', ascending=False)
     tmp.reset_index(drop=True, inplace=True)
 
-    print(f'The output df#{len(tmp)} after split')
+    # print(f'The output df#{len(tmp)} after split')
 
     return tmp
 
