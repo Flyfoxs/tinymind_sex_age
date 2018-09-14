@@ -1,16 +1,14 @@
-Early stopping, best iteration is:
-[94]	valid_0's multi_logloss: 2.73059
+[CV]  subsample=1.0, min_child_weight=5, max_depth=3, gamma=5, colsample_bytree=1.0, score=-2.7092979838313, total=40.4min
+[CV] subsample=0.8, min_child_weight=5, max_depth=5, gamma=1, colsample_bytree=0.8
 
 
-[89]	valid_0's multi_logloss: 2.72456 initial
-
-[102]	valid_0's multi_logloss: 2.72263 drop max
-
-[91]	valid_0's multi_logloss: 2.72528 drop total
-
-[90]	valid_0's multi_logloss: 2.72564 drop max_cnt
-
-[94]	valid_0's multi_logloss: 2.72424 drop _p
-
-
-[103]	valid_0's multi_logloss: 2.72245 drop tfidf
+[CV] subsample=1.0, min_child_weight=5, max_depth=3, gamma=5, colsample_bytree=1.0
+[CV] subsample=1.0, min_child_weight=5, max_depth=3, gamma=5, colsample_bytree=1.0
+[CV] subsample=1.0, min_child_weight=5, max_depth=3, gamma=5, colsample_bytree=1.0
+[CV] subsample=0.6, min_child_weight=1, max_depth=5, gamma=1.5, colsample_bytree=0.8
+[CV]  subsample=1.0, min_child_weight=5, max_depth=3, gamma=5, colsample_bytree=1.0, score=-2.720428053655788, total=51.5min
+[CV] subsample=0.6, min_child_weight=1, max_depth=5, gamma=1.5, colsample_bytree=0.8
+[CV]  subsample=1.0, min_child_weight=5, max_depth=3, gamma=5, colsample_bytree=1.0, score=-2.7091727878117275, total=51.6min
+[CV] subsample=0.6, min_child_weight=1, max_depth=5, gamma=1.5, colsample_bytree=0.8
+[CV]  subsample=1.0, min_child_weight=5, max_depth=3, gamma=5, colsample_bytree=1.0, score=-2.722740652453953, total=51.8min
+[CV] subsample=0.8, min_child_weight=5, max_depth=5, gamma=1, colsample_bytree=0.8

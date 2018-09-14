@@ -13,7 +13,7 @@ from utils_.util_pandas import *
 from tiny.util import *
 
 
-@file_cache()
+#@file_cache()
 @timed()
 def get_drop_list_for_install(reverse=False):
     deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
@@ -41,18 +41,20 @@ def get_drop_list_for_install(reverse=False):
     else:
         device_app_test = device_app_test[device_app_test == 0]
 
-    device_app_test.index.rename('device', inplace=True)
+    device_app_test.index.rename('package', inplace=True)
 
     return device_app_test.to_frame().reset_index()
 
 def drop_useless_package(df):
     useless = get_drop_list_for_install()
+    print(f'Column will be remove:{useless.package[:10]}')
+    print(f'Column will be compare:{df.columns[:10]}')
     df.columns = [ col.split('_')[-1]
                    if '_' in col  else col
                    for col in df.columns
                    ]
-    columns = [ col for col in df.columns if col in useless.device ]
-    print(f'There are {len(columns)} will be droped:{columns}')
+    columns = [ col for col in df.columns if col in useless.package.values ]
+    print(f'There are {len(columns)} will be droped:{columns[:10]}')
     df.drop(columns=columns, inplace=True)
     return df
 

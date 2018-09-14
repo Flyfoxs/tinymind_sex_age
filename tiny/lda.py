@@ -113,9 +113,10 @@ def get_lda_from_usage(mini):
 
 
 def get_device_pkg_all():
-    app = get_device_pkg('app', drop=True)
-    count = get_device_pkg('count', drop=True)
-    duration = get_device_pkg('duration', drop=True)
+    drop =True
+    app = get_device_pkg('app', drop=drop)
+    count = get_device_pkg('count', drop=drop)
+    duration = get_device_pkg('duration', drop=drop)
 
     app.set_index('device', inplace=True)
     count.set_index('device', inplace=True)
@@ -136,35 +137,37 @@ def get_device_pkg_all():
 @file_cache()
 def get_device_pkg(type='app', drop=False):
     deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
-    deviceid_packages['apps'] = deviceid_packages['apps'].apply(lambda x: x.split(','))
-    if type=='app':
-        deviceid_packages['app_lenghth'] = deviceid_packages['apps'].apply(lambda x: len(x))
 
     deviceid_packages.sort_values('device', inplace=True)
 
+    if type=='app':
+        print(f'Try to load packge for type:{type}')
+        deviceid_packages['apps'] = deviceid_packages['apps'].apply(lambda x: x.split(','))
 
-    apps = deviceid_packages['apps'].apply(lambda x: ' '.join(x)).tolist()
-    deviceid_packages.drop(columns=['apps'], inplace=True)
-    vectorizer = CountVectorizer()
-    cntTf_app = vectorizer.fit_transform(apps)
-    cntTf_app = pd.DataFrame(cntTf_app,
-                             columns=vectorizer.get_feature_names(),
-                             index=deviceid_packages.device)
+        deviceid_packages['app_lenghth'] = deviceid_packages['apps'].apply(lambda x: len(x))
 
-    cntTf_all = extend_package(version=version, mini=mini)
-    cntTf_count = cntTf_all[[col for col in cntTf_all.columns if 'count_' in col]]
-    cntTf_duration = cntTf_all[[col for col in cntTf_all.columns if 'duration_' in col]]
+        apps = deviceid_packages['apps'].apply(lambda x: ' '.join(x)).tolist()
+        vectorizer = CountVectorizer()
+        cntTf_app = vectorizer.fit_transform(apps)
+        cntTf_app = pd.DataFrame(cntTf_app.toarray(),
+                                 columns=vectorizer.get_feature_names(),
+                                 index=deviceid_packages.device)
+        cntTf = cntTf_app
+    elif type == 'count':
+        cntTf_all = extend_package(version=version, mini=mini)
+        cntTf_count = cntTf_all[[col for col in cntTf_all.columns if 'count_' in col]]
+        cntTf = cntTf_count
+    elif type == 'duration':
+        cntTf_all = extend_package(version=version, mini=mini)
+        cntTf_duration = cntTf_all[[col for col in cntTf_all.columns if 'duration_' in col]]
+        cntTf = cntTf_duration
 
-    cntf_map =  {'app':cntTf_app,
-                  'count':cntTf_count,
-                  'duration':cntTf_duration,
-                 }
 
-    cntTf = cntf_map[type]
 
     if drop:
         cntTf = drop_useless_package(cntTf)
 
+    print(f'Try to lda for type#{type}')
     docres = get_lda_docres(cntTf)
     df_weight = get_tfidf(cntTf)
     deviceid_packages = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
@@ -172,13 +175,15 @@ def get_device_pkg(type='app', drop=False):
 
     print(f'Already calculate lda for {type} DF')
 
-
+    deviceid_packages.drop(columns=['apps'], inplace=True)
     print(f'deviceid_packages column:{deviceid_packages.columns}')
     return deviceid_packages
 
 
 def get_tfidf(cntTf):
     transformer = TfidfTransformer()
+    import scipy
+    cntTf = scipy.sparse.csr_matrix(cntTf.values)
     tfidf = transformer.fit_transform(cntTf)
     # word = vectorizer.get_feature_names()
     weight = tfidf.toarray()
@@ -200,8 +205,12 @@ def get_lda_docres(cntTf):
                                     learning_offset=50.,
                                     random_state=666)
     #print(f'cntTf column:{cntTf.columns}')
+
+    import scipy
+    print('Convert df to csr_matrix')
+    cntTf =  scipy.sparse.csr_matrix(cntTf.values)
     print('Lda analysis begin')
-    docres = lda.fit_transform(cntTf.values)
+    docres = lda.fit_transform(cntTf)
     print('Lda analysis end')
     return docres
 
