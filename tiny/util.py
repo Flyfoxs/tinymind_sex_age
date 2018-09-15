@@ -263,7 +263,7 @@ def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
 
         df = input.merge(df, on='device', how='left')
 
-    drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max']
+    drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max', 'tol_day_min', 'tol_day_max']
     drop_list = [ col for col in df.columns if col in drop_list]
     df.drop(columns=drop_list, inplace=True)
 

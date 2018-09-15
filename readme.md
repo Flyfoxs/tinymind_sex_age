@@ -34,7 +34,8 @@
 # 模型融合
 # 每个字段对应的TFIDF
 # 平均Package Duration
-# 安装却不使用,方向指标
+# 安装却不使用,反向指标
+# 平均每天使用时间
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
