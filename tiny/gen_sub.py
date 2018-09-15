@@ -5,10 +5,11 @@ from sklearn.cross_validation import train_test_split
 from tiny.lda import *
 from  tiny.util import *
 
-# New add
-# deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
-deviceid_train = get_lda_from_app_install(drop=False)
-deviceid_train.set_index('device',inplace=True)
+# # New add
+# # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
+# deviceid_train = get_lda_from_app_install(drop=False)
+# deviceid_train.drop(columns='app_lenghth', inplace=True)
+# deviceid_train.set_index('device',inplace=True)
 
 deviceid_train2 = get_lda_from_usage(mini=mini)
 deviceid_train2.set_index('device',inplace=True)
@@ -17,31 +18,21 @@ deviceid_train2.set_index('device',inplace=True)
 
 #print(deviceid_train2.shape)
 
-core_list = ['0', '1', '2', '3','4']
+#core_list = ['0', '1', '2', '3','4']
 #print(f'========={deviceid_train3[core_list].columns}')
 # for col in core_list:
 #     deviceid_train_2[col] =  deviceid_train_2[col].apply(lambda val: 1 if val > 0 else 0)
-deviceid_train = pd.concat([deviceid_train,deviceid_train2[core_list] ], axis=1)
+deviceid_train = pd.concat([deviceid_train2 ], axis=1)
 
 deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False)
 
+deviceid_train = attach_device_label(deviceid_train)
 #deviceid_train = extend_feature(span_no=12,input=deviceid_train,  trunc_long_time=False)
 
-drop_col = [col for col in deviceid_train.columns if col.endswith('_count') or col.endswith('_sum') ]
-print(f'=========will drop:{drop_col}')
-deviceid_train.drop(columns=drop_col, inplace=True)
+# drop_col = [col for col in deviceid_train.columns if str(col).endswith('_count') or str(col).endswith('_sum') ]
+# print(f'=========will drop:{drop_col}')
+# deviceid_train.drop(columns=drop_col, inplace=True)
 
-
-#print(len(deviceid_train))
-#deviceid_train.groupby('max_day_cnt')['max_day_cnt'].count()
-
-#
-#
-# col_drop = [item for item in deviceid_train.columns if 'max_' in str(item)]
-# deviceid_train.drop(columns=col_drop, inplace=True )
-
-#deviceid_train.drop(columns=['tfidf_sum'], inplace=True )
-deviceid_train.head()
 
 
 train=deviceid_train[deviceid_train['sex'].notnull()]

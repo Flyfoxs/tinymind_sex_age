@@ -276,6 +276,10 @@ def extend_percent(df, prefix):
     for col in [item for item in df.columns if f'_count' in item]:
         df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total_count_'], 5)
 
+    drop_col = [col for col in df.columns if str(col).endswith('_count') or str(col).endswith('_sum')]
+    print(f'=========After percent, will drop:{drop_col}')
+    df.drop(columns=drop_col, inplace=True)
+
     return df
 
 @timed()
