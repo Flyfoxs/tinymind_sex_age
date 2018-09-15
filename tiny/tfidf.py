@@ -20,9 +20,7 @@ def get_tfidf(cntTf):
     import scipy
     cntTf = scipy.sparse.csr_matrix(cntTf.values)
     tfidf = transformer.fit_transform(cntTf)
-    # word = vectorizer.get_feature_names()
-    weight = tfidf.toarray()
-    df_weight = pd.DataFrame(weight, index=cntTf.index)
+    df_weight = pd.DataFrame(tfidf.toarray(), index=cntTf.index)
     return df_weight
 
 

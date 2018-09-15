@@ -88,12 +88,12 @@ def get_lda_from_usage(mini):
 
     drop =True
 
-    df_list = [get_device_pkg('app', drop=False),
-               get_device_pkg('count', drop=False),
-               get_device_pkg('duration', drop=False),
-               get_device_pkg('app', drop=drop),
-               get_device_pkg('count', drop=drop),
-               get_device_pkg('duration', drop=drop),
+    df_list = [get_lda_app_and_usage('app', drop=False),
+               get_lda_app_and_usage('count', drop=False),
+               get_lda_app_and_usage('duration', drop=False),
+               get_lda_app_and_usage('app', drop=drop),
+               get_lda_app_and_usage('count', drop=drop),
+               get_lda_app_and_usage('duration', drop=drop),
                ]
 
     for df in df_list:
@@ -114,7 +114,7 @@ def get_lda_from_usage(mini):
 
 @timed()
 @file_cache(overwrite=True)
-def get_device_pkg(type='app', drop=False):
+def get_lda_app_and_usage(type='app', drop=False):
     from tiny.tfidf import get_cntTf
     cntTf = get_cntTf(type)
 
