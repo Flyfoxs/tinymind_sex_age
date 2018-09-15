@@ -13,15 +13,16 @@ class Cache_File:
     def get_path(self, key, type):
         return f'{self.cache_path}{key}.{type}'
 
-    def readFile(self, key, type):
+    def readFile(self, key, type_):
         if self.enable:
-            path = self.get_path(key, type)
+            path = self.get_path(key, type_)
             if os.path.exists(path):
                 logger.debug(f"try to read cache from file:{path}, type:{type}")
 
                 #check if the file have the data type column
-                if type=='pkl':
+                if type_== 'pkl':
                     df = pd.read_pickle(path)
+                    logger.debug(f"Load to {type(df)} for {type_}@{path}")
                 else:
                     df = pd.read_csv(path, nrows=1)
                     tmp_data_list = [item for item in self.date_list if item in df.columns]

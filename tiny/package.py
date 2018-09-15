@@ -73,9 +73,26 @@ def drop_useless_package(df):
 
 
 
-@file_cache(type='pkl', overwrite=False)
 @timed()
-def extend_package(version=1, mini=mini):
+#@file_cache(type='pkl', overwrite=False)
+def extend_package_install(type='package'):
+    deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
+    deviceid_packages.sort_values('device', inplace=True)
+    print(f'Try to load packge for type:{type}')
+    deviceid_packages['apps'] = deviceid_packages['apps'].apply(lambda x: x.split(','))
+    # deviceid_packages['app_lenghth'] = deviceid_packages['apps'].apply(lambda x: len(x))
+    apps = deviceid_packages['apps'].apply(lambda x: ' '.join(x)).tolist()
+    vectorizer = CountVectorizer()
+    cntTf_app = vectorizer.fit_transform(apps)
+    cntTf_app = pd.DataFrame(cntTf_app.toarray(),
+                             columns=vectorizer.get_feature_names(),
+                             index=deviceid_packages.device)
+    return cntTf_app
+
+
+@timed()
+@file_cache(type='pkl', overwrite=True)
+def extend_package(version=1, mini=mini,type='package'):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -89,9 +106,14 @@ def extend_package(version=1, mini=mini):
             print(f"Try to summary file:{path}")
             df = get_start_closed(path)
             if mini:
-                df = df[:1000]
+                df = df[:5000]
+
+            if type != 'package':
+                print(f'Try to merge pkg label for type:{type}')
+                df = extend_pkg_label(df)
+
             df = split_days_all(df)
-            df = extend_package_merge(df)
+            df = extend_package_merge(df, type=type)
             if len(df) > 0 :
                 tmp_list.append(df)
             else:
@@ -105,31 +127,43 @@ def extend_package(version=1, mini=mini):
 
 @timed()
 #@file_cache(type='pkl', overwrite=True)
-def extend_package_count_df(df):
-    p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
+def extend_package_count_df(df, type='package'):
+    p = df.groupby(['device', type])['start_base'].nunique().reset_index()
     #p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
-    p = p.pivot(index='device', columns='package', values='start_base').reset_index()
+    p = p.pivot(index='device', columns=type, values='start_base').reset_index()
     print(f'Device_Package: convert {df.shape} to {p.shape} ')
     p.set_index('device', inplace=True)
-    p.columns=[f'count_{item}' for item in p.columns]
+    p.columns=[f'count_{type}_{item}' for item in p.columns]
     return p
 
 @timed()
 #@file_cache(type='pkl', overwrite=True)
-def extend_package_duration_df(df):
+def extend_package_duration_df(df, type='package'):
     #p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
-    p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
-    p = p.pivot(index='device', columns='package', values='duration').reset_index()
+    p = df.groupby(['device', type])['duration'].sum().reset_index()
+    p = p.pivot(index='device', columns=type, values='duration').reset_index()
     print(f'Device_Package: convert {df.shape} to {p.shape} ')
     p.set_index('device', inplace=True)
-    p.columns = [f'duration_{item}' for item in p.columns]
+    p.columns = [f'duration_{type}_{item}' for item in p.columns]
     return p
 
 
-def extend_package_merge(df):
+def extend_package_merge(df, type='package'):
     return pd.concat([
-                     extend_package_count_df(df) ,
-                      extend_package_duration_df(df),
+                     extend_package_count_df(df, type=type) ,
+                      extend_package_duration_df(df, type=type),
                       ], axis=1)
 
+def extend_pkg_label(df=None):
+
+    pkg_label = get_package_label()
+    #pkg_label.set_index('package', inplace=True)
+
+    pkg_label['combine_type'] = pkg_label.apply(lambda row: f'{row.p_type}_{row.p_sub_type}', axis=1)
+    if df is None:
+        return pkg_label
+    else:
+        df = pd.merge(df, pkg_label, on='package', how='left')
+        df.fillna('Unknown', inplace=True)
+        return df
 

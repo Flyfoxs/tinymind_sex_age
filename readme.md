@@ -36,6 +36,7 @@
 # 平均Package Duration
 # 安装却不使用,反向指标
 # 平均每天使用时间
+# 按照周末和工作日百分比对比
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
@@ -44,3 +45,6 @@ Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 
 nohup python -u tiny/gen_sub.py > refactor.log 2>&1 &
 
+
+
+nohup python -u tiny/test.py > group_type.log 2>&1 &

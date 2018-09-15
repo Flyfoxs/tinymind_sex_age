@@ -11,7 +11,7 @@ from utils_.util_pandas import *
 try:
     from tiny.conf import *
 except :
-    mini=False
+    mini=True
     version=1
 
 
@@ -355,7 +355,7 @@ def split_days(tmp, threshold_days = 100):
     # 检查是否有需要截断的数据, 如果没有直接Return, 或者进入小循环
     tmp_todo_big = tmp[tmp.duration > threshold_days]
     if len(tmp_todo_big) == 0 and tmp.duration.max() <= threshold_days:
-        print(f'Final return with:{len(tmp)}')
+        print(f'Final return with para:{threshold_days}:{len(tmp)}')
         return tmp
 
 

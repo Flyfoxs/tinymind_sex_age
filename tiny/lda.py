@@ -113,7 +113,7 @@ def get_lda_from_usage(mini):
 
 
 @timed()
-@file_cache(overwrite=True)
+@file_cache(overwrite=False)
 def get_lda_app_and_usage(type='app', drop=False):
     from tiny.tfidf import get_cntTf
     cntTf = get_cntTf(type)
@@ -138,6 +138,9 @@ def get_lda_app_and_usage(type='app', drop=False):
 
     #docres.drop(columns=['apps'], inplace=True)
     #print(f'deviceid_packages column:{deviceid_packages.columns}')
+    docres.sort_index()
+    docres.index.name = 'device'
+    docres.reset_index(inplace=True)
     return docres
 
 
@@ -165,6 +168,6 @@ def get_lda_docres(cntTf):
 
 if __name__ == '__main__':
     get_lda_from_usage()
-    extend_package(version=1)
+    #extend_package(version=1)
 
 

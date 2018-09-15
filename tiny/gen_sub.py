@@ -3,7 +3,8 @@ import lightgbm as lgb
 from sklearn.cross_validation import train_test_split
 
 from tiny.lda import *
-from  tiny.util import *
+from tiny.util import *
+from tiny.tfidf import *
 
 # # New add
 # # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
@@ -12,7 +13,7 @@ from  tiny.util import *
 # deviceid_train.set_index('device',inplace=True)
 
 deviceid_train2 = get_lda_from_usage(mini=mini)
-deviceid_train2.set_index('device',inplace=True)
+#deviceid_train2.set_index('device',inplace=True)
 #deviceid_train2.drop(columns=['device', 'sex', 'sex_age', 'age'], inplace=True)
 
 
@@ -27,7 +28,11 @@ deviceid_train = pd.concat([deviceid_train2 ], axis=1)
 deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False)
 
 deviceid_train = attach_device_label(deviceid_train)
-#deviceid_train = extend_feature(span_no=12,input=deviceid_train,  trunc_long_time=False)
+
+
+#tfidf_app = tfidf_app/tfidf_app
+
+
 
 # drop_col = [col for col in deviceid_train.columns if str(col).endswith('_count') or str(col).endswith('_sum') ]
 # print(f'=========will drop:{drop_col}')

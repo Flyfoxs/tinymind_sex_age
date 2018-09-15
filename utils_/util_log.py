@@ -26,7 +26,7 @@ def timed(logger=logger, level=None, format='%s: %s ms', paras=True):
             import pandas as pd
             args_mini = [item for item in args
                          if (type(item) in (tuple, list, dict) and len(item) <= 20)
-                            or type(item) not in (tuple, list, dict, pd.DataFrame)
+                            or type(item) not in (tuple, list, dict, pd.DataFrame, pd.SparseDataFrame)
                          ]
 
             if paras:
