@@ -74,8 +74,9 @@ def drop_useless_package(df):
 
 
 @timed()
-#@file_cache(type='pkl', overwrite=False)
-def extend_package_install(type='package'):
+#Can not save to pkl
+@file_cache(type='pkl', overwrite=False)
+def base_on_package_install_for_TF(type='package'):
     deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
     deviceid_packages.sort_values('device', inplace=True)
     print(f'Try to load packge for type:{type}')
@@ -84,76 +85,42 @@ def extend_package_install(type='package'):
     apps = deviceid_packages['apps'].apply(lambda x: ' '.join(x)).tolist()
     vectorizer = CountVectorizer()
     cntTf_app = vectorizer.fit_transform(apps)
-    cntTf_app = pd.DataFrame(cntTf_app.toarray(),
-                             columns=vectorizer.get_feature_names(),
-                             index=deviceid_packages.device)
+    cntTf_app = pd.SparseDataFrame(cntTf_app.toarray(),
+                                     columns=vectorizer.get_feature_names(),
+                                     index=deviceid_packages.device)
+
+
     return cntTf_app
 
 
-@timed()
-@file_cache(type='pkl', overwrite=False)
-def extend_package(version, mini=mini,type='package'):
-    rootdir = './output/start_close/'
-    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
-    list = sorted(list, reverse=True)
-    if mini:
-        list =  list[:3]
-
-    tmp_list = []
-    for i in range(0, len(list)):
-        path = os.path.join(rootdir, list[i])
-        if os.path.isfile(path) and 'csv' in path:
-            print(f"Try to summary file:{path}")
-            df = get_start_closed(path)
-            if mini:
-                df = df[:5000]
-
-            #需要packge的类型,就扩展app的类型:p_type, p_sub_type
-            if type != 'package':
-                print(f'Try to merge pkg label for type:{type}')
-                df = extend_pkg_label(df)
-
-            df = split_days_all(df)
-            df = extend_package_merge(df, type=type)
-            if len(df) > 0 :
-                tmp_list.append(df)
-            else:
-                print(f'The df is None for file:{path}')
-
-    df = pd.concat(tmp_list)
-    df.fillna(0,inplace=True)
-    print(f'Share of device package usage is:{df.shape}')
-
-    return df.sort_index()
-
 
 @timed()
 #@file_cache(type='pkl', overwrite=True)
-def extend_package_count_df(df, type='package'):
-    p = df.groupby(['device', type])['start_base'].nunique().reset_index()
+def extend_package_count_df(df, col='package'):
+    p = df.groupby(['device', col])['start_base'].nunique().reset_index()
     #p = df.groupby(['device', 'package'])['duration'].sum().reset_index()
-    p = p.pivot(index='device', columns=type, values='start_base').reset_index()
+    p = p.pivot(index='device', columns=col, values='start_base').reset_index()
     print(f'Device_Package: convert {df.shape} to {p.shape} ')
     p.set_index('device', inplace=True)
-    p.columns=[f'count_{type}_{item}' for item in p.columns]
+    p.columns=[f'count_{col}_{item}' for item in p.columns]
     return p
 
 @timed()
 #@file_cache(type='pkl', overwrite=True)
-def extend_package_duration_df(df, type='package'):
+def extend_package_duration_df(df, col='package'):
     #p = df.groupby(['device', 'package'])['start_base'].nunique().reset_index()
-    p = df.groupby(['device', type])['duration'].sum().reset_index()
-    p = p.pivot(index='device', columns=type, values='duration').reset_index()
+    p = df.groupby(['device', col])['duration'].sum().reset_index()
+    p = p.pivot(index='device', columns=col, values='duration').reset_index()
     print(f'Device_Package: convert {df.shape} to {p.shape} ')
     p.set_index('device', inplace=True)
-    p.columns = [f'duration_{type}_{item}' for item in p.columns]
+    p.columns = [f'duration_{col}_{item}' for item in p.columns]
     return p
 
 
-def extend_package_merge(df, type='package'):
+def extend_package_merge(df, col='package'):
     return pd.concat([
-                     extend_package_count_df(df, type=type) ,
-                      extend_package_duration_df(df, type=type),
+                     extend_package_count_df(df, col=col) ,
+                      extend_package_duration_df(df, col=col),
                       ], axis=1)
 
 def extend_pkg_label(df=None):

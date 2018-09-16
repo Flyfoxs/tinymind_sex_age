@@ -86,25 +86,38 @@ def attach_device_label(df):
 @timed()
 def get_lda_from_usage(mini):
 
-    drop =True
-
-    group_type = 'p_sub_type'
-
-    df_list = [get_lda_app_and_usage('app', drop=False),
-               get_lda_app_and_usage('count', drop=False),
-               get_lda_app_and_usage('duration', drop=False),
-               get_lda_app_and_usage('app', drop=drop),
-               get_lda_app_and_usage('count', drop=drop),
-               get_lda_app_and_usage('duration', drop=drop),
 
 
-               get_lda_app_and_usage('app', drop=True, group_type=group_type),
-               get_lda_app_and_usage('app', drop=False, group_type=group_type),
+    df_list = [
+               # get_lda_app_and_usage('app', drop=False, agg_value='package'),
+               # get_lda_app_and_usage('count', drop=False, agg_value='package'),
+               # get_lda_app_and_usage('duration', drop=False, agg_value='package'),
+               # get_lda_app_and_usage('app', drop=True, agg_value='package'),
+               # get_lda_app_and_usage('count', drop=True, agg_value='package'),
+               # get_lda_app_and_usage('duration', drop=True, agg_value='package'),
 
-               get_lda_app_and_usage('count', drop=True, group_type=group_type),
-               get_lda_app_and_usage('count', drop=False, group_type=group_type),
+               get_lda_app_and_usage(group_level='app',   drop=False, agg_col='package', agg_method=None) ,
+               get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='count') ,
+               get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='sum') ,
 
-               # get_lda_app_and_usage('duration', drop=True, group_type=group_type),
+               get_lda_app_and_usage(group_level='app',   drop=True, agg_col='package', agg_method=None) ,
+               get_lda_app_and_usage(group_level='usage', drop=True, agg_col='package', agg_method='count') ,
+               get_lda_app_and_usage(group_level='usage', drop=True, agg_col='package', agg_method='sum') ,
+
+
+
+               # get_lda_app_and_usage('app', drop=True, agg_value= 'p_sub_type'),
+               # get_lda_app_and_usage('app', drop=False, agg_value= 'p_sub_type'),
+               #
+               # get_lda_app_and_usage('count', drop=True, agg_value= 'p_sub_type'),
+               # get_lda_app_and_usage('count', drop=False, agg_value= 'p_sub_type'),
+
+               get_lda_app_and_usage(group_level='app', drop=True, agg_col='p_sub_type', agg_method=None),
+               get_lda_app_and_usage(group_level='app', drop=False, agg_col='p_sub_type', agg_method=None),
+               get_lda_app_and_usage(group_level='usage', drop=True, agg_col='p_sub_type', agg_method='count'),
+               get_lda_app_and_usage(group_level='usage', drop=False, agg_col='p_sub_type', agg_method='count'),
+
+        # get_lda_app_and_usage('duration', drop=True, group_type=group_type),
                # get_lda_app_and_usage('duration', drop=False, group_type=group_type),
 
                ]
@@ -127,9 +140,9 @@ def get_lda_from_usage(mini):
 
 @timed()
 @file_cache(overwrite=False)
-def get_lda_app_and_usage(type='app', drop=False, group_type='package'):
+def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='count'):
     from tiny.tfidf import get_cntTf
-    cntTf = get_cntTf(type, group_type)
+    cntTf = get_cntTf(group_level, agg_col=agg_col, agg_method=agg_method)
 
     if drop:
         cntTf = drop_useless_package(cntTf)

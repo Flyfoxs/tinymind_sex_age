@@ -41,19 +41,55 @@ from tiny.lda import *
 #     return df_weight
 #
 
+@timed()
+@file_cache(type='pkl', overwrite=False)
+def base_on_usage_for_TF(version, mini=mini, col='package'):
+    rootdir = './output/start_close/'
+    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
+    list = sorted(list, reverse=True)
+    if mini:
+        list =  list[:3]
+
+    tmp_list = []
+    for i in range(0, len(list)):
+        path = os.path.join(rootdir, list[i])
+        if os.path.isfile(path) and 'csv' in path:
+            print(f"Try to summary file:{path}")
+            df = get_start_closed(path)
+            if mini:
+                df = df[:5000]
+
+            #需要packge的类型,就扩展app的类型:p_type, p_sub_type
+            if type != 'package':
+                print(f'Try to merge pkg label for col:{col}')
+                df = extend_pkg_label(df)
+
+            df = split_days_all(df)
+            df = extend_package_merge(df, col=col)
+            if len(df) > 0 :
+                tmp_list.append(df)
+            else:
+                print(f'The df is None for file:{path}')
+
+    df = pd.concat(tmp_list)
+    df.fillna(0,inplace=True)
+    print(f'Share of device package usage is:{df.shape}')
+
+    return df.sort_index()
+
 
 @timed()
 #@file_cache(type='pkl')
-def get_cntTf(type, group_type='package'):
-    if type == 'app':
-        cntTf_app = extend_package_install(type=group_type)
+def get_cntTf( group_level, agg_col, agg_method):
+    if group_level == 'app':
+        cntTf_app = base_on_package_install_for_TF(agg_col)
         cntTf = cntTf_app
-    elif type == 'count':
-        cntTf_all = extend_package(version=version, mini=mini, type=group_type)
+    elif group_level =='usage' and agg_method == 'count':
+        cntTf_all = base_on_usage_for_TF(version=version, mini=mini, col=agg_col)
         cntTf_count = cntTf_all[[col for col in cntTf_all.columns if 'count_' in col]]
         cntTf = cntTf_count
-    elif type == 'duration':
-        cntTf_all = extend_package(version=version, mini=mini, type=group_type)
+    elif group_level =='usage' and agg_method == 'sum':
+        cntTf_all = base_on_usage_for_TF(version=version, mini=mini, col=agg_col)
         cntTf_duration = cntTf_all[[col for col in cntTf_all.columns if 'duration_' in col]]
         cntTf = cntTf_duration
     cntTf.fillna(0, inplace=True)

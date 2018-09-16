@@ -17,7 +17,7 @@ class Cache_File:
         if self.enable:
             path = self.get_path(key, type_)
             if os.path.exists(path):
-                logger.debug(f"try to read cache from file:{path}, type:{type}")
+                logger.debug(f"try to read cache from file:{path}, type:{type_}")
 
                 #check if the file have the data type column
                 if type_== 'pkl':

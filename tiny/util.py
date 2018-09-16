@@ -157,7 +157,7 @@ def get_summary_weekday(df):
 
 @timed()
 #@file_cache()
-def get_summary_span24(df, prefix):
+def get_summary_span24(df):
     #prefix = groupby[-1] if prefix is None else prefix
 
     columns = [key for key in df.columns if 'span24_' in key]
@@ -262,7 +262,7 @@ def cal_duration_for_span(df, span_no=24):
     for sn in range(0, span_no):
         # df[f'span_{sn}'] = df.apply(lambda row: get_duration(row['start'], row['close'], sn), axis=1)
 
-        print(f'Try to cal for range#{sn} with span_len: {span_len}')
+        print(f'Try to cal for range#{sn} with span_len: {span_len} hours')
         # df['start_base']  = df['start'].dt.date
         df['check_start'] = df['start'].dt.date + pd.DateOffset(hours=span_len * (sn))
         df['check_close'] = df['start'].dt.date + pd.DateOffset(hours=span_len * (sn + 1))
@@ -294,9 +294,9 @@ def cal_duration_for_span(df, span_no=24):
 
 def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     prefix='tol'
-    df = extend_time_span(version=version, trunc_long_time=trunc_long_time, mini=mini)
+    df = summary_feature_base_on_usage(version=version, trunc_long_time=trunc_long_time, mini=mini)
     # df = reduce_time_span(df, prefix, span_no)
-    df = extend_percent(df, prefix)
+    df = convert_count_to_percent(df, prefix)
 
     df = extend_brand_pkg(df)
     if input is not None:
@@ -315,7 +315,7 @@ def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
 
     return df
 
-def extend_percent(df, prefix):
+def convert_count_to_percent(df, prefix):
     for col in [item for item in df.columns if f'_sum' in item]:
         df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total_sum_'], 5)
 
@@ -328,9 +328,11 @@ def extend_percent(df, prefix):
 
     return df
 
+
+
 @timed()
 @file_cache()
-def extend_time_span(version, trunc_long_time=False, mini=False):
+def summary_feature_base_on_usage(version, trunc_long_time=False, mini=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
