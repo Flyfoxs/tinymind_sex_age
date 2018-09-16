@@ -104,6 +104,9 @@ def get_lda_from_usage(mini):
                get_lda_app_and_usage('count', drop=True, group_type=group_type),
                get_lda_app_and_usage('count', drop=False, group_type=group_type),
 
+               # get_lda_app_and_usage('duration', drop=True, group_type=group_type),
+               # get_lda_app_and_usage('duration', drop=False, group_type=group_type),
+
                ]
 
     for df in df_list:

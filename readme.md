@@ -37,6 +37,7 @@
 # 安装却不使用,反向指标
 # 平均每天使用时间
 # 按照周末和工作日百分比对比
+# 删除长Session数据
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb

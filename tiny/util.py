@@ -108,10 +108,57 @@ def reduce_time_span(df, prefix, span_no=4):
             df.drop(columns=col_list, inplace=True)
     return df
 
+def get_summary_weekday(df):
+
+    #按照每个星期去统计
+    gp = df.groupby(['device', 'weekday']).agg({'package': 'nunique', 'day_duration': 'sum'})
+    gp.reset_index(inplace=True)
+
+    gp1 = gp.pivot(index='device', columns='weekday', values='package')
+    gp1.columns = [f'package_{col}' for col in gp1.columns]
+
+    gp2 = gp.pivot(index='device', columns='weekday', values='day_duration')
+    gp2.columns = [f'duration_{col}' for col in gp2.columns]
+
+
+    #区分周末和工作日
+    df['weekend'] = df.weekday // 5
+    gp3 = df.groupby(['device', 'weekend']).agg({'package': 'nunique', 'day_duration': 'sum'})
+    gp3.reset_index(inplace=True)
+
+    wk_end1 = gp3.pivot(index='device', columns='weekend', values='package')
+    wk_end1.columns = [f'package_wk_{col}' for col in wk_end1.columns]
+
+    wk_end2 = gp3.pivot(index='device', columns='weekend', values='day_duration')
+    wk_end2.columns = [f'duration_wk_{col}' for col in wk_end2.columns]
+
+    wk = pd.concat([wk_end1, wk_end2], axis=1)
+    wk.head()
+
+    #计算总数
+    total = df.groupby(['device']).agg({'package': 'nunique', 'duration': 'sum'})
+
+
+    merge = pd.concat([gp1, gp2, wk, total], axis=1)
+
+    # 转换为Percentage
+    type_ = 'package'
+    for col in [col for col in merge.columns if f'{type_}_' in col]:
+        # print(col)
+        merge[col] = merge[col] / merge[type_]
+
+    type_ = 'duration'
+    for col in [col for col in merge.columns if f'{type_}_' in col]:
+        # print(col)
+        merge[col] = merge[col] / merge[type_]
+
+    return merge
+
+
 @timed()
 #@file_cache()
-def get_summary_duration(df, groupby=['device', 'weekday'], prefix=None):
-    prefix = groupby[-1] if prefix is None else prefix
+def get_summary_span24(df, prefix):
+    #prefix = groupby[-1] if prefix is None else prefix
 
     columns = [key for key in df.columns if 'span24_' in key]
     gp_map = [(key, ['sum', 'count']) for key in columns if 'span24_' in key]
@@ -121,7 +168,7 @@ def get_summary_duration(df, groupby=['device', 'weekday'], prefix=None):
     gp_map['package'] = 'nunique'
     gp_map['start_base'] = ['min','max','nunique']
 
-    df = df.groupby(groupby).agg(gp_map)
+    df = df.groupby('device').agg(gp_map)
 
     df['total_sum']   = df[[key for key in df.columns if 'sum' in key]].sum(axis=1)
     df['total_count'] = df[[key for key in df.columns if 'count' in key]].sum(axis=1)
@@ -131,10 +178,10 @@ def get_summary_duration(df, groupby=['device', 'weekday'], prefix=None):
     print(type(df.columns[0]))
     print('_'.join(df.columns[0]))
     print(f'The latest colums:{df.columns}')
-    df.columns = [f"{prefix}_{'_'.join(key)}" for key in df.columns]
+    df.columns = [f"sum_{'_'.join(key)}" for key in df.columns]
 
     print(f'The latest colums:{df.columns}')
-    return df.reset_index()
+    return df
 
 
 def get_train():
@@ -209,6 +256,8 @@ def cal_duration_for_span(df, span_no=24):
 
     span_len = 24//span_no
 
+    df[f'day_duration'] = (df['close'] - df['start']) / np.timedelta64(1, 'D')
+
     #把一天分为4个时间段
     for sn in range(0, span_no):
         # df[f'span_{sn}'] = df.apply(lambda row: get_duration(row['start'], row['close'], sn), axis=1)
@@ -243,13 +292,10 @@ def cal_duration_for_span(df, span_no=24):
 #     return pd.concat( [total, max], axis=1 ).reset_index()
 
 
-
-
 def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     prefix='tol'
-    df = extend_time_span(version=2, trunc_long_time=trunc_long_time, mini=mini,
-                          groupby=['device'], prefix=prefix)
-    df = reduce_time_span(df, prefix, span_no)
+    df = extend_time_span(version=3, trunc_long_time=trunc_long_time, mini=mini)
+    # df = reduce_time_span(df, prefix, span_no)
     df = extend_percent(df, prefix)
 
     df = extend_brand_pkg(df)
@@ -284,7 +330,7 @@ def extend_percent(df, prefix):
 
 @timed()
 @file_cache()
-def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['device', 'weekday'], prefix=None):
+def extend_time_span(version, trunc_long_time=False, mini=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -305,13 +351,15 @@ def extend_time_span(version, trunc_long_time=False, mini=False, groupby=['devic
 
             df = split_days_all(df, trunc_long_time)
             df = cal_duration_for_span(df, span_no=24)
-            df = get_summary_duration(df, groupby, prefix=prefix)
+            df_weekday = get_summary_weekday(df)
+            df_span    = get_summary_span24(df)
+            df = pd.concat([df_weekday, df_span], axis=1)
             if len(df) > 0 :
                 duration_list.append(df)
             else:
                 print(f'The df is None for file:{path}')
-
-    return pd.concat(duration_list)
+    all = pd.concat(duration_list)
+    return all.reset_index()
 
 
 
