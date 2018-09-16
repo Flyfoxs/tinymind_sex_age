@@ -294,7 +294,7 @@ def cal_duration_for_span(df, span_no=24):
 
 def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     prefix='tol'
-    df = extend_time_span(version=3, trunc_long_time=trunc_long_time, mini=mini)
+    df = extend_time_span(version=version, trunc_long_time=trunc_long_time, mini=mini)
     # df = reduce_time_span(df, prefix, span_no)
     df = extend_percent(df, prefix)
 

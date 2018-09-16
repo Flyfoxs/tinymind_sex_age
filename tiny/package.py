@@ -92,7 +92,7 @@ def extend_package_install(type='package'):
 
 @timed()
 @file_cache(type='pkl', overwrite=False)
-def extend_package(version=1, mini=mini,type='package'):
+def extend_package(version, mini=mini,type='package'):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -108,6 +108,7 @@ def extend_package(version=1, mini=mini,type='package'):
             if mini:
                 df = df[:5000]
 
+            #需要packge的类型,就扩展app的类型:p_type, p_sub_type
             if type != 'package':
                 print(f'Try to merge pkg label for type:{type}')
                 df = extend_pkg_label(df)
