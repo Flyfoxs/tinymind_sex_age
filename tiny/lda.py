@@ -147,7 +147,7 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
     if drop:
         cntTf = drop_useless_package(cntTf)
 
-    print(f'Try to lda for type#{type}')
+    print(f'Try to lda for group_level#{group_level}, agg_col#{agg_col}, agg_method#{agg_method}')
 
     tmp = cntTf / cntTf
 

@@ -294,7 +294,7 @@ def cal_duration_for_span(df, span_no=24):
 
 def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
     prefix='tol'
-    df = summary_feature_base_on_usage(version=version, trunc_long_time=trunc_long_time, mini=mini)
+    df = summary_time_trend_on_usage(version=version, trunc_long_time=trunc_long_time, mini=mini)
     # df = reduce_time_span(df, prefix, span_no)
     df = convert_count_to_percent(df, prefix)
 
@@ -332,7 +332,7 @@ def convert_count_to_percent(df, prefix):
 
 @timed()
 @file_cache()
-def summary_feature_base_on_usage(version, trunc_long_time=False, mini=False):
+def summary_time_trend_on_usage(version, trunc_long_time=False, mini=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
