@@ -88,12 +88,22 @@ def get_lda_from_usage(mini):
 
     drop =True
 
+    group_type = 'p_sub_type'
+
     df_list = [get_lda_app_and_usage('app', drop=False),
                get_lda_app_and_usage('count', drop=False),
                get_lda_app_and_usage('duration', drop=False),
                get_lda_app_and_usage('app', drop=drop),
                get_lda_app_and_usage('count', drop=drop),
                get_lda_app_and_usage('duration', drop=drop),
+
+
+               get_lda_app_and_usage('app', drop=True, group_type=group_type),
+               get_lda_app_and_usage('app', drop=False, group_type=group_type),
+
+               get_lda_app_and_usage('count', drop=True, group_type=group_type),
+               get_lda_app_and_usage('count', drop=False, group_type=group_type),
+
                ]
 
     for df in df_list:
@@ -114,9 +124,9 @@ def get_lda_from_usage(mini):
 
 @timed()
 @file_cache(overwrite=False)
-def get_lda_app_and_usage(type='app', drop=False):
+def get_lda_app_and_usage(type='app', drop=False, group_type='package'):
     from tiny.tfidf import get_cntTf
-    cntTf = get_cntTf(type)
+    cntTf = get_cntTf(type, group_type)
 
     if drop:
         cntTf = drop_useless_package(cntTf)
@@ -126,7 +136,7 @@ def get_lda_app_and_usage(type='app', drop=False):
     tmp = cntTf / cntTf
 
     docres = get_lda_docres(cntTf)
-    docres[f'{type}_{drop}_app_length'] = tmp.sum(axis=1)
+    docres[f'{type}_{drop}_{group_type}_app_length'] = tmp.sum(axis=1)
 
     # docres = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
     #

@@ -13,7 +13,7 @@ from utils_.util_pandas import *
 from tiny.util import *
 
 
-@file_cache(overwrite=True)
+@file_cache(overwrite=False)
 @timed()
 def get_drop_list_for_install(reverse=False):
     deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
@@ -91,7 +91,7 @@ def extend_package_install(type='package'):
 
 
 @timed()
-@file_cache(type='pkl', overwrite=True)
+@file_cache(type='pkl', overwrite=False)
 def extend_package(version=1, mini=mini,type='package'):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -120,6 +120,7 @@ def extend_package(version=1, mini=mini,type='package'):
                 print(f'The df is None for file:{path}')
 
     df = pd.concat(tmp_list)
+    df.fillna(0,inplace=True)
     print(f'Share of device package usage is:{df.shape}')
 
     return df.sort_index()

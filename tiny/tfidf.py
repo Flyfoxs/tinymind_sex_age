@@ -56,6 +56,7 @@ def get_cntTf(type, group_type='package'):
         cntTf_all = extend_package(version=version, mini=mini, type=group_type)
         cntTf_duration = cntTf_all[[col for col in cntTf_all.columns if 'duration_' in col]]
         cntTf = cntTf_duration
+    cntTf.fillna(0, inplace=True)
     return cntTf
 
 #
