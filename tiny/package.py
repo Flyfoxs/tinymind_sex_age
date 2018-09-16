@@ -47,16 +47,21 @@ def get_drop_list_for_install(reverse=False):
 
 def drop_useless_package(df):
     useless = get_drop_list_for_install()
-    print(f'Column will be remove:{useless.package[:10]}')
-    print(f'Column will be compare:{df.columns[:10]}')
-    df.columns = [ col.split('_')[-1]
-                   if '_' in col  else col
-                   for col in df.columns
-                   ]
-    columns = [ col for col in df.columns if col in useless.package.values ]
-    print(f'There are {len(columns)} will be droped:{columns[:10]}')
-    df.drop(columns=columns, inplace=True)
-    return df
+    if 'package' in df:
+        old_len = len(df)
+        df = df[~df.package.isin(useless.package)]
+        print(f'{old_len} rows remove usless package to f{len(df)})')
+    else:
+        # print(f'Column will be remove:{useless.package[:10]}')
+        # print(f'Column will be compare:{df.columns[:10]}')
+        df.columns = [ col.split('_')[-1]
+                       if '_' in col  else col
+                       for col in df.columns
+                       ]
+        columns = [ col for col in df.columns if col in useless.package.values ]
+        print(f'There are {len(columns)} will be droped:{columns[:10]}')
+        df.drop(columns=columns, inplace=True)
+        return df
 #
 # @timed()
 # def get_drop_list_for_usage():

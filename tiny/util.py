@@ -12,7 +12,7 @@ try:
     from tiny.conf import *
 except :
     mini=True
-    version=1
+    version=3
 
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
@@ -292,9 +292,9 @@ def cal_duration_for_span(df, span_no=24):
 #     return pd.concat( [total, max], axis=1 ).reset_index()
 
 
-def extend_feature( span_no=6, input=None, trunc_long_time=False, mini=False):
+def extend_feature( span_no=6, input=None, trunc_long_time=False, drop=False):
     prefix='tol'
-    df = summary_time_trend_on_usage(version=version, trunc_long_time=trunc_long_time, mini=mini)
+    df = summary_time_trend_on_usage(version=version, trunc_long_time=trunc_long_time, drop=drop)
     # df = reduce_time_span(df, prefix, span_no)
     df = convert_count_to_percent(df, prefix)
 
@@ -332,7 +332,7 @@ def convert_count_to_percent(df, prefix):
 
 @timed()
 @file_cache()
-def summary_time_trend_on_usage(version, trunc_long_time=False, mini=False):
+def summary_time_trend_on_usage(version, trunc_long_time=False, drop=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -350,6 +350,10 @@ def summary_time_trend_on_usage(version, trunc_long_time=False, mini=False):
             if mini:
                 print('Return mini result for testing')
                 df = df[0:1000]
+
+            if drop:
+                from tiny.package import drop_useless_package
+                drop_useless_package(df)
 
             df = split_days_all(df, trunc_long_time)
             df = cal_duration_for_span(df, span_no=24)
