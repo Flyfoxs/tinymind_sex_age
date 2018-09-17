@@ -117,7 +117,10 @@ def get_lda_from_usage(mini):
                get_lda_app_and_usage(group_level='usage', drop=True, agg_col='p_sub_type', agg_method='count'),
                get_lda_app_and_usage(group_level='usage', drop=False, agg_col='p_sub_type', agg_method='count'),
 
-               # get_lda_app_and_usage('duration', drop=True, group_type=group_type),
+                get_lda_app_and_usage(group_level='usage', drop=True, agg_col='p_sub_type', agg_method='sum'),
+                get_lda_app_and_usage(group_level='usage', drop=False, agg_col='p_sub_type', agg_method='sum'),
+
+        # get_lda_app_and_usage('duration', drop=True, group_type=group_type),
                # get_lda_app_and_usage('duration', drop=False, group_type=group_type),
 
                ]
