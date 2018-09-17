@@ -2,6 +2,7 @@
 from utils_.util_log import *
 import pandas as pd
 import  os
+import numpy as np
 class Cache_File:
     def __init__(self):
         self.cache_path='./cache/'
@@ -22,7 +23,8 @@ class Cache_File:
                 #check if the file have the data type column
                 if type_== 'pkl':
                     df = pd.read_pickle(path)
-                    logger.debug(f"Load to {type(df)} for {type_}@{path}")
+                    logger.debug(f"Load to {type(df)} with density:{df.density} for {type_}@{path}")
+                    df.fillna(0,inplace=True)
                 else:
                     df = pd.read_csv(path, nrows=1)
                     tmp_data_list = [item for item in self.date_list if item in df.columns]
@@ -42,7 +44,11 @@ class Cache_File:
             path = self.get_path(key, type)
             logger.debug( f"====Write {len(val)} records to File#{path}" )
             if type == 'pkl':
-                sparse = val.to_sparse()
+                sparse = val.to_sparse(fill_value=0)
+                logger.debug(f'The original sparse.density is {sparse.density}')
+                if sparse.density > 0.1:
+                    sparse = sparse.to_dense().to_sparse(fill_value=0)
+                    logger.debug(f'The new sparse.density is convert to {sparse.density}')
 
                 sparse.to_pickle(path)
                 logger.debug(f'The sparse.density is {sparse.density}')

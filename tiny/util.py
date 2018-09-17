@@ -292,9 +292,9 @@ def cal_duration_for_span(df, span_no=24):
 #     return pd.concat( [total, max], axis=1 ).reset_index()
 
 
-def extend_feature( span_no=6, input=None, trunc_long_time=False, drop=False):
+def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=False):
     prefix='tol'
-    df = summary_time_trend_on_usage(version=version, trunc_long_time=trunc_long_time, drop=drop)
+    df = summary_time_trend_on_usage(version=version,  drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
     # df = reduce_time_span(df, prefix, span_no)
     df = convert_count_to_percent(df, prefix)
 
@@ -303,9 +303,9 @@ def extend_feature( span_no=6, input=None, trunc_long_time=False, drop=False):
         if 'device' not in list(input.columns):
             input.index.name = 'device'
             input = input.reset_index()
-        print(f'({list(input.columns)}')
-
-        print(f'({list(df.columns)}')
+        # print(f'({list(input.columns)}')
+        #
+        # print(f'({list(df.columns)}')
 
         df = input.merge(df, on='device', how='left')
 
@@ -332,10 +332,10 @@ def convert_count_to_percent(df, prefix):
 
 @timed()
 @file_cache()
-def summary_time_trend_on_usage(version, trunc_long_time=False, drop=False):
+def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
-    list = sorted(list, reverse=True)
+    #list = sorted(list, reverse=True)
 
     if mini:
         list =  list[:3]
@@ -345,18 +345,19 @@ def summary_time_trend_on_usage(version, trunc_long_time=False, drop=False):
         path = os.path.join(rootdir, list[i])
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
-            df = get_start_closed(path)
+            df = cal_duration_for_partition(path)
+
+            if drop_long:
+                df = df[df.day_duration>=drop_long]
 
             if mini:
                 print('Return mini result for testing')
                 df = df[0:1000]
 
-            if drop:
+            if drop_useless_pkg:
                 from tiny.package import drop_useless_package
                 drop_useless_package(df)
 
-            df = split_days_all(df, trunc_long_time)
-            df = cal_duration_for_span(df, span_no=24)
             df_weekday = get_summary_weekday(df)
             df_span    = get_summary_span24(df)
             df = pd.concat([df_weekday, df_span], axis=1)
@@ -369,16 +370,18 @@ def summary_time_trend_on_usage(version, trunc_long_time=False, drop=False):
 
 
 
+@file_cache()
+@timed()
+def cal_duration_for_partition(path):
+    df = get_start_closed(path)
+    df = split_days_all(df)
+    df = cal_duration_for_span(df, span_no=24)
+    return df
+
 
 @timed()
 #@file_cache()
-def split_days_all(tmp, trunc_long_time=None):
-    if trunc_long_time == True:
-        trunc_week_sn =2
-        # 超长记录,截取后面的数据, 最多保留2个星期,最少保留一个完整的星期
-        tmp['start_tmp'] = (tmp.close - Week(trunc_week_sn, weekday=0)).dt.date.astype('datetime64[ns]')
-        tmp.start = tmp[['start', 'start_tmp']].max(axis=1)
-        tmp.drop( columns=['start_tmp'] , inplace=True )
+def split_days_all(tmp):
 
     tmp.duration = (tmp.close - tmp.start) / np.timedelta64(1, 'D')
 

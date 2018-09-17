@@ -78,11 +78,13 @@ def drop_useless_package(df):
 
 
 
-@timed()
+
 #Can not save to pkl
-@file_cache(type='pkl', overwrite=False)
+#@file_cache(type='pkl', overwrite=False)
+@timed()
 def base_on_package_install_for_TF(type='package'):
     deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
+    #deviceid_packages=deviceid_packages[:1000]
     deviceid_packages.sort_values('device', inplace=True)
     print(f'Try to load packge for type:{type}')
     deviceid_packages['apps'] = deviceid_packages['apps'].apply(lambda x: x.split(','))
@@ -90,10 +92,9 @@ def base_on_package_install_for_TF(type='package'):
     apps = deviceid_packages['apps'].apply(lambda x: ' '.join(x)).tolist()
     vectorizer = CountVectorizer()
     cntTf_app = vectorizer.fit_transform(apps)
-    cntTf_app = pd.SparseDataFrame(cntTf_app.toarray(),
+    cntTf_app = pd.DataFrame(cntTf_app.toarray(),
                                      columns=vectorizer.get_feature_names(),
                                      index=deviceid_packages.device)
-
 
     return cntTf_app
 
@@ -122,7 +123,7 @@ def extend_package_duration_df(df, col='package'):
     return p
 
 
-def extend_package_merge(df, col='package'):
+def extend_package_TF(df, col='package'):
     return pd.concat([
                      extend_package_count_df(df, col=col) ,
                       extend_package_duration_df(df, col=col),

@@ -48,5 +48,7 @@ nohup python -u tiny/gen_sub.py > refactor3.log 2>&1 &
 
 
 
-nohup python -u tiny/test.py > group_type.log 2>&1 &
+nohup python -u tiny/test.py > test.log 2>&1 &
+
+nohup python -u tiny/test2.py > test22.log 2>&1 &
 

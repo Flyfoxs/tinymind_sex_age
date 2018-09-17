@@ -35,7 +35,7 @@ def timed(logger=logger, level=None, format='%s: %s ms', paras=True):
                 logger.info(f"Begin to run {fn.__name__} with {len(args) + len(kwargs)} paras")
             result = fn(*args, **kwargs)
             duration = time.time() - start
-            logging.info('cost:%5.2f sec: ===%r end (%r, %r) ' % (duration, fn.__name__, args_mini, kwargs, ))
+            logging.info('cost:%7.2f sec: ===%r end (%r, %r) ' % (duration, fn.__name__, args_mini, kwargs, ))
             #logger.log(level, format, repr(fn), duration * 1000)
             return result
         return inner

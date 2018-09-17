@@ -65,7 +65,7 @@ def base_on_usage_for_TF(version, mini=mini, col='package'):
                 df = extend_pkg_label(df)
 
             df = split_days_all(df)
-            df = extend_package_merge(df, col=col)
+            df = extend_package_TF(df, col=col)
             if len(df) > 0 :
                 tmp_list.append(df)
             else:
@@ -79,7 +79,7 @@ def base_on_usage_for_TF(version, mini=mini, col='package'):
 
 
 @timed()
-#@file_cache(type='pkl')
+@file_cache(type='pkl')
 def get_cntTf( group_level, agg_col, agg_method):
     if group_level == 'app':
         cntTf_app = base_on_package_install_for_TF(agg_col)
@@ -92,8 +92,9 @@ def get_cntTf( group_level, agg_col, agg_method):
         cntTf_all = base_on_usage_for_TF(version=version, mini=mini, col=agg_col)
         cntTf_duration = cntTf_all[[col for col in cntTf_all.columns if 'duration_' in col]]
         cntTf = cntTf_duration
+
     cntTf.fillna(0, inplace=True)
-    return cntTf
+    return cntTf.to_sparse(fill_value=0)
 
 #
 # @timed()

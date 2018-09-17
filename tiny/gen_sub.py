@@ -25,7 +25,7 @@ deviceid_train2 = get_lda_from_usage(mini=mini)
 #     deviceid_train_2[col] =  deviceid_train_2[col].apply(lambda val: 1 if val > 0 else 0)
 deviceid_train = pd.concat([deviceid_train2 ], axis=1)
 
-deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False, drop=False)
+deviceid_train = extend_feature(span_no=24, input=deviceid_train, drop_useless_pkg=False, drop_long=False)
 
 deviceid_train = attach_device_label(deviceid_train)
 

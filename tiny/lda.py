@@ -152,7 +152,7 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
     tmp = cntTf / cntTf
 
     docres = get_lda_docres(cntTf)
-    docres[f'{type}_{drop}_{group_type}_app_length'] = tmp.sum(axis=1)
+    docres[f'{group_level}_{agg_col}_{drop}_app_length'] = tmp.sum(axis=1)
 
     # docres = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
     #
@@ -164,7 +164,7 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
 
     #docres.drop(columns=['apps'], inplace=True)
     #print(f'deviceid_packages column:{deviceid_packages.columns}')
-    docres.sort_index()
+    docres.sort_index(inplace=True)
     docres.index.name = 'device'
     docres.reset_index(inplace=True)
     return docres
