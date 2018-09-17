@@ -92,6 +92,9 @@ def get_cntTf( group_level, agg_col, agg_method):
         cntTf_all = base_on_usage_for_TF(version=version, mini=mini, col=agg_col)
         cntTf_duration = cntTf_all[[col for col in cntTf_all.columns if 'duration_' in col]]
         cntTf = cntTf_duration
+    else:
+        cntTf = pd.DataFrame()
+        print(f'Unknown params:{group_level}')
 
     cntTf.fillna(0, inplace=True)
     return cntTf.to_sparse(fill_value=0)
@@ -104,3 +107,13 @@ def get_cntTf( group_level, agg_col, agg_method):
 #     cntTf_label = extend_pkg_label(cntTf)
 #     cntTf_label.replace({0:np.nan})
 #     return cntTf_label.groupby(['p_type','p_sub_type']).agg(['sum','count'])
+
+if __name__ == '__main__':
+
+    for group_level in ['usage']:
+        for agg_col in ['p_sub_type', 'package']:
+            for agg_method in ['sum', 'count']:
+                get_cntTf(group_level, agg_col, agg_method)
+
+    get_cntTf('app', 'package', None)
+    get_cntTf('app', 'p_sub_type', None)

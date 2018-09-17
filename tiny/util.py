@@ -110,10 +110,12 @@ def reduce_time_span(df, prefix, span_no=4):
 
 def get_summary_weekday(df):
 
+    ##TODO
     #按照每个星期去统计
     gp = df.groupby(['device', 'weekday']).agg({'package': 'nunique', 'day_duration': 'sum'})
     gp.reset_index(inplace=True)
 
+    #按照每天(weekday)去统计
     gp1 = gp.pivot(index='device', columns='weekday', values='package')
     gp1.columns = [f'package_{col}' for col in gp1.columns]
 
@@ -137,20 +139,19 @@ def get_summary_weekday(df):
 
     #计算总数
     total = df.groupby(['device']).agg({'package': 'nunique', 'duration': 'sum'})
-
+    total.rename( columns= {'package':'nunique_package','duration':'sum_duration'}, inplace=True)
 
     merge = pd.concat([gp1, gp2, wk, total], axis=1)
 
-    # 转换为Percentage
-    type_ = 'package'
-    for col in [col for col in merge.columns if f'{type_}_' in col]:
+    # 转换为package nunique 的Percentage
+    for col in [col for col in merge.columns if f'package_' in col]:
         # print(col)
-        merge[col] = merge[col] / merge[type_]
+        merge[col] = merge[col] / merge['nunique_package']
 
-    type_ = 'duration'
-    for col in [col for col in merge.columns if f'{type_}_' in col]:
+
+    for col in [col for col in merge.columns if f'duration_' in col]:
         # print(col)
-        merge[col] = merge[col] / merge[type_]
+        merge[col] = merge[col] / merge['sum_duration']
 
     return merge
 
@@ -165,7 +166,9 @@ def get_summary_span24(df):
     gp_map = dict(gp_map)
     # print(gp_map)
 
+    #统计总共用了多少Package
     gp_map['package'] = 'nunique'
+    #统计Pkg总共用了多少天
     gp_map['start_base'] = ['min','max','nunique']
 
     df = df.groupby('device').agg(gp_map)
@@ -177,10 +180,10 @@ def get_summary_span24(df):
 
     print(type(df.columns[0]))
     print('_'.join(df.columns[0]))
-    print(f'The latest colums:{df.columns}')
+    #print(f'The latest colums:{df.columns}')
     df.columns = [f"sum_{'_'.join(key)}" for key in df.columns]
 
-    print(f'The latest colums:{df.columns}')
+    print(f'The latest colums after get_summary_span24:{df.columns}')
     return df
 
 
@@ -233,7 +236,7 @@ def get_test():
 
 @timed()
 def extend_brand_pkg(tmp):
-    if 'package' in tmp:
+    if 'package' in tmp and tmp['package'].dtype == object:
         package = get_package_label()
         print(f'input df col:{tmp.columns}')
         print(f'packae col:{package.columns}')
@@ -292,13 +295,17 @@ def cal_duration_for_span(df, span_no=24):
 #     return pd.concat( [total, max], axis=1 ).reset_index()
 
 
+#The function merge all the app together, but LDA will view it as different
 def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=False):
-    prefix='tol'
+
+    #already merge all the app together
     df = summary_time_trend_on_usage(version=version,  drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
     # df = reduce_time_span(df, prefix, span_no)
-    df = convert_count_to_percent(df, prefix)
 
-    df = extend_brand_pkg(df)
+    df = convert_count_to_percent(df)
+
+
+    # df = extend_brand_pkg(df)
     if input is not None:
         if 'device' not in list(input.columns):
             input.index.name = 'device'
@@ -309,33 +316,47 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
 
         df = input.merge(df, on='device', how='left')
 
-    drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max', 'tol_day_min', 'tol_day_max']
+    drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max',
+                 'p_type', 'p_sub_type',
+                 'sum_day_min', 'sum_day_max']
     drop_list = [ col for col in df.columns if col in drop_list]
     df.drop(columns=drop_list, inplace=True)
 
     return df
 
-def convert_count_to_percent(df, prefix):
-    for col in [item for item in df.columns if f'_sum' in item]:
-        df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total_sum_'], 5)
+def convert_count_to_percent(df):
+    #需要挑选怎么样的百分比更合适
+    # sum_pkg_nunique: 全部时间段,总共用了多少pkg
+    # sum_day_nunique: 全部时间段,总共有多少天的统计数据
+    # sum_day_min-sum_day_max 全部时间段,统计数据跨度多少天
+    # sum_total_count_ 多个时间段的 count算术相加
 
-    for col in [item for item in df.columns if f'_count' in item]:
-        df[f'{col}_p'] = round(df[col] / df[f'{prefix}_total_count_'], 5)
+    try:
+        for col in [item for item in df.columns if f'_sum' in item]:
+            df[f'{col}_p'] = round(df[col] / df['sum_total_sum_'], 5)
 
-    drop_col = [col for col in df.columns if str(col).endswith('_count') or str(col).endswith('_sum')]
-    print(f'=========After percent, will drop:{drop_col}')
-    df.drop(columns=drop_col, inplace=True)
+
+        for col in [item for item in df.columns if f'_count' in item]:
+            df[f'{col}_p'] = round(df[col] / df[f'sum_total_count_'], 5)
+
+        drop_col = [col for col in df.columns if str(col).endswith('_count') or str(col).endswith('_sum')]
+        print(f'=========After percent, will drop:{drop_col}')
+        df.drop(columns=drop_col, inplace=True)
+    except  Exception as error:
+        print('Caught this error: ' + repr(error))
+        print(f'Current column list:{df.columns}')
+        raise error
 
     return df
 
 
 
 @timed()
-@file_cache()
+@file_cache(overwrite=False)
 def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
-    #list = sorted(list, reverse=True)
+    list = sorted(list, reverse=True)
 
     if mini:
         list =  list[:3]
@@ -347,8 +368,9 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
             print(f"Try to summary file:{path}")
             df = cal_duration_for_partition(path)
 
-            if drop_long:
-                df = df[df.day_duration>=drop_long]
+            if drop_long and drop_long<1:
+                print(f'Drop long session with session<={drop_long}')
+                df = df[df.day_duration<=drop_long]
 
             if mini:
                 print('Return mini result for testing')
@@ -359,6 +381,7 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
                 drop_useless_package(df)
 
             df_weekday = get_summary_weekday(df)
+
             df_span    = get_summary_span24(df)
             df = pd.concat([df_weekday, df_span], axis=1)
             if len(df) > 0 :
@@ -477,3 +500,9 @@ def get_start_closed(file=None):
 
     return start_close
 
+if __name__ == '__main__':
+    for drop_useless_pkg in [True, False]:
+        for drop_long in [1, 0.9, 0.7, 0.5, 0.3, 0.1]:
+            summary_time_trend_on_usage(version=version,
+                                        drop_useless_pkg=drop_useless_pkg,
+                                        drop_long=drop_long)

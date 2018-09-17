@@ -44,8 +44,9 @@ Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 
 
 
-nohup python -u tiny/gen_sub.py > refactor3.log 2>&1 &
+nohup python -u tiny/gen_sub.py > gen_sub.log 2>&1 &
 
+nohup python -u tiny/util.py > util.log 2>&1 &
 
 
 nohup python -u tiny/test.py > test.log 2>&1 &

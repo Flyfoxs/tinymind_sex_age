@@ -72,13 +72,16 @@ params = {
 }
 
 
+try:
 
-
-gbm = lgb.train(params,
-        lgb_train,
-        num_boost_round=1000,
-        valid_sets=lgb_eval,
-        early_stopping_rounds=50)
+    gbm = lgb.train(params,
+            lgb_train,
+            num_boost_round=1000,
+            valid_sets=lgb_eval,
+            early_stopping_rounds=50)
+except Exception as error:
+    print(f'Model input columns:{list(X.columns)}\n dict({X.dtypes.sort_values()})')
+    raise error
 
 
 best = round(gbm.best_score.get('valid_0').get('multi_logloss'), 5)
