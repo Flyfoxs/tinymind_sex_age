@@ -158,9 +158,9 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
             df = cal_duration_for_partition(path)
 
             if drop_long and drop_long<1:
-                print(f'Drop long session with session<={drop_long}')
+                print(f'Drop long session with session<={drop_long}, before:{len(df)})')
                 df = df[df.day_duration<=drop_long]
-
+                print(f'Drop long session with session<={drop_long}, after:{len(df)})')
             if mini:
                 print('Return mini result for testing')
                 df = df[0:1000]
@@ -250,8 +250,9 @@ def summary_pkg_activity(group_col, grou_method):
 
 
 if __name__ == '__main__':
-    for drop_useless_pkg in [True, False]:
-        for drop_long in [1, 0.9, 0.7, 0.5, 0.3, 0.1]:
-            summary_time_trend_on_usage(version=version,
-                                        drop_useless_pkg=drop_useless_pkg,
-                                        drop_long=drop_long)
+    pass
+    # for drop_useless_pkg in [True, False]:
+    #     for drop_long in [1, 0.9, 0.7, 0.5, 0.3, 0.1]:
+    #         summary_time_trend_on_usage(version=version,
+    #                                     drop_useless_pkg=drop_useless_pkg,
+    #                                     drop_long=drop_long)

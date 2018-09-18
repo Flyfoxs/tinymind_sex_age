@@ -11,8 +11,8 @@ from utils_.util_pandas import *
 try:
     from tiny.conf import *
 except :
-    mini=True
-    version=3
+    mini=False
+    version=4
 
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签

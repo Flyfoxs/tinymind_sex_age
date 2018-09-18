@@ -39,7 +39,9 @@
 # 按照周末和工作日百分比对比
 # 删除长Session数据
 # Top APP_Type
-# 
+# 年龄是category还是value
+
+# 删除低频APP, uselessAPP
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
