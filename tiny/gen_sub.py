@@ -2,9 +2,8 @@
 import lightgbm as lgb
 from sklearn.cross_validation import train_test_split
 
-from tiny.lda import *
-from tiny.util import *
 from tiny.tfidf import *
+from tiny.usage import *
 
 # # New add
 # # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
