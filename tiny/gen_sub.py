@@ -15,6 +15,7 @@ def gen_sub_by_para(drop_useless_pkg, drop_long):
 
     feature = extend_feature(span_no=24, input=lda_feature, drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
 
+    feature=  extend_device_brand(feature)
     feature_label = attach_device_train_label(feature)
 
 
