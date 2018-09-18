@@ -29,7 +29,7 @@ def get_brand():
     brand = pd.read_csv('input/deviceid_brand.tsv', sep='\t', header=None)
 
     brand.columns = ['device', 'brand', 'phone_type']
-    return convert_label_encode(brand, ['device'])
+    return convert_label_encode(brand, excluded_list = ['device'])
 
 #
 # # Performance issue
@@ -146,19 +146,32 @@ def get_test():
     test = pd.read_csv('input/deviceid_test.tsv', sep='\t',header=None)
     return test
 
+def extend_pkg_label(df=None):
+
+    pkg_label = get_package_label()
+    #pkg_label.set_index('package', inplace=True)
+
+    pkg_label['combine_type'] = pkg_label.apply(lambda row: f'{row.p_type}_{row.p_sub_type}', axis=1)
+    if df is None:
+        return pkg_label
+    else:
+        df = pd.merge(df, pkg_label, on='package', how='left')
+        df.fillna('Unknown', inplace=True)
+        return df
+
 @timed()
-def extend_brand_pkg(tmp):
-    if 'package' in tmp and tmp['package'].dtype == object:
-        package = get_package_label()
-        print(f'input df col:{tmp.columns}')
-        print(f'packae col:{package.columns}')
-        tmp = tmp.merge(package, how='left')
+def extend_device_brand(tmp):
 
     brand = get_brand()
     print(f'column list:{tmp.columns}')
-    tmp = tmp.merge(brand, how='left')
-
-    return tmp
+    if tmp is None:
+        return brand
+    else:
+        if 'device' not in tmp:
+            tmp.index.name = 'device'
+            tmp.reset_index(inplace=True)
+        tmp = tmp.merge(brand, how='left')
+        return tmp
 
 
 

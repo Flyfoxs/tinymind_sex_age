@@ -38,6 +38,8 @@
 # 平均每天使用时间
 # 按照周末和工作日百分比对比
 # 删除长Session数据
+# Top APP_Type
+# 
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
@@ -52,4 +54,7 @@ nohup python -u tiny/util.py > util.log 2>&1 &
 nohup python -u tiny/test.py > test.log 2>&1 &
 
 nohup python -u tiny/test2.py > test22.log 2>&1 &
+
+
+nohup python -u tiny/usage.py > usage.log 2>&1 &
 

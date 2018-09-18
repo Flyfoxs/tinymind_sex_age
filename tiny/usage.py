@@ -73,7 +73,7 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
     #already merge all the app together
     df = summary_time_trend_on_usage(version=version,  drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
     # df = reduce_time_span(df, prefix, span_no)
-    df.drop(columns=['day_dur'], inplace=True)
+    df.drop(columns=['day_dur'], inplace=True, errors='ignore')
     df = convert_count_to_percent(df)
 
 
@@ -167,7 +167,9 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
 
             if drop_useless_pkg:
                 from tiny.package import drop_useless_package
-                drop_useless_package(df)
+                print(f'The rows before drop:{len(df)})')
+                df = drop_useless_package(df)
+                print(f'The rows after drop:{len(df)})')
 
             df_weekday = get_summary_weekday(df)
 
@@ -231,6 +233,18 @@ def get_summary_weekday(df):
         merge[col] = merge[col] / merge['sum_duration']
 
     return merge
+
+def summary_pkg_activity(group_col, grou_method):
+    rootdir = './output/start_close/'
+    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
+    list = sorted(list, reverse=True)
+
+
+    for i in range(0, len(list)):
+        path = os.path.join(rootdir, list[i])
+        if os.path.isfile(path) and 'csv' in path:
+            print(f"Try to summary file:{path}")
+            pkg = cal_duration_for_partition(path)
 
 
 

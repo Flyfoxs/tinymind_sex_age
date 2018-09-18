@@ -53,7 +53,7 @@ from tiny.package import *
 #     return deviceid_packages
 #
 
-def attach_device_label(df):
+def attach_device_train_label(df):
 
     deviceid_test = pd.read_csv('./input/deviceid_test.tsv', sep='\t', names=['device'])
     deviceid_train = pd.read_csv('./input/deviceid_train.tsv', sep='\t', names=['device', 'sex', 'age'])
@@ -84,17 +84,12 @@ def attach_device_label(df):
 
 #@file_cache(overwrite=True)
 @timed()
-def get_lda_from_usage(mini):
+def get_lda_from_usage():
 
 
 
     df_list = [
-               # get_lda_app_and_usage('app', drop=False, agg_value='package'),
-               # get_lda_app_and_usage('count', drop=False, agg_value='package'),
-               # get_lda_app_and_usage('duration', drop=False, agg_value='package'),
-               # get_lda_app_and_usage('app', drop=True, agg_value='package'),
-               # get_lda_app_and_usage('count', drop=True, agg_value='package'),
-               # get_lda_app_and_usage('duration', drop=True, agg_value='package'),
+
 
                get_lda_app_and_usage(group_level='app',   drop=False, agg_col='package', agg_method=None) ,
                get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='count') ,
@@ -104,16 +99,9 @@ def get_lda_from_usage(mini):
                get_lda_app_and_usage(group_level='usage', drop=True, agg_col='package', agg_method='count') ,
                get_lda_app_and_usage(group_level='usage', drop=True, agg_col='package', agg_method='sum') ,
 
-
-
-               # get_lda_app_and_usage('app', drop=True, agg_value= 'p_sub_type'),
-               # get_lda_app_and_usage('app', drop=False, agg_value= 'p_sub_type'),
+               # get_lda_app_and_usage(group_level='app', drop=True, agg_col=None, agg_method=None),
+               # get_lda_app_and_usage(group_level='app', drop=False, agg_col=None, agg_method=None),
                #
-               # get_lda_app_and_usage('count', drop=True, agg_value= 'p_sub_type'),
-               # get_lda_app_and_usage('count', drop=False, agg_value= 'p_sub_type'),
-
-               get_lda_app_and_usage(group_level='app', drop=True, agg_col=None, agg_method=None),
-               get_lda_app_and_usage(group_level='app', drop=False, agg_col=None, agg_method=None),
                get_lda_app_and_usage(group_level='usage', drop=True, agg_col='p_sub_type', agg_method='count'),
                get_lda_app_and_usage(group_level='usage', drop=False, agg_col='p_sub_type', agg_method='count'),
 

@@ -47,10 +47,13 @@ def get_drop_list_for_install(reverse=False):
 
 def drop_useless_package(df):
     useless = get_drop_list_for_install()
+    #Drop the package by row
     if 'package' in df:
         old_len = len(df)
         df = df[~df.package.isin(useless.package)]
-        print(f'{old_len} rows remove usless package to f{len(df)})')
+        print(f'drop_useless_package: {old_len} rows remove usless package to f{len(df)})')
+
+    #Drop the package by column
     else:
         # print(f'Column will be remove:{useless.package[:10]}')
         # print(f'Column will be compare:{df.columns[:10]}')
@@ -59,9 +62,9 @@ def drop_useless_package(df):
                        for col in df.columns
                        ]
         columns = [ col for col in df.columns if col in useless.package.values ]
-        print(f'There are {len(columns)} will be droped:{columns[:10]}')
+        print(f'drop_useless_package: There are {len(columns)} column will be droped:{columns[:10]}')
         df.drop(columns=columns, inplace=True)
-        return df
+    return df
 #
 # @timed()
 # def get_drop_list_for_usage():
@@ -129,16 +132,5 @@ def extend_package_TF(df, col='package'):
                       extend_package_duration_df(df, col=col),
                       ], axis=1)
 
-def extend_pkg_label(df=None):
 
-    pkg_label = get_package_label()
-    #pkg_label.set_index('package', inplace=True)
-
-    pkg_label['combine_type'] = pkg_label.apply(lambda row: f'{row.p_type}_{row.p_sub_type}', axis=1)
-    if df is None:
-        return pkg_label
-    else:
-        df = pd.merge(df, pkg_label, on='package', how='left')
-        df.fillna('Unknown', inplace=True)
-        return df
 
