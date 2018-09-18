@@ -6,12 +6,13 @@ from tiny.tfidf import *
 from tiny.usage import *
 
 
-
+@timed()
 def gen_sub_by_para(drop_useless_pkg, drop_long):
     args = locals()
 
-    lda_feature = get_lda_from_usage()
-    feature = extend_feature(span_no=24, input=lda_feature, drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
+    lda_feature = get_lda_from_usage(18363)
+    feature = extend_feature(span_no=24, input=lda_feature,
+                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
     feature=  extend_device_brand(feature)
     feature_label = attach_device_train_label(feature)
 
@@ -83,8 +84,10 @@ def gen_sub_by_para(drop_useless_pkg, drop_long):
     sub.to_csv(file,index=False)
 
 if __name__ == '__main__':
-    gen_sub_by_para(True, 0.3)
-    gen_sub_by_para(True, 0.4)
+
+    #for limit in range(100, 1300, 100):
+        gen_sub_by_para(True, 0.3)
+    # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:
     #

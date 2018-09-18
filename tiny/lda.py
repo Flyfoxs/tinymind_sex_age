@@ -84,29 +84,29 @@ def attach_device_train_label(df):
 
 #@file_cache(overwrite=True)
 @timed()
-def get_lda_from_usage():
+def get_lda_from_usage(drop=18363):
 
 
 
     df_list = [
 
 
-               get_lda_app_and_usage(group_level='app',   drop=False, agg_col='package', agg_method=None) ,
-               get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='count') ,
-               get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='sum') ,
+               get_lda_app_and_usage(group_level='app',   drop=0, agg_col='package', agg_method=None) ,
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='count') ,
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='sum') ,
 
-               get_lda_app_and_usage(group_level='app',   drop=True, agg_col='package', agg_method=None) ,
-               get_lda_app_and_usage(group_level='usage', drop=True, agg_col='package', agg_method='count') ,
-               get_lda_app_and_usage(group_level='usage', drop=True, agg_col='package', agg_method='sum') ,
+               get_lda_app_and_usage(group_level='app',   drop=drop, agg_col='package', agg_method=None) ,
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='count') ,
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='sum') ,
 
                # get_lda_app_and_usage(group_level='app', drop=True, agg_col=None, agg_method=None),
                # get_lda_app_and_usage(group_level='app', drop=False, agg_col=None, agg_method=None),
                #
-               get_lda_app_and_usage(group_level='usage', drop=True, agg_col='p_sub_type', agg_method='count'),
-               get_lda_app_and_usage(group_level='usage', drop=False, agg_col='p_sub_type', agg_method='count'),
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='count'),
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='count'),
 
-                get_lda_app_and_usage(group_level='usage', drop=True, agg_col='p_sub_type', agg_method='sum'),
-                get_lda_app_and_usage(group_level='usage', drop=False, agg_col='p_sub_type', agg_method='sum'),
+                get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='sum'),
+                get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='sum'),
 
         # get_lda_app_and_usage('duration', drop=True, group_type=group_type),
                # get_lda_app_and_usage('duration', drop=False, group_type=group_type),
@@ -136,7 +136,7 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
     cntTf = get_cntTf(group_level, agg_col=agg_col, agg_method=agg_method)
 
     if drop:
-        cntTf = drop_useless_package(cntTf)
+        cntTf = drop_useless_package(cntTf, drop)
 
     print(f'Try to lda for group_level#{group_level}, agg_col#{agg_col}, agg_method#{agg_method}')
 

@@ -168,7 +168,7 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
             if drop_useless_pkg:
                 from tiny.package import drop_useless_package
                 print(f'The rows before drop:{len(df)})')
-                df = drop_useless_package(df)
+                df = drop_useless_package(df, drop_useless_pkg)
                 print(f'The rows after drop:{len(df)})')
 
             df_weekday = get_summary_weekday(df)
@@ -247,6 +247,20 @@ def summary_pkg_activity(group_col, grou_method):
             pkg = cal_duration_for_partition(path)
 
 
+def get_bottom_app(drop_level='count', limit=18363):
+    rootdir = './output/start_close/'
+    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
+    list = sorted(list, reverse=True)
+
+    if mini:
+        list =  list[:3]
+
+    duration_list = []
+    for i in range(0, len(list)):
+        path = os.path.join(rootdir, list[i])
+        if os.path.isfile(path) and 'csv' in path:
+            print(f"Try to summary file:{path}")
+            df = cal_duration_for_partition(path)
 
 
 if __name__ == '__main__':

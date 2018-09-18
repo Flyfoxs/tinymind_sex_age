@@ -15,7 +15,12 @@ from tiny.util import *
 
 @file_cache(overwrite=False)
 @timed()
-def get_drop_list_for_install(reverse=False):
+def get_drop_list_for_install(limit=18363):
+    """
+    total:35000, 18363 is 0 install base on testing data
+    :param limit:
+    :return:
+    """
     deviceid_packages = pd.read_csv('./input/deviceid_packages.tsv', sep='\t', names=['device', 'apps'])
     deviceid_test = pd.read_csv('./input/deviceid_test.tsv', sep='\t', names=['device'])
     # deviceid_train = pd.read_csv('./input/deviceid_train.tsv', sep='\t', names=['device', 'sex', 'age'])
@@ -36,17 +41,14 @@ def get_drop_list_for_install(reverse=False):
     device_app_test = device_app[device_app.index.isin(deviceid_test.device)]
 
     device_app_test = device_app_test.sum()
-    if reverse:
-        device_app_test = device_app_test[device_app_test == 1]
-    else:
-        device_app_test = device_app_test[device_app_test == 0]
 
     device_app_test.index.rename('package', inplace=True)
+    device_app_test = device_app_test.sort_values()
+    res = device_app_test.to_frame().reset_index()
+    return res[:limit]
 
-    return device_app_test.to_frame().reset_index()
-
-def drop_useless_package(df):
-    useless = get_drop_list_for_install()
+def drop_useless_package(df, limit=18363):
+    useless = get_drop_list_for_install(limit)
     #Drop the package by row
     if 'package' in df:
         old_len = len(df)
@@ -62,7 +64,7 @@ def drop_useless_package(df):
                        for col in df.columns
                        ]
         columns = [ col for col in df.columns if col in useless.package.values ]
-        print(f'drop_useless_package: There are {len(columns)} column will be droped:{columns[:10]}')
+        print(f'drop_useless_package: There are {len(columns)} column will be droped from {len(df.columns)} columns:{columns[:10]}')
         df.drop(columns=columns, inplace=True)
     return df
 #
