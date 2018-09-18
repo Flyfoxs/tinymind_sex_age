@@ -13,7 +13,7 @@ from utils_.util_pandas import *
 from tiny.util import *
 
 
-@file_cache(overwrite=False)
+@file_cache(overwrite=True)
 @timed()
 def get_drop_list_for_install(limit=18363):
     """
@@ -45,7 +45,10 @@ def get_drop_list_for_install(limit=18363):
     device_app_test.index.rename('package', inplace=True)
     device_app_test = device_app_test.sort_values()
     res = device_app_test.to_frame().reset_index()
-    return res[:limit]
+    if limit == True :
+        return res[:18363]
+    else:
+        return res[:limit]
 
 def drop_useless_package(df, limit=18363):
     useless = get_drop_list_for_install(limit)
@@ -53,7 +56,7 @@ def drop_useless_package(df, limit=18363):
     if 'package' in df:
         old_len = len(df)
         df = df[~df.package.isin(useless.package)]
-        print(f'drop_useless_package: {old_len} rows remove usless package to f{len(df)})')
+        print(f'drop_useless_package: {old_len} rows remove useless app({len(useless)}) to f{len(df)})')
 
     #Drop the package by column
     else:

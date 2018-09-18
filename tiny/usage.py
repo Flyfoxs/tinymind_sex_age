@@ -141,7 +141,7 @@ def reduce_time_span(df, prefix, span_no=4):
 
 
 @timed()
-@file_cache(overwrite=False)
+@file_cache(overwrite=True)
 def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -167,17 +167,17 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
 
             if drop_useless_pkg:
                 from tiny.package import drop_useless_package
-                print(f'The rows before drop:{len(df)})')
+                print(f'The rows before drop:{len(df)} with:{drop_useless_pkg}')
                 df = drop_useless_package(df, drop_useless_pkg)
-                print(f'The rows after drop:{len(df)})')
+                print(f'The rows after drop:{len(df)} with:{drop_useless_pkg}')
 
             df_weekday = get_summary_weekday(df)
 
             df_span    = get_summary_span24(df)
             df = pd.concat([df_weekday, df_span], axis=1)
 
-            df['day_dur'] = df['sum_duration'] /df['sum_day_nunique']
             if len(df) > 0 :
+                print(f'Partition size is {len(df)}')
                 duration_list.append(df)
             else:
                 print(f'The df is None for file:{path}')
@@ -217,20 +217,24 @@ def get_summary_weekday(df):
     wk.head()
 
     #计算总数
-    total = df.groupby(['device']).agg({'package': 'nunique', 'duration': 'sum'})
-    total.rename( columns= {'package':'nunique_package','duration':'sum_duration'}, inplace=True)
+    total = df.groupby(['device']).agg({'package': ['nunique', 'count'], 'duration': 'sum' ,'start_base':'nunique'})
+    total.rename(columns={'package': 'pkg', 'duration': 'dur'}, inplace=True)
+    total.columns = ['_'.join(item) for item in total.columns]
 
     merge = pd.concat([gp1, gp2, wk, total], axis=1)
 
     # 转换为package nunique 的Percentage
     for col in [col for col in merge.columns if f'package_' in col]:
         # print(col)
-        merge[col] = merge[col] / merge['nunique_package']
+        merge[col] = merge[col] / merge['pkg_nunique']
 
 
     for col in [col for col in merge.columns if f'duration_' in col]:
         # print(col)
-        merge[col] = merge[col] / merge['sum_duration']
+        merge[col] = merge[col] / merge['dur_sum']
+
+    merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
+    merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
 
     return merge
 
