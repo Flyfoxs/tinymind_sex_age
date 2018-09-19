@@ -53,60 +53,31 @@ from tiny.package import *
 #     return deviceid_packages
 #
 
-def attach_device_train_label(df):
 
-    deviceid_test = pd.read_csv('./input/deviceid_test.tsv', sep='\t', names=['device'])
-    deviceid_train = pd.read_csv('./input/deviceid_train.tsv', sep='\t', names=['device', 'sex', 'age'])
-
-    deviceid_train = pd.concat([deviceid_train, deviceid_test])
-
-    deviceid_train['sex'] = deviceid_train['sex'].apply(lambda x: str(x))
-    deviceid_train['age'] = deviceid_train['age'].apply(lambda x: str(x))
-
-    def tool(x):
-        if x == 'nan':
-            return x
-        else:
-            return str(int(float(x)))
-
-    deviceid_train['sex'] = deviceid_train['sex'].apply(tool)
-    deviceid_train['age'] = deviceid_train['age'].apply(tool)
-    deviceid_train['sex_age'] = deviceid_train['sex'] + '-' + deviceid_train['age']
-    deviceid_train = deviceid_train.replace({'nan': np.NaN, 'nan-nan': np.NaN})
-    if df is not None:
-        df = pd.merge(df, deviceid_train, on='device', how='left')
-        df.sort_values('device', inplace=True)
-
-        return df
-    else :
-        return deviceid_train
-
-
-#@file_cache(overwrite=True)
 @timed()
-def get_lda_from_usage(drop=18363):
+def get_lda_from_usage( n_topics):
 
-
+    drop = 18363
 
     df_list = [
 
 
-               get_lda_app_and_usage(group_level='app',   drop=0, agg_col='package', agg_method=None) ,
-               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='count') ,
-               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='sum') ,
+               get_lda_app_and_usage(group_level='app',   drop=0, agg_col='package', agg_method=None, n_topics=n_topics) ,
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='count', n_topics=n_topics) ,
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='sum', n_topics=n_topics) ,
 
-               get_lda_app_and_usage(group_level='app',   drop=drop, agg_col='package', agg_method=None) ,
-               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='count') ,
-               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='sum') ,
+               get_lda_app_and_usage(group_level='app',   drop=drop, agg_col='package', agg_method=None, n_topics=n_topics) ,
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='count', n_topics=n_topics) ,
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='sum', n_topics=n_topics) ,
 
                # get_lda_app_and_usage(group_level='app', drop=True, agg_col=None, agg_method=None),
                # get_lda_app_and_usage(group_level='app', drop=False, agg_col=None, agg_method=None),
                #
-               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='count'),
-               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='count'),
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='count', n_topics=n_topics),
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='count', n_topics=n_topics),
 
-                get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='sum'),
-                get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='sum'),
+                get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='sum', n_topics=n_topics),
+                get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='sum', n_topics=n_topics),
 
         # get_lda_app_and_usage('duration', drop=True, group_type=group_type),
                # get_lda_app_and_usage('duration', drop=False, group_type=group_type),
@@ -122,7 +93,7 @@ def get_lda_from_usage(drop=18363):
 
     all.columns = [ str(col) for col in all.columns]
 
-    all = all[['0', '1', '2', '3', '4',]]
+    all = all[[str(i) for i in range(0, n_topics)]]
     print(f'Device_pkg all column:{all.columns}')
 
     all = all.reset_index()
@@ -131,7 +102,7 @@ def get_lda_from_usage(drop=18363):
 
 @timed()
 @file_cache(overwrite=False)
-def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='count'):
+def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='count', n_topics=5):
     from tiny.tfidf import get_cntTf
     cntTf = get_cntTf(group_level, agg_col=agg_col, agg_method=agg_method)
 
@@ -142,7 +113,7 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
 
     tmp = cntTf / cntTf
 
-    docres = get_lda_docres(cntTf)
+    docres = get_lda_docres(cntTf, n_topics)
     docres[f'{group_level}_{agg_col}_{drop}_app_length'] = tmp.sum(axis=1)
 
     # docres = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
@@ -162,13 +133,13 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
 
 
 
-def get_lda_docres(cntTf):
+def get_lda_docres(cntTf, n_topics=5):
     # Replace point
     print(f'cntTf type:{type(cntTf)}')
     # if not isinstance(cntTf, pd.DataFrame):
     #     cntTf = pd.DataFrame(cntTf.toarray())
     cntTf.fillna(0, inplace=True)
-    lda = LatentDirichletAllocation(n_topics=5,
+    lda = LatentDirichletAllocation(n_topics=n_topics,
                                     learning_offset=50.,
                                     random_state=666)
     #print(f'cntTf column:{cntTf.columns}')

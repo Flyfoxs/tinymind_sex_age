@@ -25,23 +25,13 @@ plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 
 @timed()
-def get_brand(limit=100):
+def get_brand():
     brand = pd.read_csv('input/deviceid_brand.tsv', sep='\t', header=None)
 
     brand.columns = ['device', 'brand', 'phone_type']
 
-    tmp2 = brand.groupby(['brand']).count().sort_values('device', ascending=False)
-    tmp2['cumsum'] = tmp2.device.cumsum()
-    #tmp2['percentage'] = tmp2['cumsum'] / 72554
-    brand_1 = brand[brand.brand.isin(tmp2[:limit].index)]
-
-    brand_2 = brand[~brand.brand.isin(tmp2[:limit].index)]
-    brand_2.brand = 'Other'
-    brand_2.phone_type = 'Other'
-
-    brand = pd.concat([brand_1, brand_2])
     brand = brand.sort_values('brand')
-    return convert_label_encode(brand, excluded_list = ['device'])
+    return brand
 
 #
 # # Performance issue
@@ -172,9 +162,9 @@ def extend_pkg_label(df=None):
         return df
 
 @timed()
-def extend_device_brand(tmp, limit=1200):
+def extend_device_brand(tmp):
 
-    brand = get_brand(limit)
+    brand = get_brand()
     print(f'column list:{tmp.columns}')
     if tmp is None:
         return brand
@@ -183,6 +173,9 @@ def extend_device_brand(tmp, limit=1200):
             tmp.index.name = 'device'
             tmp.reset_index(inplace=True)
         tmp = tmp.merge(brand, how='left')
+        tmp[['brand', 'phone_type']] = tmp[['brand', 'phone_type']].fillna('Other', inplace=True)
+
+        tmp = convert_label_encode(tmp,['brand', 'phone_type'])
         return tmp
 
 
@@ -299,6 +292,63 @@ def get_start_closed(file=None):
     start_close['duration'] = (start_close.close - start_close.start) / np.timedelta64(1, 'D')
 
     return start_close
+
+def replace_invalid_filename_char(filename):
+    invalid_characaters = '\':"<>|'
+    for char in invalid_characaters:
+        filename = filename.replace(char, '')
+    return filename
+
+
+def attach_device_train_label(df):
+
+    deviceid_test = pd.read_csv('./input/deviceid_test.tsv', sep='\t', names=['device'])
+    deviceid_train = pd.read_csv('./input/deviceid_train.tsv', sep='\t', names=['device', 'sex', 'age'])
+
+    deviceid_train = pd.concat([deviceid_train, deviceid_test])
+
+    deviceid_train['sex'] = deviceid_train['sex'].apply(lambda x: str(x))
+    deviceid_train['age'] = deviceid_train['age'].apply(lambda x: str(x))
+
+    def tool(x):
+        if x == 'nan':
+            return x
+        else:
+            return str(int(float(x)))
+
+    deviceid_train['sex'] = deviceid_train['sex'].apply(tool)
+    deviceid_train['age'] = deviceid_train['age'].apply(tool)
+    deviceid_train['sex_age'] = deviceid_train['sex'] + '-' + deviceid_train['age']
+    deviceid_train = deviceid_train.replace({'nan': np.NaN, 'nan-nan': np.NaN})
+    if df is not None:
+        df = pd.merge(df, deviceid_train, on='device', how='left')
+        df.sort_values('device', inplace=True)
+
+        return df
+    else :
+        return deviceid_train
+
+
+@timed()
+@file_cache(overwrite=True)
+def get_stable_feature():
+    from tiny.lda import get_lda_from_usage
+    from tiny.usage import extend_feature
+
+    lda_feature = get_lda_from_usage(n_topics=5)
+
+    feature = extend_feature(span_no=24, input=lda_feature,
+                             drop_useless_pkg=True, drop_long=0.3)
+
+    feature=  extend_device_brand(feature)
+
+    check = check_exception(feature, 'device')
+    if not check.empty:
+        print(f"Error Return feature NAN/INF:\n{check}" )
+        exit(1)
+
+    feature_label = attach_device_train_label(feature)
+    return feature_label
 
 # if __name__ == '__main__':
 #     for drop_useless_pkg in [True, False]:
