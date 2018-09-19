@@ -46,18 +46,27 @@ def convert_count_to_percent(df):
     # sum_day_nunique: 全部时间段,总共有多少天的统计数据
     # sum_day_min-sum_day_max 全部时间段,统计数据跨度多少天
     # sum_total_count_ 多个时间段的 count算术相加
+    # dur_sum_daily 每天平均多久
+    #
 
     try:
-        for col in [item for item in df.columns if f'_sum' in item]:
+        import re
+        pattern = re.compile(r'.*span.*_sum')
+        columns = [item for item in df.columns if pattern.match(item)]
+        print(f'Cal percentage for sum columns#{len(columns)}:{columns}')
+        for col in columns:
             df[f'{col}_p'] = round(df[col] / df['sum_total_sum_'], 5)
+        df.drop(columns=columns, inplace=True)
 
-
-        for col in [item for item in df.columns if f'_count' in item]:
+        pattern = re.compile(r'.*span.*_count')
+        columns = [item for item in df.columns if pattern.match(item)]
+        print(f'Cal percentage for count columns#{len(columns)}:{columns}')
+        for col in columns:
             df[f'{col}_p'] = round(df[col] / df[f'sum_total_count_'], 5)
+        df.drop(columns=columns, inplace=True)
 
-        drop_col = [col for col in df.columns if str(col).endswith('_count') or str(col).endswith('_sum')]
-        print(f'=========After percent, will drop:{drop_col}')
-        df.drop(columns=drop_col, inplace=True)
+        df.drop(columns=['sum_total_sum_', 'sum_total_count_'], inplace=True)
+
     except  Exception as error:
         print('Caught this error: ' + repr(error))
         print(f'Current column list:{df.columns}')
