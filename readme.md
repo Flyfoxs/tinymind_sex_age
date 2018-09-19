@@ -43,6 +43,9 @@
 
 # 删除低频APP, uselessAPP
 
+# LDA 参数调整
+# 最常用APP TOP#N 的归属label,以及时长
+
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 

@@ -233,8 +233,8 @@ def get_summary_weekday(df):
         # print(col)
         merge[col] = merge[col] / merge['dur_sum']
 
-    merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
-    merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
+    # merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
+    # merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
 
     return merge
 
@@ -265,6 +265,7 @@ def get_bottom_app(drop_level='count', limit=18363):
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
             df = cal_duration_for_partition(path)
+            df.groupby(['device','package']).agg({'duration':'sum', 'start_base': ['nunique', 'count']})
 
 
 if __name__ == '__main__':
