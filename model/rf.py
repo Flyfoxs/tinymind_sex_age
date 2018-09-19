@@ -32,6 +32,8 @@ def gen_sub_by_para(estimate=1000):
 
     classifier = RandomForestClassifier(n_estimators=estimate,
                                         #criterion='entropy',
+                                        verbose=1,
+                                        n_jobs=-1,
                                         random_state=42)
 
     print(f'Train begin#{estimate}')
@@ -63,7 +65,7 @@ def gen_sub_by_para(estimate=1000):
 
 if __name__ == '__main__':
 
-    for estimate in range(1000, 2000, 50):
+    for estimate in range(10, 2000, 50):
         gen_sub_by_para(estimate)
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):

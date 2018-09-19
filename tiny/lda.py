@@ -55,29 +55,29 @@ from tiny.package import *
 
 
 @timed()
-def get_lda_from_usage( n_topics):
+def get_lda_from_usage(drop=18363):
 
-    drop = 18363
+
 
     df_list = [
 
 
-               get_lda_app_and_usage(group_level='app',   drop=0, agg_col='package', agg_method=None, n_topics=n_topics) ,
-               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='count', n_topics=n_topics) ,
-               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='sum', n_topics=n_topics) ,
+               get_lda_app_and_usage(group_level='app',   drop=0, agg_col='package', agg_method=None) ,
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='count') ,
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='package', agg_method='sum') ,
 
-               get_lda_app_and_usage(group_level='app',   drop=drop, agg_col='package', agg_method=None, n_topics=n_topics) ,
-               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='count', n_topics=n_topics) ,
-               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='sum', n_topics=n_topics) ,
+               get_lda_app_and_usage(group_level='app',   drop=drop, agg_col='package', agg_method=None) ,
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='count') ,
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='package', agg_method='sum') ,
 
                # get_lda_app_and_usage(group_level='app', drop=True, agg_col=None, agg_method=None),
                # get_lda_app_and_usage(group_level='app', drop=False, agg_col=None, agg_method=None),
                #
-               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='count', n_topics=n_topics),
-               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='count', n_topics=n_topics),
+               get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='count'),
+               get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='count'),
 
-                get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='sum', n_topics=n_topics),
-                get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='sum', n_topics=n_topics),
+                get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type', agg_method='sum'),
+                get_lda_app_and_usage(group_level='usage', drop=0, agg_col='p_sub_type', agg_method='sum'),
 
         # get_lda_app_and_usage('duration', drop=True, group_type=group_type),
                # get_lda_app_and_usage('duration', drop=False, group_type=group_type),
@@ -93,7 +93,7 @@ def get_lda_from_usage( n_topics):
 
     all.columns = [ str(col) for col in all.columns]
 
-    all = all[[str(i) for i in range(0, n_topics)]]
+    all = all[[str(i) for i in range(0, 5)]]
     print(f'Device_pkg all column:{all.columns}')
 
     all = all.reset_index()
@@ -102,7 +102,7 @@ def get_lda_from_usage( n_topics):
 
 @timed()
 @file_cache(overwrite=False)
-def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='count', n_topics=5):
+def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', agg_method='count'):
     from tiny.tfidf import get_cntTf
     cntTf = get_cntTf(group_level, agg_col=agg_col, agg_method=agg_method)
 
@@ -113,7 +113,7 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
 
     tmp = cntTf / cntTf
 
-    docres = get_lda_docres(cntTf, n_topics)
+    docres = get_lda_docres(cntTf)
     docres[f'{group_level}_{agg_col}_{drop}_app_length'] = tmp.sum(axis=1)
 
     # docres = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
@@ -133,13 +133,13 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
 
 
 
-def get_lda_docres(cntTf, n_topics=5):
+def get_lda_docres(cntTf):
     # Replace point
     print(f'cntTf type:{type(cntTf)}')
     # if not isinstance(cntTf, pd.DataFrame):
     #     cntTf = pd.DataFrame(cntTf.toarray())
     cntTf.fillna(0, inplace=True)
-    lda = LatentDirichletAllocation(n_topics=n_topics,
+    lda = LatentDirichletAllocation(n_topics=5,
                                     learning_offset=50.,
                                     random_state=666)
     #print(f'cntTf column:{cntTf.columns}')

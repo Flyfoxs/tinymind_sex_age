@@ -7,11 +7,11 @@ import pandas as pd
 
 
 @timed(logger)
-def convert_label_encode(sample,  list=[]):
+def convert_label_encode(sample,  excluded_list=[]):
 
     label_encode = defaultdict(LabelEncoder)
     sample = sample.apply(lambda x: label_encode[x.name].fit_transform(x.astype(str))
-                    if x.name in list else x,
+                    if x.name not in excluded_list else x,
                     reduce=False)
 
 

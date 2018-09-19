@@ -7,10 +7,10 @@ from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para(drop_useless_pkg, drop_long,  n_topics):
+def gen_sub_by_para(drop_useless_pkg, drop_long):
     args = locals()
 
-    lda_feature = get_lda_from_usage(n_topics=n_topics)
+    lda_feature = get_lda_from_usage(18363)
     feature = extend_feature(span_no=24, input=lda_feature,
                              drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
     feature=  extend_device_brand(feature)
@@ -88,9 +88,8 @@ def gen_sub_by_para(drop_useless_pkg, drop_long,  n_topics):
 
 if __name__ == '__main__':
 
-    gen_sub_by_para(True, 0.3, n_topics=5)
-    # for n_topics in range(3, 8, 1):
-    #     gen_sub_by_para(True, 0.3, n_topics=n_topics)
+    #for limit in range(100, 1300, 100):
+        gen_sub_by_para(True, 0.3)
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:

@@ -33,10 +33,9 @@ def cal_duration_for_span(df, span_no=24):
         df[f'span24_{sn}'] = (df['merge_end'] - df['merge_begin']) / np.timedelta64(1, 'D')
 
         #去除负值
-        df[f'span24_{sn}'][df[f'span24_{sn}'] <= 0] = 0
+        df[f'span24_{sn}'][df[f'span24_{sn}'] <= 0] = np.nan
         df
 
-    df.fillna(0,inplace=True)
     df.drop(columns = ['check_start', 'check_close', 'merge_begin','merge_end'], inplace=True)
     print(f'Output columns for extend_time is {df.columns}')
     return df
@@ -63,7 +62,7 @@ def convert_count_to_percent(df):
         print('Caught this error: ' + repr(error))
         print(f'Current column list:{df.columns}')
         raise error
-    df.fillna(0, inplace=True)
+
     return df
 
 
@@ -87,8 +86,7 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
         #
         # print(f'({list(df.columns)}')
 
-        df = input.merge(df, on='device', how='outer')
-        df.fillna(0, inplace=True)
+        df = input.merge(df, on='device', how='left')
 
     drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max',
                  'p_type', 'p_sub_type',
@@ -143,7 +141,7 @@ def reduce_time_span(df, prefix, span_no=4):
 
 
 @timed()
-@file_cache(overwrite=True)
+@file_cache(overwrite=False)
 def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -184,8 +182,6 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
             else:
                 print(f'The df is None for file:{path}')
     all = pd.concat(duration_list)
-    all.fillna(0,inplace=True)
-    all.replace({np.inf:0}, inplace=True)
     return all.reset_index()
 
 
@@ -222,7 +218,7 @@ def get_summary_weekday(df):
 
     #计算总数
     total = df.groupby(['device']).agg({'package': ['nunique', 'count'], 'duration': 'sum' ,'start_base':'nunique'})
-    total.rename(columns={'package': 'pkg', 'duration': 'dur', 'sum':'sm', 'count':'cnt'}, inplace=True)
+    total.rename(columns={'package': 'pkg', 'duration': 'dur'}, inplace=True)
     total.columns = ['_'.join(item) for item in total.columns]
 
     merge = pd.concat([gp1, gp2, wk, total], axis=1)
@@ -235,12 +231,11 @@ def get_summary_weekday(df):
 
     for col in [col for col in merge.columns if f'duration_' in col]:
         # print(col)
-        merge[col] = merge[col] / merge['dur_sm']
+        merge[col] = merge[col] / merge['dur_sum']
 
-    # merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
-    # merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
+    merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
+    merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
 
-    merge.fillna(0,inplace=True)
     return merge
 
 def summary_pkg_activity(group_col, grou_method):
@@ -254,7 +249,6 @@ def summary_pkg_activity(group_col, grou_method):
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
             pkg = cal_duration_for_partition(path)
-            pkg.fillna(0, inplace=True)
 
 
 def get_bottom_app(drop_level='count', limit=18363):
@@ -271,8 +265,6 @@ def get_bottom_app(drop_level='count', limit=18363):
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
             df = cal_duration_for_partition(path)
-            df.fillna(0, inplace=True)
-            df.groupby(['device','package']).agg({'duration':'sum', 'start_base': ['nunique', 'count']})
 
 
 if __name__ == '__main__':
