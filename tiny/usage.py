@@ -204,6 +204,9 @@ def get_summary_weekday(df):
     gp.reset_index(inplace=True)
 
     #按照每天(weekday)去统计
+    # gp0 = gp.pivot(index='device', columns='weekday', values='start')
+    # gp0.columns = [f'action_{col}' for col in gp0.columns]
+
     gp1 = gp.pivot(index='device', columns='weekday', values='package')
     gp1.columns = [f'package_{col}' for col in gp1.columns]
 
@@ -236,14 +239,17 @@ def get_summary_weekday(df):
     merge = pd.concat([gp1, gp2, wk, total], axis=1)
 
     # 转换为package nunique 的Percentage
-    for col in [col for col in merge.columns if f'package_' in col]:
-        # print(col)
+    columns = [col for col in merge.columns if f'package_' in col]
+    print(f'will cal precent for weekly#package{len(columns)}:{columns}')
+    for col in columns:
         merge[col] = merge[col] / merge['pkg_nunique']
+    #merge.drop(columns=columns, inplace=True)
 
-
-    for col in [col for col in merge.columns if f'duration_' in col]:
-        # print(col)
+    columns = [col for col in merge.columns if f'duration_' in col]
+    print(f'will cal precent for weekly#duration{len(columns)}:{columns}')
+    for col in columns:
         merge[col] = merge[col] / merge['dur_sum']
+    #merge.drop(columns=columns, inplace=True)
 
 
     #工作日和周末的对比:
@@ -251,9 +257,10 @@ def get_summary_weekday(df):
     merge['wk_comapre_dur' ] = merge['duration_wk_0']/ merge['duration_wk_1']
     merge['wk_compare_action_count'] = merge['action_wk_0'] / merge['action_wk_1']
 
-
-    merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
+    merge['action_daily']    = merge['pkg_count']/merge['start_base_nunique']
+    #merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
     merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
+
 
     return merge
 
