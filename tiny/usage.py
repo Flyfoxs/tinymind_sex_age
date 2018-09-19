@@ -150,7 +150,7 @@ def reduce_time_span(df, prefix, span_no=4):
 
 
 @timed()
-@file_cache(overwrite=False)
+@file_cache(overwrite=True)
 def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -213,7 +213,7 @@ def get_summary_weekday(df):
 
     #区分周末和工作日
     df['weekend'] = df.weekday // 5
-    gp3 = df.groupby(['device', 'weekend']).agg({'package': 'nunique', 'day_duration': 'sum'})
+    gp3 = df.groupby(['device', 'weekend']).agg({'package': 'nunique', 'weekday':'count', 'day_duration': 'sum'})
     gp3.reset_index(inplace=True)
 
     wk_end1 = gp3.pivot(index='device', columns='weekend', values='package')
@@ -222,7 +222,10 @@ def get_summary_weekday(df):
     wk_end2 = gp3.pivot(index='device', columns='weekend', values='day_duration')
     wk_end2.columns = [f'duration_wk_{col}' for col in wk_end2.columns]
 
-    wk = pd.concat([wk_end1, wk_end2], axis=1)
+    wk_end3 = gp3.pivot(index='device', columns='weekend', values='weekday')
+    wk_end3.columns = [f'action_wk_{col}' for col in wk_end3.columns]
+
+    wk = pd.concat([wk_end1, wk_end2, wk_end3], axis=1)
     wk.head()
 
     #计算总数
@@ -241,6 +244,13 @@ def get_summary_weekday(df):
     for col in [col for col in merge.columns if f'duration_' in col]:
         # print(col)
         merge[col] = merge[col] / merge['dur_sum']
+
+
+    #工作日和周末的对比:
+    merge['wk_compare_app_count'] = merge['package_wk_0'] / merge['package_wk_1']
+    merge['wk_comapre_dur' ] = merge['duration_wk_0']/ merge['duration_wk_1']
+    merge['wk_compare_action_count'] = merge['action_wk_0'] / merge['action_wk_1']
+
 
     merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
     merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
