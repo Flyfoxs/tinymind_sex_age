@@ -73,8 +73,10 @@ def gen_sub_by_para(drop_useless_pkg, drop_long,  n_topics):
     sub.columns=Y_CAT.categories
     sub['DeviceID']=test['device'].values
     sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8', '1-9', '1-10', '2-0', '2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
+    from sklearn.metrics import log_loss
+    loss = log_loss(y_test, gbm.predict(X_test,num_iteration=gbm.best_iteration))
 
-
+    print(f'Loss={loss}')
     #lgb.plot_importance(gbm, max_num_features=20)
 
     print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
@@ -86,8 +88,9 @@ def gen_sub_by_para(drop_useless_pkg, drop_long,  n_topics):
 
 if __name__ == '__main__':
 
-    for n_topics in range(3, 8, 1):
-        gen_sub_by_para(True, 0.3, n_topics=n_topics)
+    gen_sub_by_para(True, 0.3, n_topics=5)
+    # for n_topics in range(3, 8, 1):
+    #     gen_sub_by_para(True, 0.3, n_topics=n_topics)
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:
