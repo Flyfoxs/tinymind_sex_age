@@ -157,24 +157,16 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     path_list = sorted(list, reverse=True)
     path_list = [os.path.join(rootdir, item) for item in path_list]
 
-    from multiprocessing.dummy import Pool as ThreadPool
+    #from multiprocessing.dummy import Pool as ThreadPool
 
-    pool = ThreadPool(processes=2)
+    from multiprocessing import Pool as ThreadPool
+
+    pool = ThreadPool(processes=8)
 
     process_file = partial(summary_individual_file, drop_long=drop_long, drop_useless_pkg=drop_useless_pkg)
     results = pool.map(process_file, path_list)
 
     results = [item for item in results if len(item)>0]
-
-    # duration_list = []
-    # for path in path_list:
-    #     if os.path.isfile(path) and 'csv' in path:
-    #         df = summary_individual_file(path, drop_long, drop_useless_pkg, )
-    #         if len(df) > 0:
-    #             print(f'Partition size is {len(df)}')
-    #             duration_list.append(df)
-    #         else:
-    #             print(f'The df is None for file:{path}')
 
     all = pd.concat(results)
     return all.reset_index()
