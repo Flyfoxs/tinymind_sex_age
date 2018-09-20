@@ -14,17 +14,19 @@ class Cache_File:
     def get_path(self, key, type):
         return f'{self.cache_path}{key}.{type}'
 
-    def readFile(self, key, type_):
+    def readFile(self, key, file_type):
         if self.enable:
-            path = self.get_path(key, type_)
+            path = self.get_path(key, file_type)
             if os.path.exists(path):
-                logger.debug(f"try to read cache from file:{path}, type:{type_}")
+                logger.debug(f"try to read cache from file:{path}, type:{file_type}")
 
                 #check if the file have the data type column
-                if type_== 'pkl':
+                if file_type== 'pkl':
                     df = pd.read_pickle(path)
-                    logger.debug(f"Load to {type(df)} with density:{df.density} for {type_}@{path}")
+                    logger.debug(f"Load to {type(df)} with density:{df.density} for {file_type}@{path}")
                     df.fillna(0,inplace=True)
+                elif file_type == 'h5':
+                    df = pd.read_hdf(path, 'key')
                 else:
                     df = pd.read_csv(path, nrows=1)
                     tmp_data_list = [item for item in self.date_list if item in df.columns]
@@ -52,6 +54,8 @@ class Cache_File:
 
                 sparse.to_pickle(path)
                 logger.debug(f'The sparse.density is {sparse.density}')
+            elif type == 'h5':
+                val.to_hdf(path, 'key')
             else:
                 val.to_csv(path, index=False, )
             return val

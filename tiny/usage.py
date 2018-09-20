@@ -150,7 +150,7 @@ def reduce_time_span(df, prefix, span_no=4):
 
 
 @timed()
-@file_cache(overwrite=True)
+@file_cache(overwrite=False, type='h5')
 def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
