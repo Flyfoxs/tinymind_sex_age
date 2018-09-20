@@ -48,6 +48,7 @@
 # DNN
 # Drop usless in usage, not only lda
 # Long Session的个数
+# 统一只取最后N天的数据
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb

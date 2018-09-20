@@ -66,7 +66,7 @@ def gen_sub_by_para(estimate=1000):
 if __name__ == '__main__':
 
     #for estimate in range(10, 2000, 50):
-        gen_sub_by_para(10)
+        gen_sub_by_para(100)
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:

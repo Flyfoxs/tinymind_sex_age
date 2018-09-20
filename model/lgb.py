@@ -54,13 +54,38 @@ params = {
     'verbose': -1
 }
 
+params = {
+        'boosting_type': 'gbdt',
+        'max_depth': 3,
+        'metric': {'multi_logloss'},
+        'num_class': 22,
+        'objective': 'multiclass',
+        'random_state': 47,
+        'verbose': -1,
+        'feature_fraction': 0.2,
+        'min_data_in_leaf': 1472,
+
+        'reg_alpha': 3,
+        'reg_lambda': 4,
+        'subsample': 0.2
+
+    }
+
 
 gbm = LGBMClassifier(n_estimators=1000,
                      boosting_type='gbdt',
                      objective='multiclass',
                      num_class=22,
                      random_state=47,
-                     eval_metric='multi_logloss'
+                     eval_metric='multi_logloss',
+
+
+                     subsample=0.2,
+                     feature_fraction=0.2,
+                     reg_alpha=3,
+                     reg_lambda=4,
+                     min_data_in_leaf=1472,
+                     max_depth= 3,
                     )
 
 gbm.set_params(**params)

@@ -7,8 +7,12 @@ from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para(drop_useless_pkg, drop_long, n_topics):
+def gen_sub_by_para(reg_alpha, reg_lambda, ):
     args = locals()
+
+    drop_useless_pkg=True
+    drop_long =0.3
+    n_topics=5
 
     lda_feature = get_lda_from_usage(n_topics)
     feature = extend_feature(span_no=24, input=lda_feature,
@@ -37,15 +41,14 @@ def gen_sub_by_para(drop_useless_pkg, drop_long, n_topics):
 
         #"min_data_in_leaf":1000,
         'verbose': -1,
-        'feature_fraction': 0.58,
+        'feature_fraction': 0.2,
         # 'min_child_samples': 289,
         #'min_child_weight': 0.1,
         'min_data_in_leaf': 1472,
         #'num_leaves': 300,
-        'reg_alpha': 3,
-        'reg_lambda': 4,
-        'subsample': 0.8
-
+        'reg_alpha': reg_alpha,
+        'reg_lambda': reg_lambda,
+        'subsample': 0.5
 
     }
 
@@ -81,13 +84,15 @@ def gen_sub_by_para(drop_useless_pkg, drop_long, n_topics):
 
     print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
-    file = f'./sub/baseline_{best}_{args}.csv'
+    file = f'./sub/baseline_lg_{best}_{args}.csv'
     file = replace_invalid_filename_char(file)
     print(f'sub file save to {file}')
     sub.to_csv(file,index=False)
 
 if __name__ == '__main__':
-    gen_sub_by_para(True, 0.3, n_topics=5)
+    for reg_alpha in np.arange(1, 5, 1):
+        for reg_lambda in np.arange(1, 5, 1):
+            gen_sub_by_para(reg_alpha, reg_lambda)
     # #for limit in range(100, 1300, 100):
     # for drop in np.arange(0.1, 1.1, 0.1):
     #     gen_sub_by_para(True, round(drop, 2), n_topics=5)
