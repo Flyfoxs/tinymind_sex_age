@@ -37,7 +37,7 @@ def gen_sub_by_para(drop_useless_pkg, drop_long, n_topics):
 
         #"min_data_in_leaf":1000,
         'verbose': -1,
-        'colsample_bytree': 0.58,
+        'feature_fraction': 0.58,
         # 'min_child_samples': 289,
         #'min_child_weight': 0.1,
         'min_data_in_leaf': 1472,

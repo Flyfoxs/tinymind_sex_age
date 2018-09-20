@@ -15,6 +15,7 @@ from tiny.util import *
 
 @lru_cache()
 @timed()
+@file_cache()
 def get_drop_list_for_install(limit=18363):
     """
     total:35000, 18363 is 0 install base on testing data

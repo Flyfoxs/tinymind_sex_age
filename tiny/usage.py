@@ -1,4 +1,5 @@
 from tiny.util import *
+from functools import partial
 
 @file_cache()
 @timed()
@@ -149,60 +150,64 @@ def reduce_time_span(df, prefix, span_no=4):
 
 
 @timed()
-@file_cache(overwrite=False, type='h5')
+@file_cache(overwrite=True, type='h5')
 def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
-    list = sorted(list, reverse=True)
+    path_list = sorted(list, reverse=True)
+    path_list = [os.path.join(rootdir, item) for item in path_list]
 
-    if mini:
-        list =  list[:3]
+    from multiprocessing.dummy import Pool as ThreadPool
 
-    duration_list = []
-    for i in range(0, len(list)):
-        path = os.path.join(rootdir, list[i])
-        if os.path.isfile(path) and 'csv' in path:
-            print(f"Try to summary file:{path}")
-            df = cal_duration_for_partition(path)
+    pool = ThreadPool(processes=2)
 
-            if drop_long and drop_long<1:
-                print(f'Drop long session with session<={drop_long}, before:{len(df)})')
-                df = df[df.day_duration<=drop_long]
-                print(f'Drop long session with session<={drop_long}, after:{len(df)})')
-            if mini:
-                print('Return mini result for testing')
-                df = df[0:1000]
+    process_file = partial(summary_individual_file, drop_long=drop_long, drop_useless_pkg=drop_useless_pkg)
+    results = pool.map(process_file, path_list)
 
-            if drop_useless_pkg:
-                from tiny.package import drop_useless_package
-                print(f'The rows before drop:{len(df)} with:{drop_useless_pkg}')
-                df = drop_useless_package(df, drop_useless_pkg)
-                print(f'The rows after drop:{len(df)} with:{drop_useless_pkg}')
+    results = [item for item in results if len(item)>0]
 
-            df_weekday = get_summary_weekday(df)
+    # duration_list = []
+    # for path in path_list:
+    #     if os.path.isfile(path) and 'csv' in path:
+    #         df = summary_individual_file(path, drop_long, drop_useless_pkg, )
+    #         if len(df) > 0:
+    #             print(f'Partition size is {len(df)}')
+    #             duration_list.append(df)
+    #         else:
+    #             print(f'The df is None for file:{path}')
 
-            df_span    = get_summary_span24(df)
-            df = pd.concat([df_weekday, df_span], axis=1)
-
-            if len(df) > 0 :
-                print(f'Partition size is {len(df)}')
-                duration_list.append(df)
-            else:
-                print(f'The df is None for file:{path}')
-    all = pd.concat(duration_list)
+    all = pd.concat(results)
     return all.reset_index()
 
 
-
+def summary_individual_file(path, drop_long, drop_useless_pkg, ):
+    print(f"Try to summary file:{path}")
+    if not path.endswith('csv'):
+        print(f"Incorrect file:{path}")
+        return pd.DataFrame()
+    df = cal_duration_for_partition(path)
+    if drop_long and drop_long < 1:
+        print(f'Drop long session with session<={drop_long}, before:{len(df)})')
+        df = df[df.day_duration <= drop_long]
+        print(f'Drop long session with session<={drop_long}, after:{len(df)})')
+    if drop_useless_pkg:
+        from tiny.package import drop_useless_package
+        print(f'The rows before drop:{len(df)} with:{drop_useless_pkg}')
+        df = drop_useless_package(df, drop_useless_pkg)
+        print(f'The rows after drop:{len(df)} with:{drop_useless_pkg}')
+    df_weekday = get_summary_weekday(df)
+    df_span = get_summary_span24(df)
+    df = pd.concat([df_weekday, df_span], axis=1)
+    return df
 
 def get_summary_weekday(df):
 
     ##TODO
     #按照每个星期去统计
-    gp = df.groupby(['device', 'weekday']).agg({'package': 'nunique', 'day_duration': 'sum'})
+    gp = df.groupby(['device', 'weekday']).agg({'package': 'nunique', 'day_duration': 'sum', 'start':'count'})
     gp.reset_index(inplace=True)
 
-    #按照每天(weekday)去统计
+    # #按照每天(weekday)去统计
     # gp0 = gp.pivot(index='device', columns='weekday', values='start')
     # gp0.columns = [f'action_{col}' for col in gp0.columns]
 
@@ -228,7 +233,7 @@ def get_summary_weekday(df):
     wk_end3.columns = [f'action_wk_{col}' for col in wk_end3.columns]
 
     wk = pd.concat([wk_end1, wk_end2, wk_end3], axis=1)
-    wk.head()
+
 
     #计算总数
     total = df.groupby(['device']).agg({'package': ['nunique', 'count'], 'duration': 'sum' ,'start_base':'nunique'})
@@ -236,6 +241,16 @@ def get_summary_weekday(df):
     total.columns = ['_'.join(item) for item in total.columns]
 
     merge = pd.concat([gp1, gp2, wk, total], axis=1)
+
+
+    #工作日和周末的对比:
+    merge['wk_compare_app_count'] = merge['package_wk_0'] / merge['package_wk_1']
+    merge['wk_comapre_dur' ] = merge['duration_wk_0']/ merge['duration_wk_1']
+    merge['wk_compare_action_count'] = merge['action_wk_0'] / merge['action_wk_1']
+
+    merge['action_daily']    = merge['pkg_count']/merge['start_base_nunique']
+    merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
+
 
     # 转换为package nunique 的Percentage
     columns = [col for col in merge.columns if f'package_' in col]
@@ -250,15 +265,6 @@ def get_summary_weekday(df):
         merge[col] = merge[col] / merge['dur_sum']
     #merge.drop(columns=columns, inplace=True)
 
-
-    #工作日和周末的对比:
-    merge['wk_compare_app_count'] = merge['package_wk_0'] / merge['package_wk_1']
-    merge['wk_comapre_dur' ] = merge['duration_wk_0']/ merge['duration_wk_1']
-    merge['wk_compare_action_count'] = merge['action_wk_0'] / merge['action_wk_1']
-
-    merge['action_daily']    = merge['pkg_count']/merge['start_base_nunique']
-    #merge['pkg_count_daily'] = merge['pkg_count']/merge['start_base_nunique']
-    merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
 
 
     return merge

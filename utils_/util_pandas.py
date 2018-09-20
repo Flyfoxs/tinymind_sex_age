@@ -7,11 +7,15 @@ import pandas as pd
 
 
 @timed(logger)
-def convert_label_encode(sample,  excluded_list=[]):
+def convert_label_encode(sample,  included_list=[]):
+
+    sample = sample.apply(lambda x: x.fillna('Other')
+                            if x.name in included_list else x,
+                                                  reduce=False)
 
     label_encode = defaultdict(LabelEncoder)
     sample = sample.apply(lambda x: label_encode[x.name].fit_transform(x.astype(str))
-                    if x.name not in excluded_list else x,
+                    if x.name in included_list else x,
                     reduce=False)
 
 
@@ -33,6 +37,6 @@ def check_exception(df, index=None):
     if len(x)>0:
         print(x.min(), x.max()+1, y.min(), y.max()+1)
         df = df.iloc[x.min():(x.max()+1), y.min():(y.max()+1)]
-        return df.iloc[:4, :3]
+        return df.iloc[:3, :4]
     else:
         return pd.DataFrame()

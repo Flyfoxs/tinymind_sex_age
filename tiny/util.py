@@ -340,7 +340,7 @@ def attach_device_train_label(df):
 
 
 @timed()
-@file_cache(overwrite=True)
+@file_cache(overwrite=False)
 def get_stable_feature():
     from tiny.lda import get_lda_from_usage
     from tiny.usage import extend_feature
