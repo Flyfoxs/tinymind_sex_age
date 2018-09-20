@@ -25,23 +25,26 @@ plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 
 @timed()
-def get_brand(limit=100):
+def get_brand():
     brand = pd.read_csv('input/deviceid_brand.tsv', sep='\t', header=None)
 
     brand.columns = ['device', 'brand', 'phone_type']
-
-    tmp2 = brand.groupby(['brand']).count().sort_values('device', ascending=False)
-    tmp2['cumsum'] = tmp2.device.cumsum()
-    #tmp2['percentage'] = tmp2['cumsum'] / 72554
-    brand_1 = brand[brand.brand.isin(tmp2[:limit].index)]
-
-    brand_2 = brand[~brand.brand.isin(tmp2[:limit].index)]
-    brand_2.brand = 'Other'
-    brand_2.phone_type = 'Other'
-
-    brand = pd.concat([brand_1, brand_2])
-    brand = brand.sort_values('brand')
-    return convert_label_encode(brand, excluded_list = ['device'])
+    #
+    # tmp2 = brand.groupby(['brand']).count().sort_values('device', ascending=False)
+    # tmp2['cumsum'] = tmp2.device.cumsum()
+    # #tmp2['percentage'] = tmp2['cumsum'] / 72554
+    # brand_1 = brand[brand.brand.isin(tmp2[:limit].index)]
+    #
+    # brand_2 = brand[~brand.brand.isin(tmp2[:limit].index)]
+    # brand_2.brand = 'Other'
+    # brand_2.phone_type = 'Other'
+    #
+    # print(f'Size of brand1:{len(brand_1)} , brand2:{len(brand_2)}')
+    #
+    #
+    # brand = pd.concat([brand_1, brand_2])
+    # brand = brand.sort_values('brand')
+    return brand
 
 #
 # # Performance issue
@@ -172,9 +175,9 @@ def extend_pkg_label(df=None):
         return df
 
 @timed()
-def extend_device_brand(tmp, limit=1200):
+def extend_device_brand(tmp):
 
-    brand = get_brand(limit)
+    brand = get_brand()
     print(f'column list:{tmp.columns}')
     if tmp is None:
         return brand
@@ -183,7 +186,7 @@ def extend_device_brand(tmp, limit=1200):
             tmp.index.name = 'device'
             tmp.reset_index(inplace=True)
         tmp = tmp.merge(brand, how='left')
-        return tmp
+        return convert_label_encode(tmp,['brand', 'phone_type'])
 
 
 
@@ -301,7 +304,7 @@ def get_start_closed(file=None):
     return start_close
 
 def replace_invalid_filename_char(filename):
-    invalid_characaters = '\':"<>|'
+    invalid_characaters = '\':"<>|{}'
     for char in invalid_characaters:
         filename = filename.replace(char, '')
     return filename
@@ -337,7 +340,7 @@ def attach_device_train_label(df):
 
 
 @timed()
-@file_cache(overwrite=False)
+@file_cache(overwrite=True)
 def get_stable_feature():
     from tiny.lda import get_lda_from_usage
     from tiny.usage import extend_feature

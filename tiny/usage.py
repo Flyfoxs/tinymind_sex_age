@@ -91,10 +91,7 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
         if 'device' not in list(input.columns):
             input.index.name = 'device'
             input = input.reset_index()
-        # print(f'({list(input.columns)}')
-        #
-        # print(f'({list(df.columns)}')
-
+        #TODO , join is outer
         df = input.merge(df, on='device', how='left')
 
     drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max',
@@ -102,6 +99,8 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
                  'sum_day_min', 'sum_day_max']
     drop_list = [ col for col in df.columns if col in drop_list]
     df.drop(columns=drop_list, inplace=True)
+
+    df.replace({np.nan:0, np.inf:0}, inplace=True)
 
     return df
 
