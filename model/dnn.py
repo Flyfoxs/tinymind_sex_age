@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from keras.datasets import mnist
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation
+from keras.layers.core import Dense, Activation, Dropout
 from keras.layers.advanced_activations import LeakyReLU, PReLU
 from keras.optimizers import SGD
 from keras.utils import np_utils
@@ -32,11 +32,19 @@ model.add(Dense(1000, input_shape=(input_dim,)))
 #model.add(Activation('sigmoid'))
 model.add(LeakyReLU(alpha=0.01))
 
-model.add(Dense(20))
-model.add(LeakyReLU(alpha=0.01))
+model.add(Dense(100, activation=LeakyReLU(alpha=0.01)))
 
-model.add(Dense(22))
-model.add(Activation('softmax'))
+#model.add(Dropout(0.1))
+
+model.add(Dense(100, activation=LeakyReLU(alpha=0.01)))
+
+#model.add(Dropout(0.1))
+
+model.add(Dense(20, activation=LeakyReLU(alpha=0.01)))
+
+
+model.add(Dense(22, activation=Activation('softmax')))
+
 
 # model.compile(optimizer="sgd", loss="mse")
 from keras.metrics import categorical_accuracy
@@ -44,7 +52,7 @@ model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[catego
 #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[categorical_accuracy])
 
 
-model.fit(X_train, np_utils.to_categorical(y_train), epochs=10, verbose=1)
+model.fit(X_train, np_utils.to_categorical(y_train), epochs=1000, verbose=1)
 
 from sklearn.metrics import log_loss
 
