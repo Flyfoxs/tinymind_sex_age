@@ -1,9 +1,10 @@
 from tiny.util import *
 from functools import partial
+from tiny.group_label import *
 
 @file_cache()
 @timed()
-def cal_duration_for_partition(path):
+def cal_duration_for_partition(path='./output/start_close/deviceid_package_start_close_40_09_8474059_9415641.csv'):
     df = get_start_closed(path)
     df = split_days_all(df)
     df = cal_duration_for_span(df, span_no=24)
@@ -85,9 +86,11 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
     # df = reduce_time_span(df, prefix, span_no)
     df.drop(columns=['day_dur'], inplace=True, errors='ignore')
     df = convert_count_to_percent(df)
+    #
+    #Extend top#n on usage
+    df_label = summary_top_on_usage('p_type',3)
+    df = pd.merge(df, df_label, how='left', on='device')
 
-
-    # df = extend_brand_pkg(df)
     if input is not None:
         if 'device' not in list(input.columns):
             input.index.name = 'device'
@@ -149,22 +152,26 @@ def reduce_time_span(df, prefix, span_no=4):
     return df
 
 
+
 @timed()
 @file_cache(overwrite=False, type='h5')
 def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     path_list = sorted(list, reverse=True)
-    path_list = [os.path.join(rootdir, item) for item in path_list]
+    path_list = [os.path.join(rootdir, item) for item in path_list if item.endswith('csv')]
 
     #from multiprocessing.dummy import Pool as ThreadPool
 
     from multiprocessing import Pool as ThreadPool
 
-    pool = ThreadPool(processes=8)
+    pool = ThreadPool(processes=4)
 
     process_file = partial(summary_individual_file, drop_long=drop_long, drop_useless_pkg=drop_useless_pkg)
     results = pool.map(process_file, path_list)
+
+    pool.close()
+    pool.join()
 
     results = [item for item in results if len(item)>0]
 
@@ -174,10 +181,13 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
 
 def summary_individual_file(path, drop_long, drop_useless_pkg, ):
     print(f"Try to summary file:{path}")
-    if not path.endswith('csv'):
-        print(f"Incorrect file:{path}")
-        return pd.DataFrame()
+
     df = cal_duration_for_partition(path)
+
+    # old_len = len(df)
+    # df = df[df.start_base >= '2017-01-01']
+    # print(f'{old_len - len(df))} rows({(old_len - len(df))/old_len}) <2017-01-01 is remove from {path}')
+
     if drop_long and drop_long < 1:
         print(f'Drop long session with session<={drop_long}, before:{len(df)})')
         df = df[df.day_duration <= drop_long]

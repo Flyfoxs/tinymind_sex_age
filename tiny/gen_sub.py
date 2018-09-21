@@ -7,7 +7,7 @@ from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para(reg_alpha, reg_lambda, ):
+def gen_sub_by_para():
     args = locals()
 
     drop_useless_pkg=True
@@ -17,7 +17,13 @@ def gen_sub_by_para(reg_alpha, reg_lambda, ):
     lda_feature = get_lda_from_usage(n_topics)
     feature = extend_feature(span_no=24, input=lda_feature,
                              drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
-    feature=  extend_device_brand(feature)
+
+    feature =  extend_device_brand(feature)
+
+    obj_col = feature.select_dtypes(include=['object']).columns
+    print(f'{obj_col} will convert to label encode')
+    feature = convert_label_encode(feature, list(obj_col) )
+
     feature_label = attach_device_train_label(feature)
 
 
@@ -46,8 +52,8 @@ def gen_sub_by_para(reg_alpha, reg_lambda, ):
         #'min_child_weight': 0.1,
         'min_data_in_leaf': 1472,
         #'num_leaves': 300,
-        'reg_alpha': reg_alpha,
-        'reg_lambda': reg_lambda,
+        'reg_alpha': 2,
+        'reg_lambda': 4,
         'subsample': 0.5
 
     }
@@ -90,9 +96,9 @@ def gen_sub_by_para(reg_alpha, reg_lambda, ):
     sub.to_csv(file,index=False)
 
 if __name__ == '__main__':
-    for reg_alpha in np.arange(1, 5, 1):
-        for reg_lambda in np.arange(1, 5, 1):
-            gen_sub_by_para(reg_alpha, reg_lambda)
+    # for reg_alpha in np.arange(1, 5, 1):
+    #     for reg_lambda in np.arange(1, 5, 1):
+            gen_sub_by_para()
     # #for limit in range(100, 1300, 100):
     # for drop in np.arange(0.1, 1.1, 0.1):
     #     gen_sub_by_para(True, round(drop, 2), n_topics=5)

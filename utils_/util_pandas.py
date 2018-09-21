@@ -8,6 +8,8 @@ import pandas as pd
 
 @timed(logger)
 def convert_label_encode(sample,  included_list=[]):
+    if 'device' in included_list:
+        included_list.remove('device')
 
     sample = sample.apply(lambda x: x.fillna('Other')
                             if x.name in included_list else x,

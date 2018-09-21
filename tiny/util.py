@@ -18,10 +18,10 @@ except :
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
-# pd.set_option('display.height', 1000)
-# pd.set_option('display.max_rows', 500)
-# pd.set_option('display.max_columns', 500)
-# pd.set_option('display.width', 1000)
+pd.set_option('display.height', 1000)
+pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.width', 1000)
 
 
 @timed()
@@ -171,7 +171,7 @@ def extend_pkg_label(df=None):
         return pkg_label
     else:
         df = pd.merge(df, pkg_label, on='package', how='left')
-        df.fillna('Unknown', inplace=True)
+        df[['p_type', 'p_sub_type','combine_type']] = df[['p_type','p_sub_type', 'combine_type']].fillna('Unknown')
         return df
 
 @timed()

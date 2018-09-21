@@ -26,20 +26,22 @@ from tiny.lda import *
 #
 #     return tfidf
 #
-# @timed()
-# def cal_tfidf(cntTf):
-#     index = cntTf.index
-#     transformer = TfidfTransformer()
-#     import scipy
-#     print('Try to sparse cntTF')
-#     cntTf.fillna(0, inplace=True)
-#     cntTf = scipy.sparse.csr_matrix(cntTf.values)
-#     print(f'Try to cal tfidf for {type(cntTf)}')
-#     tfidf = transformer.fit_transform(cntTf)
-#
-#     df_weight = pd.SparseDataFrame(tfidf.toarray(), index=index)
-#     return df_weight
-#
+@timed()
+def cal_tfidf(cntTf):
+    index = cntTf.index
+    transformer = TfidfTransformer()
+    import scipy
+    print('Try to sparse cntTF')
+    cntTf.fillna(0, inplace=True)
+    cntTf = cntTf.to_sparse(fill_value=0)
+    print(f'Density before TFIDF:{cntTf.density}')
+    #cntTf = scipy.sparse.csr_matrix()
+    print(f'Try to cal tfidf for {type(cntTf)}')
+    tfidf = transformer.fit_transform(cntTf)
+
+    df_weight = pd.SparseDataFrame(tfidf.toarray(), index=index)
+    return df_weight
+
 
 @timed()
 @file_cache(type='pkl', overwrite=False)
@@ -99,6 +101,15 @@ def get_cntTf( group_level, agg_col, agg_method):
     cntTf.fillna(0, inplace=True)
     return cntTf.to_sparse(fill_value=0)
 
+@file_cache(type='pkl')
+def get_tfidf(summary=True):
+    cntTf = get_cntTf('app', 'package', None)
+    tfidf = cal_tfidf(cntTf);
+    if summary:
+        return tfidf.sum(axis=1).to_frame()
+    else:
+        return tfidf
+
 #
 # @timed()
 # @file_cache()
@@ -110,10 +121,14 @@ def get_cntTf( group_level, agg_col, agg_method):
 
 if __name__ == '__main__':
 
-    for group_level in ['usage']:
-        for agg_col in ['p_sub_type', 'package']:
-            for agg_method in ['sum', 'count']:
-                get_cntTf(group_level, agg_col, agg_method)
 
-    get_cntTf('app', 'package', None)
-    get_cntTf('app', 'p_sub_type', None)
+
+    tfidf = get_tfidf(summary=True)
+
+    # for group_level in ['usage']:
+    #     for agg_col in ['p_sub_type', 'package']:
+    #         for agg_method in ['sum', 'count']:
+    #             get_cntTf(group_level, agg_col, agg_method)
+    #
+    # get_cntTf('app', 'package', None)
+    # get_cntTf('app', 'p_sub_type', None)

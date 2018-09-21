@@ -46,14 +46,17 @@ rf = RandomForestClassifier(n_estimators=5000,
                                         n_jobs=-1,
                                         random_state=42)
 
+gnb = GaussianNB()
+
 lr = LogisticRegression()
-sclf = StackingCVClassifier(classifiers=[lgbm, rf],
+sclf = StackingCVClassifier(classifiers=[lgbm, rf, gnb],
                           #use_probas=True,
                          # average_probas=False,
                           meta_classifier=lr)
 
 #sclf = lgbm
 
+sclf = gnb
 
 
 
