@@ -15,4 +15,5 @@ input
 output
 cache
 sub
+**/*.hdf5
 

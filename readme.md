@@ -69,3 +69,7 @@ nohup python -u tiny/test2.py > test22.log 2>&1 &
 
 nohup python -u tiny/usage.py > usage.log 2>&1 &
 
+
+nohup python -u model/rf.py > rf.log 2>&1 &
+
+nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py > dnn.log 2>&1 &

@@ -66,12 +66,13 @@ def merge_score(file_list):
 
 if __name__ == '__main__':
     file_list = [
-        (0.5, 'lg' , './sub/baseline_lg_2.64604_.csv'),
-        (0.5, 'dnn',  './sub/baseline_dnn_2.664605327415466_epochs 200, dense 20, dropout 0.51.csv'),
+        (0.4, 'lg' , './sub/baseline_lg_2.64604_.csv'),
+        (0.3, 'dnn',  './sub/baseline_dnn_2.664605327415466_epochs 200, dense 20, dropout 0.51.csv'),
+        (0.3, 'rf5k', './sub/baseline_rf_2.6752_estimate 5000.csv'),
     ]
     score = merge_score(file_list)
     score = round(score, 10)
-    weight=[str(f'{file[1]}|{file[0]}') for file in file_list]
+    weight=[str(f'{file[1]}_{file[0]}') for file in file_list]
     score.to_csv(f'./sub/merge_score_{"_".join(weight)}.csv')
 
 

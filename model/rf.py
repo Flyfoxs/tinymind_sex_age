@@ -12,7 +12,7 @@ def gen_sub_by_para(estimate=1000):
     args = locals()
 
 
-    feature_label = get_stable_feature()
+    feature_label = get_stable_feature('rf01')
 
 
 

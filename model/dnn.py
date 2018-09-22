@@ -1,3 +1,4 @@
+from keras import models
 from keras.callbacks import ModelCheckpoint
 from keras.layers import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
@@ -9,6 +10,7 @@ from sklearn.cross_validation import train_test_split
 from tiny.tfidf import *
 from tiny.usage import *
 
+tmp_model = './model/checkpoint/dnn_best_tmp.hdf5'
 
 def train_dnn(dropout, dense):
     args = locals()
@@ -57,7 +59,7 @@ def train_dnn(dropout, dense):
     #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[categorical_accuracy])
 
     #'./model/'
-    file_path = f'./model/checkpoint/dnn_best_{args}.hdf5'
+    file_path = tmp_model
 
     check_best = ModelCheckpoint(filepath=replace_invalid_filename_char(file_path),
                                 monitor='val_loss',verbose=1,
@@ -69,52 +71,55 @@ def train_dnn(dropout, dense):
                        callbacks=[check_best],
                        batch_size=128,
                        #steps_per_epoch= len(X_test)//128,
-                       epochs=200, verbose=1)
+                       epochs=400, verbose=1)
 
     return model, history, args
 
 
 if __name__ == '__main__':
-    model , history, args = train_dnn(0.51, 20)
+    for drop in np.arange(0.4, 0.8, 0.05):
+        for dense in np.arange(20, 100, 10):
 
-    #model = keras.models.load_model(filepath)
+            _ , history, args = train_dnn(drop, dense)
 
-    feature_label = get_stable_feature('0922')
+            model = models.load_model(tmp_model)
 
-    train = feature_label[feature_label['sex'].notnull()]
-    test = feature_label[feature_label['sex'].isnull()]
+            feature_label = get_stable_feature('0922')
 
-    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+            train = feature_label[feature_label['sex'].notnull()]
+            test = feature_label[feature_label['sex'].isnull()]
 
-    Y = train['sex_age']
-    Y_CAT = pd.Categorical(Y)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels, test_size=0.3, random_state=666)
+            X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
 
-    # X_train.fillna(0, inplace=True)
-    # X_test.fillna(0, inplace=True)
+            Y = train['sex_age']
+            Y_CAT = pd.Categorical(Y)
+            X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels, test_size=0.3, random_state=666)
 
-    classifier = model
 
-    pre_x = test.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-    sub = pd.DataFrame(classifier.predict_proba(pre_x.values))
+            classifier = model
 
-    sub.columns = Y_CAT.categories
-    sub['DeviceID'] = test['device'].values
-    sub = sub[
-        ['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
-         '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
+            pre_x = test.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+            sub = pd.DataFrame(classifier.predict_proba(pre_x.values))
 
-    from sklearn.metrics import log_loss
+            sub.columns = Y_CAT.categories
+            sub['DeviceID'] = test['device'].values
+            sub = sub[
+                ['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
+                 '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
 
-    best = log_loss(y_test, classifier.predict_proba(X_test))
+            from sklearn.metrics import log_loss
 
-    # lgb.plot_importance(gbm, max_num_features=20)
+            best = log_loss(y_test, classifier.predict_proba(X_test))
 
-    print(
-        f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
+            model_file = f'./model/checkpoint/dnn_best_{best}_{args}.hdf5'
+            model.save(model_file,
+                       overwrite=True)
 
-    file = f'./sub/baseline_dnn_{best}_{args}.csv'
-    file = replace_invalid_filename_char(file)
-    print(f'sub file save to {file}')
-    sub = round(sub, 10)
-    sub.to_csv(file, index=False)
+            print(
+                f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
+
+            file = f'./sub/baseline_dnn_{best}_{args}.csv'
+            file = replace_invalid_filename_char(file)
+            print(f'sub file save to {file}')
+            sub = round(sub, 10)
+            sub.to_csv(file, index=False)
