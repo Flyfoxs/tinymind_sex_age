@@ -82,12 +82,14 @@ def summary_top_for_individual_file(path, gp_col, top):
     tmp = ex_input.groupby('device')[gp_col].nunique().to_frame()
     tmp.rename(columns={gp_col: f'{gp_col}_count'}, inplace=True)
 
-    df = pd.concat([gp00,
+    df = pd.concat([
+                    gp00, #✔️
                    # gp01, #❎
-                    gp02,
-                    gp11,
+                    gp02, #✔️
+                    gp11, #✔️
                     gp12, #✔️
-                    tmp], axis=1)
+                    tmp,  #✔️
+                    ], axis=1)
 
     df.fillna(0)
 

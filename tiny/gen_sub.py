@@ -15,14 +15,12 @@ def gen_sub_by_para():
     n_topics=5
 
     lda_feature = get_lda_from_usage(n_topics)
+
     feature = extend_feature(span_no=24, input=lda_feature,
                              drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
 
-    feature =  extend_device_brand(feature)
+    feature = convert_label_encode(feature)
 
-    obj_col = feature.select_dtypes(include=['object']).columns
-    print(f'{obj_col} will convert to label encode')
-    feature = convert_label_encode(feature, list(obj_col) )
 
     feature_label = attach_device_train_label(feature)
 

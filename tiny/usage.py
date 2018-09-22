@@ -98,6 +98,11 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
         #TODO , join is outer
         df = input.merge(df, on='device', how='left')
 
+        from tiny.tfidf import attach_tfidf
+        df = attach_tfidf(df)
+
+        df = extend_device_brand(df)
+
     drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max',
                  'p_type', 'p_sub_type',
                  'sum_day_min', 'sum_day_max']

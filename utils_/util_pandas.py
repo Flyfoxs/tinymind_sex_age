@@ -7,21 +7,28 @@ import pandas as pd
 
 
 @timed(logger)
-def convert_label_encode(sample,  included_list=[]):
-    if 'device' in included_list:
-        included_list.remove('device')
-
-    sample = sample.apply(lambda x: x.fillna('Other')
-                            if x.name in included_list else x,
-                                                  reduce=False)
-
-    label_encode = defaultdict(LabelEncoder)
-    sample = sample.apply(lambda x: label_encode[x.name].fit_transform(x.astype(str))
-                    if x.name in included_list else x,
-                    reduce=False)
+def convert_label_encode(sample):
+    try:
+        #Label encode
+        obj_col = sample.select_dtypes(include=['object']).columns
+        obj_col = [ item for item in obj_col if item != 'device']
+        print(f'{obj_col} will convert to label encode, and fillna with Other')
 
 
-    return sample
+        sample = sample.apply(lambda x: x.fillna('Other')
+                                if x.name in obj_col else x,
+                                                      reduce=False)
+
+        label_encode = defaultdict(LabelEncoder)
+        sample = sample.apply(lambda x: label_encode[x.name].fit_transform(x.astype(str))
+                        if x.name in obj_col else x,
+                        reduce=False)
+
+
+        return sample
+    except Exception as e:
+        print(f'The columns typs is {sample.dtypes.sort_values()}')
+        raise e
 
 
 import numpy as np

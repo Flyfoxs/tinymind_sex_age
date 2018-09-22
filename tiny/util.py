@@ -186,7 +186,7 @@ def extend_device_brand(tmp):
             tmp.index.name = 'device'
             tmp.reset_index(inplace=True)
         tmp = tmp.merge(brand, how='left')
-        return convert_label_encode(tmp,['brand', 'phone_type'])
+        return tmp
 
 
 
@@ -353,8 +353,6 @@ def get_stable_feature():
     feature = extend_feature(span_no=24, input=lda_feature,
                              drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
     feature=  extend_device_brand(feature)
-    feature_label = attach_device_train_label(feature)
-
 
 
     check = check_exception(feature, 'device')

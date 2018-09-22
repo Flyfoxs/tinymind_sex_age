@@ -101,14 +101,17 @@ def get_cntTf( group_level, agg_col, agg_method):
     cntTf.fillna(0, inplace=True)
     return cntTf.to_sparse(fill_value=0)
 
-@file_cache(type='pkl')
+@file_cache(overwrite=False)
 def get_tfidf(summary=True):
     cntTf = get_cntTf('app', 'package', None)
     tfidf = cal_tfidf(cntTf);
     if summary:
-        return tfidf.sum(axis=1).to_frame()
+        return tfidf.sum(axis=1).reset_index(name='tfidf')
     else:
         return tfidf
+
+def attach_tfidf(df):
+    return pd.merge(df, get_tfidf(summary=True), how='left', on='device')
 
 #
 # @timed()
