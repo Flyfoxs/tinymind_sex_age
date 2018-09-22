@@ -48,9 +48,9 @@
 # DNN
 # Drop usless in usage, not only lda
 # Long Session的个数
-# 统一只取最后N天的数据
+# 统一只取最后N天的数据 ❎
 # 去公共时间的数据
-# 数据倾斜
+# 数据倾斜(年龄上面)
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
