@@ -88,7 +88,7 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
     df = convert_count_to_percent(df)
     #
     #Extend top#n on usage
-    df_label = summary_top_on_usage('p_type',3)
+    df_label = summary_top_on_usage('p_sub_type',2)
     df = pd.merge(df, df_label, how='left', on='device')
 
     if input is not None:

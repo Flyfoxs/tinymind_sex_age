@@ -178,7 +178,7 @@ def extend_pkg_label(df=None):
 def extend_device_brand(tmp):
 
     brand = get_brand()
-    print(f'column list:{tmp.columns}')
+    #print(f'column list:{tmp.columns}')
     if tmp is None:
         return brand
     else:
@@ -340,19 +340,23 @@ def attach_device_train_label(df):
 
 
 @timed()
-@file_cache(overwrite=False)
+@file_cache(overwrite=True)
 def get_stable_feature():
     from tiny.lda import get_lda_from_usage
     from tiny.usage import extend_feature
 
-    drop_useless_pkg=True
-    drop_long =0.3
-    n_topics=5
+    drop_useless_pkg = True
+    drop_long = 0.3
+    n_topics = 5
 
     lda_feature = get_lda_from_usage(n_topics)
+
     feature = extend_feature(span_no=24, input=lda_feature,
                              drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
-    feature=  extend_device_brand(feature)
+
+    feature = convert_label_encode(feature)
+
+    #feature_label = attach_device_train_label(feature)
 
 
     check = check_exception(feature, 'device')

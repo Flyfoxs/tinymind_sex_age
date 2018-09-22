@@ -5,7 +5,7 @@ from tiny.util import *
 
 
 @timed()
-@file_cache(overwrite=True, type='h5')
+@file_cache(overwrite=False, type='h5')
 def summary_top_on_usage(gp_col, top):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -56,8 +56,8 @@ def summary_top_for_individual_file(path, gp_col, top):
     gp00 = gp.pivot(index='device', columns='cum_sn', values=f'{gp_col}_cnt_daily')
     gp00.columns = [f'{gp_col}_cnt_top#{item}' for item in gp00.columns]
 
-    gp01 = gp.pivot(index='device', columns='cum_sn', values=f'{gp_col}_dur_daily')
-    gp01.columns = [f'{gp_col}_dur_top#{item}' for item in gp01.columns]
+    # gp01 = gp.pivot(index='device', columns='cum_sn', values=f'{gp_col}_dur_daily')
+    # gp01.columns = [f'{gp_col}_dur_top#{item}' for item in gp01.columns]
 
     gp02 = gp.pivot(index='device', columns='cum_sn', values=gp_col)
     gp02.columns = [f'{gp_col}_name_top#{item}' for item in gp02.columns]
@@ -109,4 +109,5 @@ def summary_usage(group_level):
 
 
 if __name__ == '__main__':
-    summary_top_on_usage('p_type', 3)
+    pass
+    # summary_top_on_usage('p_type', 3)
