@@ -91,6 +91,11 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
     df_label = summary_top_on_usage('p_sub_type',2)
     df = pd.merge(df, df_label, how='left', on='device')
 
+    # #Agg label on usage
+    # df = summary_category(df, ['射击',
+    #                             '游戏', '电商', '办公', '职', '体育', '医', '教育', '婴', '学习', '车', '母',
+    #                             ])
+
     if input is not None:
         if 'device' not in list(input.columns):
             input.index.name = 'device'

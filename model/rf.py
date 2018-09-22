@@ -54,6 +54,8 @@ def gen_sub_by_para(estimate=1000):
 
     best = log_loss(y_test, classifier.predict_proba(X_test) )
 
+    best = round(best, 4)
+
     #lgb.plot_importance(gbm, max_num_features=20)
 
     print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
@@ -61,12 +63,13 @@ def gen_sub_by_para(estimate=1000):
     file = f'./sub/baseline_rf_{best}_{args}.csv'
     file = replace_invalid_filename_char(file)
     print(f'sub file save to {file}')
+    sub = round(sub,10)
     sub.to_csv(file,index=False)
 
 if __name__ == '__main__':
 
-    #for estimate in range(10, 2000, 50):
-        gen_sub_by_para(100)
+    for estimate in range(5000, 100000, 1000):
+        gen_sub_by_para(estimate)
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:

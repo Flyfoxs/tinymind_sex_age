@@ -340,8 +340,13 @@ def attach_device_train_label(df):
 
 
 @timed()
-@file_cache(overwrite=True)
-def get_stable_feature():
+@file_cache()
+def get_stable_feature(version):
+    """
+    0922
+    :param version:
+    :return:
+    """
     from tiny.lda import get_lda_from_usage
     from tiny.usage import extend_feature
 

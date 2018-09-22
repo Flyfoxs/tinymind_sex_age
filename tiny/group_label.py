@@ -108,6 +108,18 @@ def summary_usage(group_level):
     """
 
 
+# def summary_category(df, category_list):
+#     for category in category_list:
+#         col = [item for item in df.columns if category in item and '_cnt_' in item]
+#         print(f'There are {len(col)} cols for {category}')
+#         df[f'{category}_cnt_agg'] = df[col].sum(axis=1)
+#         df.drop(columns = col, inplace=True)
+#
+#         col = [item for item in df.columns if category in item and '_sum_' in item]
+#         df[f'{category}_sum_agg'] = df[col].sum(axis=1)
+#         df.drop(columns=col, inplace=True)
+#     return df
+
 if __name__ == '__main__':
     pass
     # summary_top_on_usage('p_type', 3)

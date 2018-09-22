@@ -111,6 +111,7 @@ sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8
 
 file = f'./sub/baseline_{best}.csv'
 print(f'sub file save to {file}')
+sub = round(sub, 10)
 sub.to_csv(file,index=False)
 
 #lgb.plot_importance(gbm, max_num_features=20)

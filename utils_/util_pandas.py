@@ -49,3 +49,30 @@ def check_exception(df, index=None):
         return df.iloc[:3, :4]
     else:
         return pd.DataFrame()
+
+def merge_score(file_list):
+    df_merge = None
+    for  weight, name, file  in file_list:
+
+       df = pd.read_csv(file, index_col ='DeviceID')
+
+       df = df * weight
+
+       if df_merge is None:
+           df_merge = df
+       else:
+           df_merge = df_merge+df
+    return df_merge
+
+if __name__ == '__main__':
+    file_list = [
+        (0.5, 'lg' , './sub/baseline_lg_2.64604_.csv'),
+        (0.5, 'dnn',  './sub/baseline_dnn_2.664605327415466_epochs 200, dense 20, dropout 0.51.csv'),
+    ]
+    score = merge_score(file_list)
+    score = round(score, 10)
+    weight=[str(f'{file[1]}|{file[0]}') for file in file_list]
+    score.to_csv(f'./sub/merge_score_{"_".join(weight)}.csv')
+
+
+
