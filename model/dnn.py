@@ -77,10 +77,10 @@ def train_dnn(dropout, dense):
 
 
 if __name__ == '__main__':
-    for drop in np.arange(0.4, 0.8, 0.05):
-        for dense in np.arange(20, 100, 10):
+    #for drop in np.arange(0.4, 0.8, 0.05):
+        for dense in np.arange(10, 30, 5):
 
-            _ , history, args = train_dnn(drop, dense)
+            _ , history, args = train_dnn(0.55, dense)
 
             model = models.load_model(tmp_model)
 
