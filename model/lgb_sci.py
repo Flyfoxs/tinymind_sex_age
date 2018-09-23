@@ -8,7 +8,7 @@ from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para(learning_rate):
+def gen_sub_by_para():
     args = locals()
 
     drop_useless_pkg=True
@@ -28,6 +28,7 @@ def gen_sub_by_para(learning_rate):
 
 
     train=feature_label[feature_label['sex'].notnull()]
+    #train = balance_train(train)
     test =feature_label[feature_label['sex'].isnull()]
 
     X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
@@ -35,7 +36,7 @@ def gen_sub_by_para(learning_rate):
     Y_CAT = pd.Categorical(Y)
     X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels, test_size=0.3, random_state=666)
 
-    gbm = LGBMClassifier(n_estimators=1000,
+    gbm = LGBMClassifier(n_estimators=2000,
                          boosting_type='gbdt',
                          objective='multiclass',
                          num_class=22,
@@ -53,14 +54,14 @@ def gen_sub_by_para(learning_rate):
                          reg_lambda=4,
 
                          ##########
-                         colsample_bytree=None,#1
-                         learning_rate=learning_rate,#0.1
-                         min_child_samples=None, #20
-                         min_child_weight=None,#0.001
-                         min_split_gain=None,#0
-                         num_leaves=None,#31
-                         subsample_for_bin=None, #200000
-                         subsample_freq=None, #1
+                         learning_rate=0.02,  # 0.1
+                         colsample_bytree=None,  #1
+                         min_child_samples=None,  #20
+                         min_child_weight=None,  #0.001
+                         min_split_gain=None,  #0
+                         num_leaves=None,  #31
+                         subsample_for_bin=None,  #200000
+                         subsample_freq=None,  #1
                          nthread=-1,
 
                          )
@@ -72,6 +73,8 @@ def gen_sub_by_para(learning_rate):
     gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=50, )
 
     print('Feature importances:', list(gbm.feature_importances_))
+
+    print_imp_list(X_train, gbm)
 
     best = round(gbm.best_score_.get('valid_0').get('multi_logloss'), 5)
     best
@@ -91,7 +94,7 @@ def gen_sub_by_para(learning_rate):
     # print(f'Loss={loss}, best={best}')
     #lgb.plot_importance(gbm, max_num_features=20)
 
-    print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
+    #print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
     file = f'./sub/baseline_lg_sci_{best}_{args}.csv'
     file = replace_invalid_filename_char(file)
@@ -99,9 +102,9 @@ def gen_sub_by_para(learning_rate):
     sub.to_csv(file,index=False)
 
 if __name__ == '__main__':
-    for learning_rate in np.arange(0.01, 0.02, 0.01):
+    #for learning_rate in np.arange(0.02, 0.02, 0.01):
     #     for reg_lambda in np.arange(1, 5, 1):
-            gen_sub_by_para(round(learning_rate, 3))
+            gen_sub_by_para()
     # #for limit in range(100, 1300, 100):
     # for drop in np.arange(0.1, 1.1, 0.1):
     #     gen_sub_by_para(True, round(drop, 2), n_topics=5)

@@ -75,6 +75,7 @@ nohup python -u model/rf.py > rf_raw.log 2>&1 &
 
 nohup python -u model/rf_ex.py > rf_ex.log 2>&1 &
 
+nohup python -u model/xgb.py > xgb.log 2>&1 &
 
 nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py > dnn_dense.log 2>&1 &
 

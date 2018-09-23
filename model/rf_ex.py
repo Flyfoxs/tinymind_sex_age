@@ -8,7 +8,7 @@ from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para(max_depth):
+def gen_sub_by_para():
     args = locals()
 
 
@@ -71,6 +71,8 @@ def gen_sub_by_para(max_depth):
     print(f'sub file save to {file}')
     sub = round(sub,10)
     sub.to_csv(file,index=False)
+
+    print_imp_list(X_train, classifier)
 
 if __name__ == '__main__':
 

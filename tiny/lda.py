@@ -91,9 +91,9 @@ def get_lda_from_usage(n_topics):
 
     all = pd.concat(df_list, axis=1)
 
-    all.columns = [ str(col) for col in all.columns]
-
-    all = all[[str(i) for i in range(0, n_topics)]]
+    all.columns = [f'lda_{col}' for col in all.columns]
+    #
+    # all = all[[str(i) for i in range(0, n_topics)]]
     print(f'Device_pkg all column:{all.columns}')
 
     all = all.reset_index()
@@ -114,13 +114,11 @@ def get_lda_app_and_usage(group_level='usage', drop=False, agg_col='package', ag
     tmp = cntTf / cntTf
 
     docres = get_lda_docres(cntTf, n_topics)
-    docres[f'{group_level}_{agg_col}_{drop}_app_length'] = tmp.sum(axis=1)
 
-    # docres = pd.concat([deviceid_packages, pd.DataFrame(docres)], axis=1)
-    #
 
-    # df_weight = get_tfidf(cntTf)
-    # deviceid_packages[f'tfidf_sum_{type}'] = df_weight['sum']
+    docres['app_length'] = tmp.sum(axis=1)
+    docres.columns = [f'{group_level}_{agg_col}_{agg_method}_drop:{drop}_{col}' for col in docres.columns]
+
 
     print(f'Already calculate lda for {type} DF')
 
@@ -155,7 +153,7 @@ def get_lda_docres(cntTf, n_topics):
 
 
 if __name__ == '__main__':
-    get_lda_from_usage()
+    get_lda_from_usage(5)
     #extend_package(version=1)
 
 

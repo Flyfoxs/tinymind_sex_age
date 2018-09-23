@@ -372,6 +372,70 @@ def get_stable_feature(version):
     feature_label = attach_device_train_label(feature)
     return feature_label
 
+
+def balance_train(df):
+    small_part_cnt = df.sex.value_counts().min()
+    df = df.sort_values('sex')
+    df1 = df[:small_part_cnt]
+    df2 = df[-small_part_cnt:]
+    bal = pd.concat([df1, df2])
+    print(f"Train set is reduce from {len(df)} to {len(bal)}")
+    return bal
+
+
+
+def print_imp_list( train, clf, order_by_wight=True, show_zero=True):
+    if hasattr(clf, 'feature_importances_'):
+        imp_item = dict(zip(train.columns, clf.feature_importances_))
+
+        imp_list = sorted(imp_item.items(), key=lambda imp: imp[1], reverse=True)
+
+        # for key, value in imp_list:
+        #     if value > 0:
+        #         print(f'Import {value}: {key}')
+        #         print(train[str(key)].dtype.name)
+        #     else:
+        #         print(f'zeor imp:{key}')
+        #
+
+        zero_list = [key for key, value in imp_list if value==0]
+
+        print(f'Zero List{len(zero_list)}:{len(zero_list)}')
+
+
+        imp_list = [(key, value, train[key].dtype.name) for key, value in imp_list if value>0]
+
+        if order_by_wight :
+            imp_list = sorted(imp_list, key=lambda imp: imp[1], reverse=True)
+        else:
+            imp_list = sorted(imp_list, key=lambda imp: imp[2])
+
+        import_sn = 0
+        for (key, value, dtype) in imp_list:
+            import_sn += 1
+            logger.info("%03d: %s, %s, %s" % ( import_sn, str(key).ljust(35), str(value).ljust(5), dtype))
+
+def visual_importnance(X, forest):
+    importances = forest.feature_importances_
+    std = np.std([tree.feature_importances_ for tree in forest.estimators_],
+                 axis=0)
+    indices = np.argsort(importances)[::-1]
+
+    # Print the feature ranking
+    print("Feature ranking:")
+
+    for f in range(X.shape[1]):
+        print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+
+    # Plot the feature importances of the forest
+    plt.figure()
+    plt.title("Feature importances")
+    plt.bar(range(X.shape[1]), importances[indices],
+            color="r", yerr=std[indices], align="center")
+    plt.xticks(range(X.shape[1]), indices)
+    plt.xlim([-1, X.shape[1]])
+    plt.show()
+
 # if __name__ == '__main__':
 #     for drop_useless_pkg in [True, False]:
 #         for drop_long in [1, 0.9, 0.7, 0.5, 0.3, 0.1]:

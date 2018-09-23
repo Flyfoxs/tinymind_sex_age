@@ -1,85 +1,78 @@
 
 
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
 from xgboost import XGBClassifier
 
 from tiny.lda import *
 from  tiny.util import *
+def gen_sub_by_para(max_depth):
+    feature_label = get_stable_feature('0924')
 
-# New add
-# deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
-deviceid_train = get_lda_from_app_install()
-deviceid_train = extend_feature(span_no=24, input=deviceid_train, trunc_long_time=False)
-#extend_feature(span_no=6, input=deviceid_train, trunc_long_time=900)
+    train = feature_label[feature_label['sex'].notnull()]
+    test = feature_label[feature_label['sex'].isnull()]
 
+    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+    Y = train['sex_age']
+    Y_CAT = pd.Categorical(Y)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
 
-
-
-col_drop = [item for item in deviceid_train.columns if 'max_' in str(item)]
-deviceid_train.drop(columns=col_drop, inplace=True )
-
-
-
-train=deviceid_train[deviceid_train['sex'].notnull()]
-test=deviceid_train[deviceid_train['sex'].isnull()]
-
-X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-Y = train['sex_age']
-# Y_CAT = pd.Categorical(Y)
-# X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
-
-xgb = XGBClassifier(learning_rate=0.02, n_estimators=600, objective='multi:softprob',
-                    silent=True, nthread=1)
+    xgb = XGBClassifier(learning_rate=0.02, n_estimators=600, objective='multi:softprob',
+                        silent=True, nthread=1)
 
 
+    gbm = XGBClassifier(
+                    objective='multi:softprob',
+                    eval_metric='mlogloss',
+                    num_class=22,
+                    n_estimators=5000,
+                    max_depth=max_depth,
+                    min_child_weight=1,
+                    learning_rate=0.1,
 
-folds = 3
-param_comb = 5
+                    silent=True,
+                    gamma=0,
+                    max_delta_step=0,
+                    subsample=1,
+                    colsample_bytree=1,
+                    colsample_bylevel=1,
+                    reg_alpha=0,
+                    reg_lambda=0,
+                    scale_pos_weight=1,
+                    seed=1,
+                    missing=None)
+    # print(random_search.grid_scores_)
+    gbm.fit(X_train, y_train,  eval_set=[(X_test, y_test)], early_stopping_rounds=50, verbose=True )
 
-skf = StratifiedKFold(n_splits=folds, shuffle = True, random_state = 1001)
 
-params = {
-        'min_child_weight': [1, 5, 10],
-        'gamma': [0.5, 1, 1.5, 2, 5],
-        'subsample': [0.6, 0.8, 1.0],
-        'colsample_bytree': [0.6, 0.8, 1.0],
-        'max_depth': [3, 4, 5]
-        }
+    pre_x=test.drop(['sex','age','sex_age','device'],axis=1)
+    sub=pd.DataFrame(gbm.predict_proba(pre_x.values))
 
-random_search = RandomizedSearchCV(xgb, param_distributions=params,
-                                   n_iter=param_comb, scoring='neg_log_loss', n_jobs=4,
-                                   cv=skf.split(X,Y), verbose=3, random_state=1001 )
 
-# print(random_search.grid_scores_)
-random_search.fit(X, Y)
-# print(random_search.grid_scores_)
+    sub.columns=Y_CAT.categories
+    sub['DeviceID']=test['device'].values
+    sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8', '1-9', '1-10', '2-0', '2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
 
-print('\n All results:')
-print(random_search.cv_results_)
-print('\n Best estimator:')
-print(random_search.best_estimator_)
-print('\n Best normalized gini score for %d-fold search with %d parameter combinations:' % (folds, param_comb))
-print(random_search.best_score_ * 2 - 1)
-print('\n Best hyperparameters:')
-print(random_search.best_params_)
-results = pd.DataFrame(random_search.cv_results_)
 
-# bst = xgb.train(params, dtrain, 50, watchlist );
+    from sklearn.metrics import log_loss
 
-#
-# pred = bst.predict(xgb.DMatrix(X_test) );
-# print(pred[:2])
-#
-# print(xgb.plot_importance(bst))
-# print ('predicting, classification error=%f' % (sum( int(pred[i]) != test_Y[i] for i in range(len(test_Y))) / float(len(test_Y)) ))
-# do the same thing again, but output probabilities
+    best = log_loss(y_test, gbm.predict_proba(X_test) )
 
-# params['objective'] = 'multi:softprob'
-# bst = xgb.train(params, dtrain, 5, watchlist );
-# Note: this convention has been changed since xgboost-unity
-# get prediction, this is in 1D array, need reshape to (ndata, nclass)
-# yprob = bst.predict( X_test ).reshape( test_Y.shape[0], 6 )
-# ylabel = np.argmax(yprob, axis=1)
-# print ('predicting, classification error=%f' % (sum( int(ylabel[i]) != test_Y[i] for i in range(len(test_Y))) / float(len(test_Y)) ))
+    best = round(best, 4)
+
+    #lgb.plot_importance(gbm, max_num_features=20)
+
+    print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
+
+    file = f'./sub/baseline_xgb_ex_{best}_{args}.csv'
+    file = replace_invalid_filename_char(file)
+    print(f'sub file save to {file}')
+    sub = round(sub,10)
+    sub.to_csv(file,index=False)
+
+    print_imp_list(X_train, gbm)
+
+if __name__ == '__main__':
+    for max_depth in np.arange(2, 10, 1):
+            gen_sub_by_para(max_depth)
