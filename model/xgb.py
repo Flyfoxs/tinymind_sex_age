@@ -8,6 +8,7 @@ from xgboost import XGBClassifier
 from tiny.lda import *
 from  tiny.util import *
 def gen_sub_by_para(max_depth):
+    args = locals()
     feature_label = get_stable_feature('0924')
 
     train = feature_label[feature_label['sex'].notnull()]
@@ -18,15 +19,12 @@ def gen_sub_by_para(max_depth):
     Y_CAT = pd.Categorical(Y)
     X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
 
-    xgb = XGBClassifier(learning_rate=0.02, n_estimators=600, objective='multi:softprob',
-                        silent=True, nthread=1)
-
 
     gbm = XGBClassifier(
                     objective='multi:softprob',
                     eval_metric='mlogloss',
                     num_class=22,
-                    n_estimators=5000,
+                    n_estimators=2000,
                     max_depth=max_depth,
                     min_child_weight=1,
                     learning_rate=0.1,
@@ -47,7 +45,7 @@ def gen_sub_by_para(max_depth):
 
 
     pre_x=test.drop(['sex','age','sex_age','device'],axis=1)
-    sub=pd.DataFrame(gbm.predict_proba(pre_x.values))
+    sub=pd.DataFrame(gbm.predict_proba(pre_x))
 
 
     sub.columns=Y_CAT.categories
@@ -65,7 +63,7 @@ def gen_sub_by_para(max_depth):
 
     print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
-    file = f'./sub/baseline_xgb_ex_{best}_{args}.csv'
+    file = f'./sub/baseline_xgb_{best}_{args}.csv'
     file = replace_invalid_filename_char(file)
     print(f'sub file save to {file}')
     sub = round(sub,10)
