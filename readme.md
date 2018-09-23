@@ -51,6 +51,7 @@
 # 统一只取最后N天的数据 ❎
 # 去公共时间的数据
 # 数据倾斜(年龄上面)
+# 数据标准化 (count, duration)
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
@@ -70,6 +71,11 @@ nohup python -u tiny/test2.py > test22.log 2>&1 &
 nohup python -u tiny/usage.py > usage.log 2>&1 &
 
 
-nohup python -u model/rf.py > rf.log 2>&1 &
+nohup python -u model/rf.py > rf_raw.log 2>&1 &
+
+nohup python -u model/rf_ex.py > rf_ex.log 2>&1 &
+
+
+nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py > dnn_dense.log 2>&1 &
 
 nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py > dnn.log 2>&1 &

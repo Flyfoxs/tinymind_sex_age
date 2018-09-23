@@ -8,7 +8,7 @@ from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para():
+def gen_sub_by_para(learning_rate):
     args = locals()
 
     drop_useless_pkg=True
@@ -54,7 +54,7 @@ def gen_sub_by_para():
 
                          ##########
                          colsample_bytree=None,#1
-                         learning_rate=None,#0.1
+                         learning_rate=learning_rate,#0.1
                          min_child_samples=None, #20
                          min_child_weight=None,#0.001
                          min_split_gain=None,#0
@@ -99,9 +99,9 @@ def gen_sub_by_para():
     sub.to_csv(file,index=False)
 
 if __name__ == '__main__':
-    # for reg_alpha in np.arange(1, 5, 1):
+    for learning_rate in np.arange(0.01, 0.02, 0.01):
     #     for reg_lambda in np.arange(1, 5, 1):
-            gen_sub_by_para()
+            gen_sub_by_para(round(learning_rate, 3))
     # #for limit in range(100, 1300, 100):
     # for drop in np.arange(0.1, 1.1, 0.1):
     #     gen_sub_by_para(True, round(drop, 2), n_topics=5)

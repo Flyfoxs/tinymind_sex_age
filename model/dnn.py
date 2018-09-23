@@ -1,5 +1,5 @@
 from keras import models
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.layers import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.core import Dense, Activation, Dropout
@@ -12,7 +12,9 @@ from tiny.usage import *
 
 tmp_model = './model/checkpoint/dnn_best_tmp.hdf5'
 
-def train_dnn(dropout, dense):
+def train_dnn(dense1, dense2):
+
+    dropout = 0.6
     args = locals()
     feature_label = get_stable_feature('0922')
 
@@ -30,22 +32,18 @@ def train_dnn(dropout, dense):
     input_dim = X_train.shape[1]
 
     model = Sequential()
-    model.add(Dense(1000, input_shape=(input_dim,)))
+    model.add(Dense(dense1, input_shape=(input_dim,)))
     #model.add(Activation('sigmoid'))
     model.add(LeakyReLU(alpha=0.01))
     model.add(Dropout(dropout))
 
-    model.add(Dense(100))
-    model.add(LeakyReLU(alpha=0.01))
-    model.add(BatchNormalization())
-    model.add(Dropout(dropout))
 
-    model.add(Dense(100, ))
+    model.add(Dense(dense2, ))
     model.add(LeakyReLU(alpha=0.01))
     model.add(BatchNormalization())
 
 
-    model.add(Dense(dense, ))
+    model.add(Dense(15, ))
     model.add(LeakyReLU(alpha=0.01))
 
 
@@ -65,22 +63,26 @@ def train_dnn(dropout, dense):
                                 monitor='val_loss',verbose=1,
                                 save_best_only=True, mode='min')
 
+    early_stop = EarlyStopping(monitor='val_loss',
+                               patience=50,
+                               )
 
     history = model.fit(X_train, np_utils.to_categorical(y_train),
                         validation_data=(X_test, np_utils.to_categorical(y_test)),
-                       callbacks=[check_best],
-                       batch_size=128,
-                       #steps_per_epoch= len(X_test)//128,
-                       epochs=400, verbose=1)
+                        callbacks=[check_best, early_stop],
+                        batch_size=128,
+                        #steps_per_epoch= len(X_test)//128,
+                        epochs=500, verbose=1)
 
     return model, history, args
 
 
 if __name__ == '__main__':
     #for drop in np.arange(0.4, 0.8, 0.05):
-        for dense in np.arange(10, 30, 5):
+        for dense1 in np.arange(800, 1500, 100):
+            for dense2 in np.arange(80, 150, 10):
 
-            _ , history, args = train_dnn(0.55, dense)
+                _ , history, args = train_dnn(dense1, dense2)
 
             model = models.load_model(tmp_model)
 

@@ -1,14 +1,14 @@
 #import seaborn as sns
 import lightgbm as lgb
 from sklearn.cross_validation import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 from tiny.tfidf import *
 from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para(estimate=1000):
+def gen_sub_by_para():
     args = locals()
 
 
@@ -30,13 +30,22 @@ def gen_sub_by_para(estimate=1000):
     # X_train.fillna(0, inplace=True)
     # X_test.fillna(0, inplace=True)
 
-    classifier = RandomForestClassifier(n_estimators=estimate,
+    classifier = RandomForestClassifier(n_estimators=6000,
                                         #criterion='entropy',
+                                        max_depth = 15,
                                         verbose=1,
                                         n_jobs=-1,
                                         random_state=42)
 
-    print(f'Train begin#{estimate}')
+    # classifier = ExtraTreesClassifier(n_estimators=6000,
+    #                                   max_depth=15,
+    #                                   max_features=128,
+    #                                   verbose=1,
+    #                                   n_jobs=-1,
+    #                                   random_state=42)
+    #
+
+    print(f'Train begin#{args}')
     classifier.fit(X_train, y_train)
     print('Train End')
 
@@ -60,7 +69,7 @@ def gen_sub_by_para(estimate=1000):
 
     print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
-    file = f'./sub/baseline_rf_{best}_{args}.csv'
+    file = f'./sub/baseline_rf_raw_{best}_{args}.csv'
     file = replace_invalid_filename_char(file)
     print(f'sub file save to {file}')
     sub = round(sub,10)
@@ -68,8 +77,9 @@ def gen_sub_by_para(estimate=1000):
 
 if __name__ == '__main__':
 
-    for estimate in range(5000, 100000, 1000):
-        gen_sub_by_para(estimate)
+    # for max_depth in range(4, 40, 1):
+        #for max_features in range(1, 10, 1):
+        gen_sub_by_para()
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:

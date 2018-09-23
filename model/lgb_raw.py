@@ -37,22 +37,24 @@ def gen_sub_by_para():
     lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
     params = {
         'boosting_type': 'gbdt',
-        'max_depth': 3,
+
         'metric': {'multi_logloss'},
         'num_class': 22,
         'objective': 'multiclass',
         'random_state': 47,
-
-        #"min_data_in_leaf":1000,
         'verbose': -1,
+        'max_depth': 3,
+        #"min_data_in_leaf":1000,
+
         'feature_fraction': 0.2,
+        'subsample': 0.5,
         # 'min_child_samples': 289,
         #'min_child_weight': 0.1,
         'min_data_in_leaf': 1472,
         #'num_leaves': 300,
         'reg_alpha': 2,
         'reg_lambda': 4,
-        'subsample': 0.5
+
 
     }
 
@@ -64,6 +66,8 @@ def gen_sub_by_para():
                 num_boost_round=1000,
                 valid_sets=lgb_eval,
                 early_stopping_rounds=50,)
+
+        print(f"Light GBM:{gbm.}")
     except Exception as error:
         print(f'Model input columns:{list(X.columns)}\n dict({X.dtypes.sort_values()})')
         raise error

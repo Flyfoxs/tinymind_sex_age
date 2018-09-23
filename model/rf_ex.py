@@ -8,13 +8,11 @@ from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para():
+def gen_sub_by_para(max_depth):
     args = locals()
 
 
     feature_label = get_stable_feature('rf01')
-
-
 
     train=feature_label[feature_label['sex'].notnull()]
     test =feature_label[feature_label['sex'].isnull()]
@@ -36,7 +34,7 @@ def gen_sub_by_para():
     #                                     n_jobs=-1,
     #                                     random_state=42)
 
-    classifier = ExtraTreesClassifier(n_estimators=6000,
+    classifier = ExtraTreesClassifier(n_estimators=1000,
                                       max_depth=15,
                                       max_features=128,
                                       verbose=1,
@@ -76,9 +74,10 @@ def gen_sub_by_para():
 
 if __name__ == '__main__':
 
-    #for max_depth in range(4, 40, 1):
-        #for max_features in range(1, 10, 1):
-        gen_sub_by_para()
+    # for max_depth in range(15, 18, 1):
+        #for n_estimators in range(6000, 60000, 2000):
+            #for label in ['0902', 'rf01']:
+                gen_sub_by_para()
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:
