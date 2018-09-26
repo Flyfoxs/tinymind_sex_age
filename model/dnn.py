@@ -11,8 +11,8 @@ from tiny.tfidf import *
 from tiny.usage import *
 
 tmp_model = './model/checkpoint/dnn_best_tmp.hdf5'
-
-def train_dnn(dense):
+np.random.seed(47)
+def train_dnn(first):
     dropout = 0.6
 
     args = locals()
@@ -43,10 +43,6 @@ def train_dnn(dense):
     model.add(BatchNormalization())
     model.add(Dropout(dropout))
 
-    model.add(Dense(100, ))
-    model.add(LeakyReLU(alpha=0.01))
-    model.add(BatchNormalization())
-
 
     model.add(Dense(15, ))
     model.add(LeakyReLU(alpha=0.01))
@@ -70,7 +66,7 @@ def train_dnn(dense):
                                 save_best_only=True, mode='min')
 
     early_stop = EarlyStopping(monitor='val_loss',verbose=1,
-                               patience=100,
+                               patience=300,
                                )
 
     history = model.fit(X_train, np_utils.to_categorical(y_train),
@@ -102,8 +98,8 @@ if __name__ == '__main__':
     #for drop in np.arange(0.4, 0.8, 0.05):
         # for dense1 in np.arange(800, 1500, 100):
         #     for dense2 in np.arange(80, 150, 10):
-        for dense in np.arange(1100, 1500, 100):
-            _ , history, args = train_dnn(dense)
+        for first in [True, False]:
+            _ , history, args = train_dnn(first)
 
             best_epoch = np.array(history.history['val_loss']).argmin()+1
             best_score = np.array(history.history['val_loss']).min()
