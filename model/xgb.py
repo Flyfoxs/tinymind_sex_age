@@ -7,15 +7,15 @@ from xgboost import XGBClassifier
 
 from tiny.lda import *
 from  tiny.util import *
-def gen_sub_by_para(max_depth):
+def gen_sub_by_para(reg_alpha, reg_lambda):
     args = locals()
     feature_label = get_stable_feature('0924')
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
 
-    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-    Y = train['sex_age']
+    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)[:10000]
+    Y = train['sex_age'][:10000]
     Y_CAT = pd.Categorical(Y)
     X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
 
@@ -24,8 +24,10 @@ def gen_sub_by_para(max_depth):
                     objective='multi:softprob',
                     eval_metric='mlogloss',
                     num_class=22,
+                    max_depth=3,
                     n_estimators=2000,
-                    max_depth=max_depth,
+
+
                     min_child_weight=1,
                     learning_rate=0.1,
 
@@ -35,13 +37,20 @@ def gen_sub_by_para(max_depth):
                     subsample=1,
                     colsample_bytree=1,
                     colsample_bylevel=1,
-                    reg_alpha=0,
-                    reg_lambda=0,
+                    reg_alpha=reg_alpha,
+                    reg_lambda=reg_lambda,
                     scale_pos_weight=1,
                     seed=1,
                     missing=None)
     # print(random_search.grid_scores_)
     gbm.fit(X_train, y_train,  eval_set=[(X_test, y_test)], early_stopping_rounds=50, verbose=True )
+
+    results = gbm.evals_result()
+
+    print(results)
+
+    best_epoch = np.array(results['validation_0']['mlogloss']).argmin() + 1
+    best_score = np.array(results['validation_0']['mlogloss']).min()
 
 
     pre_x=test.drop(['sex','age','sex_age','device'],axis=1)
@@ -63,7 +72,11 @@ def gen_sub_by_para(max_depth):
 
     print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
-    file = f'./sub/baseline_xgb_{best}_{args}.csv'
+
+
+    print(f'best_epoch:{best_epoch}_best_score:{best_score}')
+
+    file = f'./sub/baseline_xgb_{best}_{args}_epoch_{best_epoch}.csv'
     file = replace_invalid_filename_char(file)
     print(f'sub file save to {file}')
     sub = round(sub,10)
@@ -72,5 +85,11 @@ def gen_sub_by_para(max_depth):
     print_imp_list(X_train, gbm)
 
 if __name__ == '__main__':
-    for max_depth in np.arange(2, 10, 1):
-            gen_sub_by_para(max_depth)
+    for reg_alpha in np.arange(0, 10, 1):
+        for reg_lambda in np.arange(0, 10, 1):
+            gen_sub_by_para(reg_alpha, reg_lambda)
+
+
+    for reg_alpha in np.arange(10, 100, 10):
+        for reg_lambda in np.arange(10, 100, 10):
+            gen_sub_by_para(reg_alpha, reg_lambda)
