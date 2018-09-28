@@ -119,14 +119,15 @@ def train_lstm(dropout):
                                                     random_state=42)
     print(Xtrain.shape, Xtest.shape, ytrain.shape, ytest.shape)
     # Build model
-    model = Sequential()
-    model.add(Embedding(vocab_size, EMBEDDING_SIZE, input_length=MAX_SENTENCE_LENGTH))
-
-    model.add(Dropout(0.2))
 
     filters = 250
     hidden_dims = 250
     kernel_size = 3
+
+    model = Sequential()
+    model.add(Embedding(vocab_size, EMBEDDING_SIZE, input_length=MAX_SENTENCE_LENGTH))
+    model.add(Dropout(dropout))
+
     model.add(Conv1D(filters,
                      kernel_size,
                      padding='valid',
@@ -134,11 +135,11 @@ def train_lstm(dropout):
                      strides=1))
     # we use max pooling:
     model.add(GlobalMaxPooling1D())
-    model.add(Dropout(0.9))
+    model.add(Dropout(dropout))
 
     # We add a vanilla hidden layer:
     model.add(Dense(hidden_dims))
-    model.add(Dropout(0.9))
+    model.add(Dropout(dropout))
     model.add(Activation('relu'))
 
 
@@ -152,7 +153,7 @@ def train_lstm(dropout):
     #                              monitor='val_loss', verbose=1,
     #                              save_best_only=True, mode='min')
     early_stop = EarlyStopping(monitor='val_loss', verbose=1,
-                               patience=20,
+                               patience=50,
                                )
     print('Begin training')
     history = model.fit(Xtrain, ytrain, batch_size=BATCH_SIZE,
@@ -163,7 +164,7 @@ def train_lstm(dropout):
     return model, history, args
 
 if __name__ == '__main__':
-    d_list = [0.8, 0.85]
+    d_list = np.arange(0.4, 0.9, 0.1)
     #d_list.reverse()
     for dropout in d_list:
         dropout = round(dropout,2)
