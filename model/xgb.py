@@ -14,8 +14,8 @@ def gen_sub_by_para(reg_alpha, reg_lambda):
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
 
-    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)[:10000]
-    Y = train['sex_age'][:10000]
+    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+    Y = train['sex_age']
     Y_CAT = pd.Categorical(Y)
     X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
 
