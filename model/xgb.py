@@ -14,7 +14,7 @@ except :
     # GPU support
     gpu_params = {}
 
-def gen_sub_by_para(learning_rate, scale_pos_weight):
+def gen_sub_by_para(learning_rate):
     args = locals()
     feature_label = get_stable_feature('0924')
 
@@ -41,9 +41,6 @@ def gen_sub_by_para(learning_rate, scale_pos_weight):
 
                     learning_rate=learning_rate,
 
-                    #
-
-                    scale_pos_weight=scale_pos_weight,
 
                     seed=1,
                     missing=None,
@@ -54,6 +51,7 @@ def gen_sub_by_para(learning_rate, scale_pos_weight):
                     max_delta_step=0,
                     min_child_weight=1,
                     colsample_bylevel=1,
+                    scale_pos_weight=1,
 
                     **gpu_params
                     )
@@ -62,7 +60,7 @@ def gen_sub_by_para(learning_rate, scale_pos_weight):
 
     results = gbm.evals_result()
 
-    print(results)
+    #print(results)
 
     best_epoch = np.array(results['validation_0']['mlogloss']).argmin() + 1
     best_score = np.array(results['validation_0']['mlogloss']).min()
@@ -100,12 +98,9 @@ def gen_sub_by_para(learning_rate, scale_pos_weight):
     print_imp_list(X_train, gbm)
 
 if __name__ == '__main__':
-    for learning_rate in np.arange(0.01, 0.11, 0.01):
+    for learning_rate in np.arange(0.02, 0.11, 0.01):
         #for colsample_bytree in np.arange(0.5, 0.8, 0.1):
-            gen_sub_by_para(learning_rate, 1)
-            gen_sub_by_para(learning_rate, 0.9)
-            gen_sub_by_para(learning_rate, 0.8)
-
+            gen_sub_by_para(learning_rate)
 
 
 
