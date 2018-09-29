@@ -19,7 +19,8 @@ def gen_sub_by_para(reg_alpha, reg_lambda):
     Y_CAT = pd.Categorical(Y)
     X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
 
-
+    #GPU support
+    params = {'tree_method': 'gpu_hist', 'predictor': 'gpu_predictor'}
     gbm = XGBClassifier(
                     objective='multi:softprob',
                     eval_metric='mlogloss',
@@ -41,7 +42,9 @@ def gen_sub_by_para(reg_alpha, reg_lambda):
                     reg_lambda=reg_lambda,
                     scale_pos_weight=1,
                     seed=1,
-                    missing=None)
+                    missing=None,
+                    **params
+                    )
     # print(random_search.grid_scores_)
     gbm.fit(X_train, y_train,  eval_set=[(X_test, y_test)], early_stopping_rounds=50, verbose=True )
 
@@ -86,8 +89,8 @@ def gen_sub_by_para(reg_alpha, reg_lambda):
 
 if __name__ == '__main__':
     for reg_alpha in np.arange(0, 10, 1):
-        for reg_lambda in np.arange(0, 10, 1):
-            gen_sub_by_para(reg_alpha, reg_lambda)
+       # for reg_lambda in np.arange(0, 10, 1):
+            gen_sub_by_para(reg_alpha, 10)
 
 
     for reg_alpha in np.arange(10, 100, 10):
