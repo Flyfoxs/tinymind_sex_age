@@ -45,7 +45,7 @@ def cal_tfidf(cntTf):
 
 @timed()
 @file_cache(type='pkl', overwrite=False)
-def base_on_usage_for_TF(version, mini=mini, col='package'):
+def base_on_usage_for_TF(version, mini=False, col='package'):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)

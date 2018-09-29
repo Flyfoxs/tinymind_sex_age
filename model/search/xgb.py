@@ -7,6 +7,11 @@ from xgboost import XGBClassifier
 
 from tiny.lda import *
 from  tiny.util import *
+try:
+    from tiny.conf import gpu_params
+except :
+    # GPU support
+    gpu_params = {}
 
 feature_label = get_stable_feature('rf01')
 
@@ -18,8 +23,8 @@ Y = train['sex_age']
 # Y_CAT = pd.Categorical(Y)
 # X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
 
-xgb = XGBClassifier(learning_rate=0.02, n_estimators=600, objective='multi:softprob',
-                    silent=True, nthread=1)
+xgb = XGBClassifier(learning_rate=0.01, n_estimators=600, objective='multi:softprob',
+                    silent=True,  **gpu_params)
 
 
 
@@ -30,9 +35,11 @@ skf = StratifiedKFold(n_splits=folds, shuffle = True, random_state = 1001)
 
 params = {
         'min_child_weight': [1, 5, 10],
-        'gamma': [0.5, 1, 1.5, 2, 5],
-        'subsample': [0.6, 0.8, 1.0],
-        'colsample_bytree': [0.6, 0.8, 1.0],
+        'reg_alpha':[10, 11, 12],
+        'reg_lambda':[10, 11, 12],
+        'gamma': [0, 0.5, 1, 1.5, 2, 5],
+        'subsample': [0.6, 0.7, 0.8],
+        'colsample_bytree':  [0.6, 0.7, 0.8],
         'max_depth': [3, 4, 5]
         }
 

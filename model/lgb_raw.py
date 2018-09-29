@@ -10,21 +10,7 @@ from tiny.usage import *
 def gen_sub_by_para():
     args = locals()
 
-    drop_useless_pkg=True
-    drop_long =0.3
-    n_topics=5
-
-    lda_feature = get_lda_from_usage(n_topics)
-
-    feature = extend_feature(span_no=24, input=lda_feature,
-                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
-
-    feature = convert_label_encode(feature)
-
-
-    feature_label = attach_device_train_label(feature)
-
-
+    feature_label = get_dynamic_feature()
 
     train=feature_label[feature_label['sex'].notnull()]
     test =feature_label[feature_label['sex'].isnull()]
@@ -67,7 +53,7 @@ def gen_sub_by_para():
                 valid_sets=lgb_eval,
                 early_stopping_rounds=50,)
 
-        print(f"Light GBM:{gbm.}")
+        print(f"Light GBM:{gbm}")
     except Exception as error:
         print(f'Model input columns:{list(X.columns)}\n dict({X.dtypes.sort_values()})')
         raise error

@@ -1,3 +1,4 @@
+from tiny.group_label import summary_top_on_usage
 from tiny.util import *
 from functools import partial
 from tiny.group_label import *
@@ -82,14 +83,18 @@ def convert_count_to_percent(df):
 def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=False):
 
     #already merge all the app together
-    df = summary_time_trend_on_usage(version=version,  drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
+    df = summary_time_trend_on_usage(version=4,  drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
     # df = reduce_time_span(df, prefix, span_no)
     df.drop(columns=['day_dur'], inplace=True, errors='ignore')
     df = convert_count_to_percent(df)
     #
     #Extend top#n on usage
     df_label = summary_top_on_usage('p_sub_type',2)
+    print(f'df_label@summary_top_on_usage:{df_label.shape}, {df_label.columns}')
     df = pd.merge(df, df_label, how='left', on='device')
+
+    # df_label = summary_top_on_usage('kms_class',1)
+    # df = pd.merge(df, df_label, how='left', on='device')
 
     # #Agg label on usage
     # df = summary_category(df, ['射击',
@@ -106,6 +111,7 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
         from tiny.tfidf import attach_tfidf
         df = attach_tfidf(df)
 
+        from tiny.util import extend_device_brand
         df = extend_device_brand(df)
 
     drop_list = ['tol_day_cnt_min', 'tol_day_cnt_max',

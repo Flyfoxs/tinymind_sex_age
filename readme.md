@@ -52,11 +52,31 @@
 # 去公共时间的数据
 # 数据倾斜(年龄上面)
 # 数据标准化 (count, duration)
+# Word2vec 
+# 男女拆分维度
+# 删除稀疏太严重的app(get_drop_list_for_usage)
+# KNN处理没有分类APP
+# summary_top_on_usage to percentage
+
+## LSTM/CNN
+    Drop long session
+    APP/Usage
+    Device the app by hours or mins
+    Analysis the count/duration in hours
+    Order by start/End
+    wordvec -> group -> analysis
+    
+    
+#低分模型需要merge吗?NO
+
+# 数据集分割来train,(大小数据集区分)
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 
+nohup python -u model/search/xgb.py > search_xgb.log 2>&1 &
 
+nohup python -u model/search/lgb.py > search_lgb.log 2>&1 &
 
 nohup python -u tiny/gen_sub.py > gen_sub.log 2>&1 &
 
@@ -80,3 +100,10 @@ nohup python -u model/xgb.py > xgb.log 2>&1 &
 nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py > dnn_dense.log 2>&1 &
 
 nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py > dnn.log 2>&1 &
+
+
+nohup /apps/dslab/anaconda/python36new/bin/python -u  ./model/lstm.py > lstm.log 2>&1 &
+
+
+nohup /apps/dslab/anaconda/python36new/bin/python -u  ./model/cnn.py > cnn.log 2>&1 &
+

@@ -1,42 +1,27 @@
 #import seaborn as sns
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
-from sklearn.cross_validation import train_test_split
 
 from tiny.tfidf import *
 from tiny.usage import *
+from tiny.lda import *
+from tiny.util import replace_invalid_filename_char
 
 
 @timed()
-def gen_sub_by_para():
+def gen_sub_by_para(bal_ratio):
     args = locals()
 
-    drop_useless_pkg=True
-    drop_long =0.3
-    n_topics=5
+    #feature_label = get_stable_feature('0924')
+    feature_label = get_dynamic_feature()
 
-    lda_feature = get_lda_from_usage(n_topics)
-
-    feature = extend_feature(span_no=24, input=lda_feature,
-                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
-
-    feature = convert_label_encode(feature)
-
-
-    feature_label = attach_device_train_label(feature)
-
-
-
+    test = feature_label[feature_label['sex'].isnull()]
     train=feature_label[feature_label['sex'].notnull()]
-    #train = balance_train(train)
-    test =feature_label[feature_label['sex'].isnull()]
+    train['sex_age'] = train['sex_age'].astype('category')
 
-    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-    Y = train['sex_age']
-    Y_CAT = pd.Categorical(Y)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels, test_size=0.3, random_state=666)
+    X_train, X_test, y_train, y_test = split_train(train, bal_ratio)
 
-    gbm = LGBMClassifier(n_estimators=2000,
+    gbm = LGBMClassifier(n_estimators=5000,
                          boosting_type='gbdt',
                          objective='multiclass',
                          num_class=22,
@@ -54,7 +39,7 @@ def gen_sub_by_para():
                          reg_lambda=4,
 
                          ##########
-                         learning_rate=0.02,  # 0.1
+                         learning_rate=0.01,  # 0.1
                          colsample_bytree=None,  #1
                          min_child_samples=None,  #20
                          min_child_weight=None,  #0.001
@@ -63,6 +48,7 @@ def gen_sub_by_para():
                          subsample_for_bin=None,  #200000
                          subsample_freq=None,  #1
                          nthread=-1,
+                         #device='gpu'
 
                          )
 
@@ -70,11 +56,11 @@ def gen_sub_by_para():
 
     print(gbm)
 
-    gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=50, )
+    gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=100, )
 
     print('Feature importances:', list(gbm.feature_importances_))
 
-    print_imp_list(X_train, gbm)
+    print_imp_list(train, gbm)
 
     best = round(gbm.best_score_.get('valid_0').get('multi_logloss'), 5)
     best
@@ -84,7 +70,7 @@ def gen_sub_by_para():
     pre_x = test.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
     sub = pd.DataFrame(gbm.predict_proba(pre_x.values, num_iteration=gbm.best_iteration_))
 
-    sub.columns=Y_CAT.categories
+    sub.columns=train.sex_age.cat.categories
     sub['DeviceID']=test['device'].values
     sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8', '1-9', '1-10', '2-0', '2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
 
@@ -101,10 +87,13 @@ def gen_sub_by_para():
     print(f'sub file save to {file}')
     sub.to_csv(file,index=False)
 
+
+
 if __name__ == '__main__':
-    #for learning_rate in np.arange(0.02, 0.02, 0.01):
-    #     for reg_lambda in np.arange(1, 5, 1):
-            gen_sub_by_para()
+    # #for learning_rate in np.arange(0.02, 0.02, 0.01):
+    # for ratio in np.arange(0, 1, 0.1):
+    #     ratio = round(ratio, 2)
+        gen_sub_by_para(0)
     # #for limit in range(100, 1300, 100):
     # for drop in np.arange(0.1, 1.1, 0.1):
     #     gen_sub_by_para(True, round(drop, 2), n_topics=5)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.layers import Conv1D, GlobalMaxPooling1D
+from keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D, Flatten
 from keras.layers.core import Activation, Dense, Dropout, SpatialDropout1D
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
@@ -95,11 +95,13 @@ def get_lstm_feature():
 
 
 @timed()
-def train_lstm(dropout):
+def train_lstm():
     args = locals()
 
+    dropout = 0.4
+
     global MAX_FEATURES
-    MAX_SENTENCE_LENGTH = 40
+    MAX_SENTENCE_LENGTH = 400
     EMBEDDING_SIZE = 128
     HIDDEN_LAYER_SIZE = 64
     BATCH_SIZE = 32
@@ -120,25 +122,29 @@ def train_lstm(dropout):
     print(Xtrain.shape, Xtest.shape, ytrain.shape, ytest.shape)
     # Build model
 
-    filters = 250
-    hidden_dims = 250
+    ##TODO
+    filters = 25
+
     kernel_size = 3
 
+    print(kernel_size)
     model = Sequential()
     model.add(Embedding(vocab_size, EMBEDDING_SIZE, input_length=MAX_SENTENCE_LENGTH))
     model.add(Dropout(dropout))
 
     model.add(Conv1D(filters,
                      kernel_size,
-                     padding='valid',
+                     padding='same',
                      activation='relu',
                      strides=1))
     # we use max pooling:
-    model.add(GlobalMaxPooling1D())
+    model.add(MaxPooling1D(2))
     model.add(Dropout(dropout))
 
+
     # We add a vanilla hidden layer:
-    model.add(Dense(hidden_dims))
+    model.add(Flatten())
+    model.add(Dense(250))
     model.add(Dropout(dropout))
     model.add(Activation('relu'))
 
@@ -153,7 +159,7 @@ def train_lstm(dropout):
     #                              monitor='val_loss', verbose=1,
     #                              save_best_only=True, mode='min')
     early_stop = EarlyStopping(monitor='val_loss', verbose=1,
-                               patience=50,
+                               patience=20,
                                )
     print('Begin training')
     history = model.fit(Xtrain, ytrain, batch_size=BATCH_SIZE,
@@ -164,16 +170,13 @@ def train_lstm(dropout):
     return model, history, args
 
 if __name__ == '__main__':
-    d_list = np.arange(0.4, 0.9, 0.1)
-    #d_list.reverse()
-    for dropout in d_list:
-        dropout = round(dropout,2)
-        model, history, args = train_lstm(dropout)
+    #for kernel_size in np.arange(1,3, 1):
+        model, history, args = train_lstm()
 
         best_epoch = np.array(history.history['val_loss']).argmin() + 1
         best_score = np.array(history.history['val_loss']).min()
-
-        print(f'Best Score:{best_score},epoch:{best_epoch} with {args}')
+        import datetime.datetime as dt
+        print(f'Best val_loss:{best_score},epoch:{best_epoch} with {args}, {dt.now()}')
 
         # # plot loss and accuracy
         # plt.subplot(211)

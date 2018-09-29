@@ -16,4 +16,5 @@ output
 cache
 sub
 **/*.hdf5
+**/.DS_Store
 

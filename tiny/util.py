@@ -1,13 +1,7 @@
-import pandas as pd
-import os
-import matplotlib.pyplot as plt
-from functools import lru_cache
-import numpy as np
-from utils_.util_log import *
-from utils_.util_date import *
+from tiny.usage import extend_feature
+from tiny.word2vec import *
 from utils_.util_cache_file import *
-from pandas.tseries.offsets import Week
-from utils_.util_pandas import *
+from utils_.util_pandas import convert_label_encode
 try:
     from tiny.conf import *
 except :
@@ -76,10 +70,13 @@ def get_brand():
 
 
 @timed()
-def get_package_label():
+def get_package_label(package_list=None):
     package = pd.read_csv('input/package_label.tsv', sep='\t', header=None, )
     package.columns = ['package', 'p_type', 'p_sub_type']
-    return package
+    if package_list is None:
+        return package
+    else:
+        return package[package.package.isin(package_list)]
 #
 # @timed()
 # def get_max_week(df):
@@ -163,6 +160,7 @@ def get_test():
 
 def extend_pkg_label(df=None):
 
+
     pkg_label = get_package_label()
     #pkg_label.set_index('package', inplace=True)
 
@@ -171,7 +169,11 @@ def extend_pkg_label(df=None):
         return pkg_label
     else:
         df = pd.merge(df, pkg_label, on='package', how='left')
-        df[['p_type', 'p_sub_type','combine_type']] = df[['p_type','p_sub_type', 'combine_type']].fillna('Unknown')
+
+        kmeans = get_app_group()
+        df = pd.merge(df, kmeans, on='package', how='left')
+        df[['p_type', 'p_sub_type','combine_type', 'kms_class']] = df[['p_type','p_sub_type', 'combine_type', 'kms_class']].fillna('Unknown')
+
         return df
 
 @timed()
@@ -304,7 +306,7 @@ def get_start_closed(file=None):
     return start_close
 
 def replace_invalid_filename_char(filename):
-    invalid_characaters = '\':"<>|{}'
+    invalid_characaters = '\':"<>|{} ,'
     for char in invalid_characaters:
         filename = filename.replace(char, '')
     return filename
@@ -347,12 +349,12 @@ def get_stable_feature(version):
     :param version:
     :return:
     """
-    from tiny.lda import get_lda_from_usage
-    from tiny.usage import extend_feature
+
 
     drop_useless_pkg = True
     drop_long = 0.3
     n_topics = 5
+    from tiny.lda import get_lda_from_usage
 
     lda_feature = get_lda_from_usage(n_topics)
 
@@ -372,15 +374,53 @@ def get_stable_feature(version):
     feature_label = attach_device_train_label(feature)
     return feature_label
 
+@timed()
+@file_cache(overwrite=False)
+def get_dynamic_feature():
+    drop_useless_pkg = True
+    drop_long = 0.3
+    n_topics = 5
+    lda_feature = get_lda_from_usage(n_topics)
+    feature = extend_feature(span_no=24, input=lda_feature,
+                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
+    feature = convert_label_encode(feature)
+    feature_label = attach_device_train_label(feature)
+    return feature_label
 
-def balance_train(df):
-    small_part_cnt = df.sex.value_counts().min()
-    df = df.sort_values('sex')
-    df1 = df[:small_part_cnt]
-    df2 = df[-small_part_cnt:]
-    bal = pd.concat([df1, df2])
-    print(f"Train set is reduce from {len(df)} to {len(bal)}")
-    return bal
+
+def split_train(df, bal_ratio=0):
+
+    train = df.sample(frac=0.7, random_state=200)
+    train = balance_train(train, bal_ratio)
+    X_train = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+    y_train = train['sex_age']
+
+    validate = df.drop(train.index)
+    X_test  = validate.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+    y_test  = validate['sex_age']
+
+    # from imblearn.combine import SMOTEENN, SMOTETomek
+    # sm = SMOTETomek()
+    #
+    # X_resampled, y_resampled = sm.fit_sample(X_train, y_train.cat.codes)
+    #
+    # print(f'SMOTEENN expend the sample from {len(X_train)} to {len(X_resampled)}')
+
+    return  X_train, X_test, y_train.cat.codes, y_test.cat.codes,
+
+
+def balance_train(df, ratio):
+    if ratio == 0:
+        return df
+    else:
+        small_part_cnt = df.sex.value_counts().min()
+        df = df.sort_values('sex')
+        #Merge more sex=2 to train set
+        cut_point = -int(small_part_cnt*ratio)
+        df_plus = df[cut_point:]
+        bal = pd.concat([df, df_plus])
+        print(f"Train set is change from {len(df)} to {len(bal)} by cut_point:{cut_point}, and value_count:\n , {bal.sex.value_counts()}")
+        return bal
 
 
 
@@ -400,7 +440,7 @@ def print_imp_list( train, clf, order_by_wight=True, show_zero=True):
 
         zero_list = [key for key, value in imp_list if value==0]
 
-        print(f'Zero List{len(zero_list)}:{len(zero_list)}')
+        print(f'Full List:{len(train.columns)}, Zero List:{len(zero_list)}, ')
 
 
         imp_list = [(key, value, train[key].dtype.name) for key, value in imp_list if value>0]
@@ -414,6 +454,8 @@ def print_imp_list( train, clf, order_by_wight=True, show_zero=True):
         for (key, value, dtype) in imp_list:
             import_sn += 1
             logger.info("%03d: %s, %s, %s" % ( import_sn, str(key).ljust(35), str(value).ljust(5), dtype))
+
+        print(f'Full List:{len(train.columns)}, Zero List:{len(zero_list)}, ')
 
 def visual_importnance(X, forest):
     importances = forest.feature_importances_

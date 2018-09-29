@@ -2,13 +2,13 @@
 import lightgbm as lgb
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-
+#from imblearn.ensemble import BalancedRandomForestClassifier
 from tiny.tfidf import *
 from tiny.usage import *
 
 
 @timed()
-def gen_sub_by_para():
+def gen_sub_by_para(class_weight):
     args = locals()
 
 
@@ -35,6 +35,7 @@ def gen_sub_by_para():
                                         max_depth = 15,
                                         verbose=1,
                                         n_jobs=-1,
+                                        class_weight=class_weight, #"balanced",
                                         random_state=42)
 
     # classifier = ExtraTreesClassifier(n_estimators=6000,
@@ -79,7 +80,8 @@ if __name__ == '__main__':
 
     # for max_depth in range(4, 40, 1):
         #for max_features in range(1, 10, 1):
-        gen_sub_by_para()
+    for class_weight in [None, "balanced"]:
+        gen_sub_by_para(class_weight)
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:

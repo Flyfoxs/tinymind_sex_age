@@ -70,6 +70,27 @@ if __name__ == '__main__':
         (0.3, 'dnn',  './sub/baseline_dnn_2.652019293564558_dense 90, dropout 0.55.csv'),
         (0.2, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
     ]
+
+    #Best
+    file_list = [
+        (0.6, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
+        (0.4, 'dnn',  './sub/baseline_dnn_2.652019293564558_dense 90, dropout 0.55.csv'),
+        #(0.2, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
+    ]
+
+    file_list = [
+        (0.65, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
+        (0.3, 'dnn',  './sub/baseline_dnn_2.652019293564558_dense 90, dropout 0.55.csv'),
+        (0.05, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
+    ]
+
+    file_list = [
+        (0.6, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
+        (0.35, 'dnn',  './sub/baseline_dnn_2.652019293564558_dense 90, dropout 0.55.csv'),
+        (0.05, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
+    ]
+
+
     score = merge_score(file_list)
     score = round(score, 10)
     weight=[str(f'{file[1]}_{file[0]}') for file in file_list]

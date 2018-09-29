@@ -14,7 +14,7 @@ except :
     # GPU support
     gpu_params = {}
 
-def gen_sub_by_para(learning_rate):
+def gen_sub_by_para():
     args = locals()
     feature_label = get_stable_feature('0924')
 
@@ -39,7 +39,7 @@ def gen_sub_by_para(learning_rate):
                     n_estimators=20000,
 
 
-                    learning_rate=learning_rate,
+                    learning_rate=0.01,
 
 
                     seed=1,
@@ -98,7 +98,10 @@ def gen_sub_by_para(learning_rate):
     print_imp_list(X_train, gbm)
 
 if __name__ == '__main__':
-    for learning_rate in np.arange(0.02, 0.11, 0.01):
+    par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
+    par_list.reverse()
+    print(par_list)
+    for learning_rate in par_list:
         #for colsample_bytree in np.arange(0.5, 0.8, 0.1):
             gen_sub_by_para(learning_rate)
 

@@ -2,6 +2,10 @@
 
 from tiny.usage import *
 from tiny.util import *
+from utils_.util_cache_file import *
+from multiprocessing import Pool as ThreadPool
+from functools import partial
+import os
 
 
 @timed()
@@ -12,7 +16,6 @@ def summary_top_on_usage(gp_col, top):
     path_list = sorted(list, reverse=True)
     path_list = [os.path.join(rootdir, item) for item in path_list if item.endswith('csv')]
 
-    from multiprocessing import Pool as ThreadPool
 
     pool = ThreadPool(processes=8)
 
@@ -30,6 +33,7 @@ def summary_top_on_usage(gp_col, top):
 @timed()
 def summary_top_for_individual_file(path, gp_col, top):
     from tiny.usage import cal_duration_for_partition
+    from tiny.util import extend_pkg_label
     df = cal_duration_for_partition(path)
     df = extend_pkg_label(df)
 
