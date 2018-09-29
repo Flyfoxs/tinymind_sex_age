@@ -7,7 +7,14 @@ from xgboost import XGBClassifier
 
 from tiny.lda import *
 from  tiny.util import *
-def gen_sub_by_para(reg_alpha, reg_lambda):
+
+try:
+    from tiny.conf import gpu_params
+except :
+    # GPU support
+    gpu_params = {}
+
+def gen_sub_by_para(learning_rate, scale_pos_weight):
     args = locals()
     feature_label = get_stable_feature('0924')
 
@@ -19,34 +26,39 @@ def gen_sub_by_para(reg_alpha, reg_lambda):
     Y_CAT = pd.Categorical(Y)
     X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
 
-    #GPU support
-    params = {'tree_method': 'gpu_hist', 'predictor': 'gpu_predictor'}
+
     gbm = XGBClassifier(
                     objective='multi:softprob',
                     eval_metric='mlogloss',
                     num_class=22,
                     max_depth=3,
-                    n_estimators=2000,
+                    reg_alpha=10,
+                    reg_lambda=10,
+                    subsample=0.7,
+                    colsample_bytree=0.6,
+                    n_estimators=20000,
 
 
-                    min_child_weight=1,
-                    learning_rate=0.1,
+                    learning_rate=learning_rate,
 
+                    #
+
+                    scale_pos_weight=scale_pos_weight,
+
+                    seed=1,
+                    missing=None,
+
+                    #Useless Paras
                     silent=True,
                     gamma=0,
                     max_delta_step=0,
-                    subsample=1,
-                    colsample_bytree=1,
+                    min_child_weight=1,
                     colsample_bylevel=1,
-                    reg_alpha=reg_alpha,
-                    reg_lambda=reg_lambda,
-                    scale_pos_weight=1,
-                    seed=1,
-                    missing=None,
-                    **params
+
+                    **gpu_params
                     )
     # print(random_search.grid_scores_)
-    gbm.fit(X_train, y_train,  eval_set=[(X_test, y_test)], early_stopping_rounds=50, verbose=True )
+    gbm.fit(X_train, y_train,  eval_set=[(X_test, y_test)], early_stopping_rounds=100, verbose=True )
 
     results = gbm.evals_result()
 
@@ -88,11 +100,12 @@ def gen_sub_by_para(reg_alpha, reg_lambda):
     print_imp_list(X_train, gbm)
 
 if __name__ == '__main__':
-    for reg_alpha in np.arange(0, 10, 1):
-       # for reg_lambda in np.arange(0, 10, 1):
-            gen_sub_by_para(reg_alpha, 10)
+    for learning_rate in np.arange(0.01, 0.11, 0.01):
+        #for colsample_bytree in np.arange(0.5, 0.8, 0.1):
+            gen_sub_by_para(learning_rate, 1)
+            gen_sub_by_para(learning_rate, 0.9)
+            gen_sub_by_para(learning_rate, 0.8)
 
 
-    for reg_alpha in np.arange(10, 100, 10):
-        for reg_lambda in np.arange(10, 100, 10):
-            gen_sub_by_para(reg_alpha, reg_lambda)
+
+
