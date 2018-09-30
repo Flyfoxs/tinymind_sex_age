@@ -85,7 +85,7 @@ def gen_sub_by_para():
 
     print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
-
+    print_imp_list(X_train, gbm)
 
     print(f'best_epoch:{best_epoch}_best_score:{best_score}')
 
@@ -95,7 +95,7 @@ def gen_sub_by_para():
     sub = round(sub,10)
     sub.to_csv(file,index=False)
 
-    print_imp_list(X_train, gbm)
+
 
 if __name__ == '__main__':
     gen_sub_by_para()

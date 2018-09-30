@@ -230,10 +230,10 @@ def get_summary_weekday(df):
     # gp0.columns = [f'action_{col}' for col in gp0.columns]
 
     gp1 = gp.pivot(index='device', columns='weekday', values='package')
-    gp1.columns = [f'package_{col}' for col in gp1.columns]
+    gp1.columns = [f'package_wd_{col}' for col in gp1.columns]
 
     gp2 = gp.pivot(index='device', columns='weekday', values='day_duration')
-    gp2.columns = [f'duration_{col}' for col in gp2.columns]
+    gp2.columns = [f'duration_wd_{col}' for col in gp2.columns]
 
 
     #区分周末和工作日
@@ -269,6 +269,13 @@ def get_summary_weekday(df):
     merge['action_daily']    = merge['pkg_count']/merge['start_base_nunique']
     merge['dur_sum_daily']   = merge['dur_sum'] / merge['start_base_nunique']
 
+    columns = [col for col in merge.columns if 'package_wd_' in col]
+    for col in columns:
+        merge[f'{col}'] = merge[col] / merge['pkg_nunique']
+
+    columns = [col for col in merge.columns if 'duration_wd_' in col]
+    for col in columns:
+        merge[f'{col}'] = merge[col] / merge['dur_sum']
 
     # 转换为package nunique 的Percentage
     columns = [col for col in merge.columns if f'package_' in col]
@@ -282,6 +289,7 @@ def get_summary_weekday(df):
     for col in columns:
         merge[col] = merge[col] / merge['dur_sum']
     #merge.drop(columns=columns, inplace=True)
+
 
 
 

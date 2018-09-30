@@ -80,22 +80,22 @@ def summary_top_for_individual_file(path, gp_col, top):
     gp['cum_sn'] = gp.groupby('device').cumcount()
     gp11 = gp.pivot(index='device', columns=gp_col, values=f'{gp_col}_cnt_daily')
     gp11.columns = [f'{gp_col}_cnt_{item}' for item in gp11.columns]
-    gp11['total'] = gp11.sum(axis=1)
+    gp11['total_cnt'] = gp11.sum(axis=1)
     for col in gp11.columns:
         if '_cnt_' in col:
-            gp11[f'{col}_p'] = gp11[col]/gp11['total']
+            gp11[f'{col}_p'] = gp11[col]/gp11['total_cnt']
             del gp11[col]
-    del gp11['total']
+    del gp11['total_cnt']
 
 
     gp12 = gp.pivot(index='device', columns=gp_col, values=f'{gp_col}_dur_daily')
     gp12.columns = [f'{gp_col}_dur_{item}' for item in gp12.columns]
-    gp12['total'] = gp11.sum(axis=1)
+    gp12['total_dur'] = gp11.sum(axis=1)
     for col in gp12.columns:
         if '_dur_' in col:
-            gp12[f'{col}_p'] = gp12[col]/gp12['total']
+            gp12[f'{col}_p'] = gp12[col]/gp12['total_dur']
             del gp12[col]
-    del gp12['total']
+    del gp12['total_dur']
 
     ########## Group on device ########
     tmp = ex_input.groupby('device')[gp_col].nunique().to_frame()

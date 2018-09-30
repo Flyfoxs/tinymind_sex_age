@@ -70,6 +70,7 @@
 #低分模型需要merge吗?NO
 
 # 数据集分割来train,(大小数据集区分)
+# 手工抽取女性APP, 男性APP
 
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
