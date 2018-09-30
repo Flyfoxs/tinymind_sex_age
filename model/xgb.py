@@ -16,7 +16,7 @@ except :
 
 def gen_sub_by_para():
     args = locals()
-    feature_label = get_stable_feature('0924')
+    feature_label = get_dynamic_feature()
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
@@ -98,12 +98,14 @@ def gen_sub_by_para():
     print_imp_list(X_train, gbm)
 
 if __name__ == '__main__':
-    par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
-    par_list.reverse()
-    print(par_list)
-    for learning_rate in par_list:
-        #for colsample_bytree in np.arange(0.5, 0.8, 0.1):
-            gen_sub_by_para(learning_rate)
+    gen_sub_by_para()
+    #
+    # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
+    # par_list.reverse()
+    # print(par_list)
+    # for learning_rate in par_list:
+    #     #for colsample_bytree in np.arange(0.5, 0.8, 0.1):
+    #         gen_sub_by_para(learning_rate)
 
 
 

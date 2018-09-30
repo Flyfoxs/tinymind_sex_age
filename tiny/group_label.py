@@ -9,7 +9,7 @@ import os
 
 
 @timed()
-@file_cache(overwrite=False, type='h5')
+@file_cache(overwrite=True, type='h5')
 def summary_top_on_usage(gp_col, top):
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -56,7 +56,7 @@ def summary_top_for_individual_file(path, gp_col, top):
     gp['cum_sn'] = gp.groupby('device').cumcount()
     gp = gp[gp.cum_sn < top]
 
-    gp
+    ################## Generate few columnt base on top#n
     gp00 = gp.pivot(index='device', columns='cum_sn', values=f'{gp_col}_cnt_daily')
     gp00.columns = [f'{gp_col}_cnt_top#{item}' for item in gp00.columns]
 
@@ -66,6 +66,7 @@ def summary_top_for_individual_file(path, gp_col, top):
     gp02 = gp.pivot(index='device', columns='cum_sn', values=gp_col)
     gp02.columns = [f'{gp_col}_name_top#{item}' for item in gp02.columns]
 
+    ################### Group On device, gp_col, many columns #######
     gp = ex_input.groupby(['device', gp_col]).agg({'start': ['count'], 'duration': ['sum'], 'start_base': ['nunique']})
     gp.columns = ["_".join(x) for x in gp.columns.ravel()]
 
@@ -79,10 +80,24 @@ def summary_top_for_individual_file(path, gp_col, top):
     gp['cum_sn'] = gp.groupby('device').cumcount()
     gp11 = gp.pivot(index='device', columns=gp_col, values=f'{gp_col}_cnt_daily')
     gp11.columns = [f'{gp_col}_cnt_{item}' for item in gp11.columns]
+    gp11['total'] = gp11.sum(axis=1)
+    for col in gp11.columns:
+        if '_cnt_' in col:
+            gp11[f'{col}_p'] = gp11[col]/gp11['total']
+            del gp11[col]
+    del gp11['total']
+
 
     gp12 = gp.pivot(index='device', columns=gp_col, values=f'{gp_col}_dur_daily')
     gp12.columns = [f'{gp_col}_dur_{item}' for item in gp12.columns]
+    gp12['total'] = gp11.sum(axis=1)
+    for col in gp12.columns:
+        if '_dur_' in col:
+            gp12[f'{col}_p'] = gp12[col]/gp12['total']
+            del gp12[col]
+    del gp12['total']
 
+    ########## Group on device ########
     tmp = ex_input.groupby('device')[gp_col].nunique().to_frame()
     tmp.rename(columns={gp_col: f'{gp_col}_count'}, inplace=True)
 

@@ -169,10 +169,11 @@ def extend_pkg_label(df=None):
         return pkg_label
     else:
         df = pd.merge(df, pkg_label, on='package', how='left')
-
-        kmeans = get_app_group()
-        df = pd.merge(df, kmeans, on='package', how='left')
-        df[['p_type', 'p_sub_type','combine_type', 'kms_class']] = df[['p_type','p_sub_type', 'combine_type', 'kms_class']].fillna('Unknown')
+        #
+        # kmeans = get_app_group()
+        # df = pd.merge(df, kmeans, on='package', how='left')
+        #
+        df[['p_type', 'p_sub_type','combine_type' ]] = df[['p_type','p_sub_type', 'combine_type' ]].fillna('Unknown')
 
         return df
 
@@ -350,7 +351,6 @@ def get_stable_feature(version):
     :return:
     """
 
-
     drop_useless_pkg = True
     drop_long = 0.3
     n_topics = 5
@@ -375,8 +375,9 @@ def get_stable_feature(version):
     return feature_label
 
 @timed()
-@file_cache(overwrite=False)
+@file_cache(overwrite=True)
 def get_dynamic_feature():
+    from tiny.lda import get_lda_from_usage
     drop_useless_pkg = True
     drop_long = 0.3
     n_topics = 5

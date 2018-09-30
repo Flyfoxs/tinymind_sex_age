@@ -65,36 +65,24 @@ def merge_score(file_list):
     return df_merge
 
 if __name__ == '__main__':
-    file_list = [
-        (0.5, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
-        (0.3, 'dnn',  './sub/baseline_dnn_2.652019293564558_dense 90, dropout 0.55.csv'),
-        (0.2, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
-    ]
 
     #Best
     file_list = [
-        (0.6, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
+        (0.6, 'xg', './sub/best/baseline_xgb_2.6394_scale_pos_weight1learning_rate0.01_epoch_2251.csv'),
+        #(0.2, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
         (0.4, 'dnn',  './sub/baseline_dnn_2.652019293564558_dense 90, dropout 0.55.csv'),
+
         #(0.2, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
     ]
 
-    file_list = [
-        (0.65, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
-        (0.3, 'dnn',  './sub/baseline_dnn_2.652019293564558_dense 90, dropout 0.55.csv'),
-        (0.05, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
-    ]
-
-    file_list = [
-        (0.6, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
-        (0.35, 'dnn',  './sub/baseline_dnn_2.652019293564558_dense 90, dropout 0.55.csv'),
-        (0.05, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
-    ]
 
 
     score = merge_score(file_list)
     score = round(score, 10)
     weight=[str(f'{file[1]}_{file[0]}') for file in file_list]
-    score.to_csv(f'./sub/merge_score_{"_".join(weight)}.csv')
+    file = f'./sub/merge_score_{"_".join(weight)}.csv'
+    score.to_csv(file)
+    print(file)
 
 
 

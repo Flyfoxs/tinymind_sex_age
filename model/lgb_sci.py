@@ -9,7 +9,7 @@ from tiny.util import replace_invalid_filename_char
 
 
 @timed()
-def gen_sub_by_para(bal_ratio):
+def gen_sub_by_para():
     args = locals()
 
     #feature_label = get_stable_feature('0924')
@@ -19,7 +19,7 @@ def gen_sub_by_para(bal_ratio):
     train=feature_label[feature_label['sex'].notnull()]
     train['sex_age'] = train['sex_age'].astype('category')
 
-    X_train, X_test, y_train, y_test = split_train(train, bal_ratio)
+    X_train, X_test, y_train, y_test = split_train(train)
 
     gbm = LGBMClassifier(n_estimators=5000,
                          boosting_type='gbdt',
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     # #for learning_rate in np.arange(0.02, 0.02, 0.01):
     # for ratio in np.arange(0, 1, 0.1):
     #     ratio = round(ratio, 2)
-        gen_sub_by_para(0)
+        gen_sub_by_para()
     # #for limit in range(100, 1300, 100):
     # for drop in np.arange(0.1, 1.1, 0.1):
     #     gen_sub_by_para(True, round(drop, 2), n_topics=5)

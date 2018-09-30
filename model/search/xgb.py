@@ -13,7 +13,7 @@ except :
     # GPU support
     gpu_params = {}
 
-feature_label = get_stable_feature('rf01')
+feature_label = get_stable_feature('0924')
 
 train = feature_label[feature_label['sex'].notnull()]
 test = feature_label[feature_label['sex'].isnull()]
