@@ -7,7 +7,6 @@ from multiprocessing import Pool as ThreadPool
 from functools import partial
 import os
 
-
 @timed()
 @file_cache(overwrite=True, type='h5')
 def summary_top_on_usage(gp_col, top):
@@ -16,10 +15,9 @@ def summary_top_on_usage(gp_col, top):
     path_list = sorted(list, reverse=True)
     path_list = [os.path.join(rootdir, item) for item in path_list if item.endswith('csv')]
 
+    process_file_top = partial(summary_top_for_individual_file, gp_col=gp_col, top=top)
 
     pool = ThreadPool(processes=8)
-
-    process_file_top = partial(summary_top_for_individual_file, gp_col=gp_col, top=top)
     results = pool.map(process_file_top, path_list)
     pool.close()
     pool.join()
@@ -33,9 +31,11 @@ def summary_top_on_usage(gp_col, top):
 @timed()
 def summary_top_for_individual_file(path, gp_col, top):
     from tiny.knn import extend_pkg_label_knn
-    from tiny.usage import cal_duration_for_partition
+    from tiny.usage import cal_duration_for_partition, drop_bottom_app
     from tiny.util import extend_pkg_label
     df = cal_duration_for_partition(path)
+    df = drop_bottom_app(df)
+
     df = extend_pkg_label(df)
     #'p_type', 'p_sub_type','combine_type'
     df = extend_pkg_label_knn('p_type', df)

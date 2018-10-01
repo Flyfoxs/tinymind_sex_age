@@ -72,6 +72,9 @@
 # 数据集分割来train,(大小数据集区分)
 # 手工抽取女性APP, 男性APP
 
+# drop_useless_package 删除
+
+# 再次尝试CNN, LSTM
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 
@@ -98,7 +101,7 @@ nohup python -u model/rf_ex.py > rf_ex.log 2>&1 &
 
 nohup python -u model/xgb.py >> xgb.log 2>&1 &
 
-nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py > dnn_lr.log 2>&1 &
+nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py >> dnn_lr.log 2>&1 &
 
 nohup /apps/dslab/anaconda/python36new/bin/python -u model/dnn.py > dnn.log 2>&1 &
 

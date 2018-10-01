@@ -13,6 +13,9 @@ from tiny.usage import *
 
 tmp_model = './model/checkpoint/dnn_best_tmp.hdf5'
 np.random.seed(47)
+
+
+
 def train_dnn(dropout, lr):
     #dropout = 0.7
 
@@ -90,8 +93,8 @@ def get_feature_label_dnn():
 
 
 if __name__ == '__main__':
-    for drop in [0.75,0.85, 0.7,] :
-        for lr in [0.001, 0.0007, 0.0005]:
+    for drop in [0.75,0.8, 0.7,] :
+        for lr in [0.0005, 0.0003, 0.0001]:
 
             _ , history, args = train_dnn(drop, lr)
 
@@ -106,6 +109,8 @@ if __name__ == '__main__':
             train = feature_label[feature_label['sex'].notnull()]
 
             X_train, X_test, y_train, y_test = split_train(train)
+
+
 
             classifier = model
 
@@ -124,6 +129,11 @@ if __name__ == '__main__':
 
             logger.debug(f'Best:{best}, best_score:{best_score} @ epoch:{best_epoch}')
 
+
+            X_stacking = classifier.predict_proba(np.concatenate((X_train,X_test)))
+            save_result_for_ensemble(f'{best_score}_{best_epoch}_dnn', X_stacking, (y_train, y_test), pre_x)
+
+
             model_file = f'./model/checkpoint/dnn_best_{best}_{args}_epoch_{best_epoch}.hdf5'
             model.save(model_file,
                        overwrite=True)
@@ -136,3 +146,4 @@ if __name__ == '__main__':
             logger.info(f'sub file save to {file}')
             sub = round(sub, 10)
             sub.to_csv(file, index=False)
+

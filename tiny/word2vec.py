@@ -85,25 +85,25 @@ def get_dict(force=False):
     return  word2vec.Word2Vec.load(file)
 
 
-
-@timed()
-@file_cache(overwrite=False)
-def get_app_group():
-    model = get_dict()
-    X = model[model.wv.vocab]
-
-    from sklearn.cluster import KMeans
-    kmeans = KMeans(n_clusters=50)
-    kmeans.fit(X)
-
-    y_kmeans = kmeans.predict(X)
-    #print(y_kmeans.shape)
-
-    df = pd.DataFrame({'package':list(model.wv.vocab.keys()), 'kms_class':y_kmeans, } )
-
-    df['kms_class'] = df['kms_class'].apply(lambda val: f'kms_{val}')
-
-    return df[[ 'package', 'kms_class',]]
+#
+# @timed()
+# @file_cache(overwrite=False)
+# def get_app_group():
+#     model = get_dict()
+#     X = model[model.wv.vocab]
+#
+#     from sklearn.cluster import KMeans
+#     kmeans = KMeans(n_clusters=50)
+#     kmeans.fit(X)
+#
+#     y_kmeans = kmeans.predict(X)
+#     #print(y_kmeans.shape)
+#
+#     df = pd.DataFrame({'package':list(model.wv.vocab.keys()), 'kms_class':y_kmeans, } )
+#
+#     df['kms_class'] = df['kms_class'].apply(lambda val: f'kms_{val}')
+#
+#     return df[[ 'package', 'kms_class',]]
 
 
 if __name__ == '__main__':

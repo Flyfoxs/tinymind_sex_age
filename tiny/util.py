@@ -452,6 +452,24 @@ def visual_importnance(X, forest):
     plt.xlim([-1, X.shape[1]])
     plt.show()
 
+
+def save_result_for_ensemble(name, train, label, test, ):
+    """"
+    name = '{score}_name'
+    """
+
+    train = np.concatenate(train)
+    label = np.concatenate(label)
+
+    file = f'./output/best/{name}.h5'
+    store = pd.HDFStore(file)
+
+    store["train"] = train
+    store["label"] = label
+    store["test"] = test
+    return file
+
+
 if __name__ == '__main__':
     drop_useless_pkg = True
     drop_long = 0.3

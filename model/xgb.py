@@ -8,11 +8,15 @@ from xgboost import XGBClassifier
 from tiny.lda import *
 from  tiny.util import *
 
+
 try:
     from tiny.conf import gpu_params
 except :
     # GPU support
     gpu_params = {}
+
+
+
 
 def gen_sub_by_para():
     args = locals()
@@ -98,7 +102,8 @@ def gen_sub_by_para():
 
 
 if __name__ == '__main__':
-    gen_sub_by_para()
+    #for app_threshold in range(20, 3000, 10):
+        gen_sub_by_para()
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
     # par_list.reverse()

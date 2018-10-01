@@ -57,6 +57,8 @@ class Cache_File:
             elif type == 'h5':
                 val.to_hdf(path, 'key')
             else:
+                if isinstance(val, pd.SparseDataFrame):
+                    val = val.to_dense()
                 val.to_csv(path, index=False, )
             return val
         else:

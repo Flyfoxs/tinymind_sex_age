@@ -1,4 +1,4 @@
-from tiny.group_label import summary_top_on_usage
+
 from tiny.util import *
 from functools import partial
 from tiny.group_label import *
@@ -344,17 +344,57 @@ def get_bottom_app(drop_level='count', limit=18363):
             print(f"Try to summary file:{path}")
             df = cal_duration_for_partition(path)
 
+def drop_bottom_app(df):
+    original_len = len(df)
+    app_list = get_app_count_sum()
+    app_count_threshold=10
+    app_list = app_list[ app_list.sum_ >= app_count_threshold]
 
-def drop_sparse_app(df):
-    from collections import Counter
-    #App count
-    #App and device, count
-    y = Counter()
+    df = df[df.package.isin(app_list.package)]
+    logger.debug(f'DF is change from {original_len} to {len(df)}, base on app_count_threshold:{app_count_threshold}')
+    return df
+
+
+from functools import lru_cache
+@timed()
+@lru_cache()
+@file_cache(overwrite=False)
+def get_app_count_sum():
+    from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+
+    apps = pd.read_csv('./output/apps_seq.tsv', header=None)
+
+    apps.columns = ['apps']
+    apps = apps.sort_values('apps')
+    apps.apps = apps.apps.apply(lambda val: val.split(' '))
+    apps.apps = apps.apps.apply(lambda val: ' '.join(val))
+
+    vectorizer = CountVectorizer()
+    cntTf = vectorizer.fit_transform(apps.iloc[:, 0].tolist())
+
+    tokens = vectorizer.get_feature_names()
+
+    cntTf_arr = cntTf.toarray()
+    #cntTf_arr =  cntTf_arr[:1000]
+    cntTf_arr = np.where(cntTf_arr == 0, np.nan, cntTf_arr)
+
+    app_analysis = pd.SparseDataFrame(data=cntTf_arr, columns=tokens)
+
+    app_top = app_analysis
+    app_top_t = app_top.T
+    app_top_t['count_'] = app_top_t.count(axis=1)
+    app_top_t['sum_'] = app_top_t.sum(axis=1)
+
+    app_count = app_top_t[['count_', 'sum_']]
+    app_count = app_count.sort_values('count_')
+    app_count.index.name = 'package'
+    return app_count.reset_index()
 
 
 
 if __name__ == '__main__':
-    pass
+    app_count = get_app_count_sum()
+    print(app_count.shape)
     # for drop_useless_pkg in [True, False]:
     #     for drop_long in [1, 0.9, 0.7, 0.5, 0.3, 0.1]:
     #         summary_time_trend_on_usage(version=version,
