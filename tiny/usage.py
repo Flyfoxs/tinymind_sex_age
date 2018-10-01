@@ -87,11 +87,23 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
     # df = reduce_time_span(df, prefix, span_no)
     df.drop(columns=['day_dur'], inplace=True, errors='ignore')
     df = convert_count_to_percent(df)
-    #
+
+
+    df_label = summary_top_on_usage('p_type_knn', 2)
+    print(f'df_label@summary_top_on_usage:{df_label.shape}, {df_label.columns}')
+    df = pd.merge(df, df_label, how='left', on='device')
+
     #Extend top#n on usage
     df_label = summary_top_on_usage('p_sub_type_knn',2)
     print(f'df_label@summary_top_on_usage:{df_label.shape}, {df_label.columns}')
     df = pd.merge(df, df_label, how='left', on='device')
+
+
+
+    df_label = summary_top_on_usage('combine_type_knn',2)
+    print(f'df_label@summary_top_on_usage:{df_label.shape}, {df_label.columns}')
+    df = pd.merge(df, df_label, how='left', on='device')
+
 
     # df_label = summary_top_on_usage('kms_class',1)
     # df = pd.merge(df, df_label, how='left', on='device')
@@ -331,6 +343,14 @@ def get_bottom_app(drop_level='count', limit=18363):
         if os.path.isfile(path) and 'csv' in path:
             print(f"Try to summary file:{path}")
             df = cal_duration_for_partition(path)
+
+
+def drop_sparse_app(df):
+    from collections import Counter
+    #App count
+    #App and device, count
+    y = Counter()
+
 
 
 if __name__ == '__main__':
