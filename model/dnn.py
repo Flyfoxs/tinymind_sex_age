@@ -4,6 +4,7 @@ from keras.layers import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.core import Dense, Activation, Dropout
 from keras.models import Sequential
+from keras.optimizers import Adam
 from keras.utils import np_utils
 from sklearn.cross_validation import train_test_split
 
@@ -12,8 +13,8 @@ from tiny.usage import *
 
 tmp_model = './model/checkpoint/dnn_best_tmp.hdf5'
 np.random.seed(47)
-def train_dnn(first):
-    dropout = 0.6
+def train_dnn(dropout, lr):
+    #dropout = 0.7
 
     args = locals()
 
@@ -52,7 +53,8 @@ def train_dnn(first):
     model.add(Activation('softmax'))
 
     # model.compile(optimizer="sgd", loss="mse")
-    model.compile(loss='categorical_crossentropy', optimizer='adam',
+    adam = Adam(lr=lr)
+    model.compile(loss='categorical_crossentropy', optimizer=adam,
                     #metrics=['categorical_crossentropy'],
                   )
     print(model.summary())
@@ -82,24 +84,16 @@ def train_dnn(first):
 
 
 def get_feature_label_dnn():
-    drop_useless_pkg = True
-    drop_long = 0.3
-    n_topics = 5
-    lda_feature = get_lda_from_usage(n_topics)
-    feature = extend_feature(span_no=24, input=lda_feature,
-                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
-    feature = convert_label_encode(feature)
-    feature_label = attach_device_train_label(feature)
+    feature_label = get_stable_feature('0930')
     feature_label['sex_age'] = feature_label['sex_age'].astype('category')
     return feature_label
 
 
 if __name__ == '__main__':
-    #for drop in np.arange(0.4, 0.8, 0.05):
-        # for dense1 in np.arange(800, 1500, 100):
-        #     for dense2 in np.arange(80, 150, 10):
-        for first in [True, False]:
-            _ , history, args = train_dnn(first)
+    for drop in [0.75,0.85, 0.7,] :
+        for lr in [0.001, 0.0007, 0.0005]:
+
+            _ , history, args = train_dnn(drop, lr)
 
             best_epoch = np.array(history.history['val_loss']).argmin()+1
             best_score = np.array(history.history['val_loss']).min()
@@ -139,6 +133,6 @@ if __name__ == '__main__':
 
             file = f'./sub/baseline_dnn_{best}_{args}_epoch_{best_epoch}.csv'
             file = replace_invalid_filename_char(file)
-            print(f'sub file save to {file}')
+            logger.info(f'sub file save to {file}')
             sub = round(sub, 10)
             sub.to_csv(file, index=False)

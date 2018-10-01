@@ -1,4 +1,4 @@
-from tiny.usage import extend_feature
+#from tiny.usage import extend_feature
 from tiny.word2vec import *
 from utils_.util_cache_file import *
 from utils_.util_pandas import convert_label_encode
@@ -345,34 +345,7 @@ def attach_device_train_label(df):
 @timed()
 @file_cache()
 def get_stable_feature(version):
-    """
-    0922
-    :param version:
-    :return:
-    """
-
-    drop_useless_pkg = True
-    drop_long = 0.3
-    n_topics = 5
-    from tiny.lda import get_lda_from_usage
-
-    lda_feature = get_lda_from_usage(n_topics)
-
-    feature = extend_feature(span_no=24, input=lda_feature,
-                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
-
-    feature = convert_label_encode(feature)
-
-    #feature_label = attach_device_train_label(feature)
-
-
-    check = check_exception(feature, 'device')
-    if not check.empty:
-        print(f"Error Return feature NAN/INF:\n{check}" )
-        exit(1)
-
-    feature_label = attach_device_train_label(feature)
-    return feature_label
+    return get_dynamic_feature()
 
 @timed()
 @file_cache(overwrite=True)
@@ -479,9 +452,8 @@ def visual_importnance(X, forest):
     plt.xlim([-1, X.shape[1]])
     plt.show()
 
-# if __name__ == '__main__':
-#     for drop_useless_pkg in [True, False]:
-#         for drop_long in [1, 0.9, 0.7, 0.5, 0.3, 0.1]:
-#             summary_time_trend_on_usage(version=version,
-#                                         drop_useless_pkg=drop_useless_pkg,
-#                                         drop_long=drop_long)
+if __name__ == '__main__':
+    drop_useless_pkg = True
+    drop_long = 0.3
+    feature = extend_feature(span_no=24, input=None,
+                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)

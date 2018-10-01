@@ -32,10 +32,15 @@ def summary_top_on_usage(gp_col, top):
 
 @timed()
 def summary_top_for_individual_file(path, gp_col, top):
+    from tiny.knn import extend_pkg_label_knn
     from tiny.usage import cal_duration_for_partition
     from tiny.util import extend_pkg_label
     df = cal_duration_for_partition(path)
     df = extend_pkg_label(df)
+    #'p_type', 'p_sub_type','combine_type'
+    df = extend_pkg_label_knn('p_type', df)
+    df = extend_pkg_label_knn('p_sub_type', df)
+    df = extend_pkg_label_knn('combine_type', df)
 
     # group by specific label
     # p_type, p_sub_type, combine_type, package

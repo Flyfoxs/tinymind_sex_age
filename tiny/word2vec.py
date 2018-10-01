@@ -6,7 +6,10 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from tiny.tfidf import *
 from tiny.usage import *
 
+
 def get_device_app_sequence_individual_file(file):
+    from tiny.usage import cal_duration_for_partition
+
     tmp = cal_duration_for_partition(file)
 
     tmp = tmp.sort_values(['device', 'start'])
@@ -22,7 +25,6 @@ def get_device_app_sequence_individual_file(file):
 
 
 @timed()
-@file_cache(overwrite=True)
 def get_device_app_sequence():
     """
     apps
@@ -46,9 +48,10 @@ def get_device_app_sequence():
     all = pd.concat(results)
     all.index.name='device'
     all.reset_index(inplace=True)
-    all = attach_device_train_label(all)
 
-    return all.reset_index()[['sex_age', 'apps']]
+    app_seq = './output/apps_seq.tsv'
+    all[['apps']].to_csv(app_seq, header=None, index=False)
+    return app_seq
 
 
 def get_package_label(package_list=None):
@@ -60,19 +63,33 @@ def get_package_label(package_list=None):
         return package[package.package.isin(package_list)]
 
 
-@timed()
-@file_cache(overwrite=True)
-def get_app_group():
+def get_dict(force=False):
     """
     apps, kms_*
     """
     from gensim.models import word2vec
-    INPUT_FILE = "./cache/get_device_app_sequence_[]_{}.csv"
+    file = "./output/word2vec.model"
+    if not os.path.exists(file) or force:
 
-    sentences = word2vec.Text8Corpus(INPUT_FILE)  # 训练模型，部分参数如下
-    model_20 = word2vec.Word2Vec(sentences, size=20, hs=1, min_count=0, window=5)
+        #global app_seq
+        INPUT_FILE = get_device_app_sequence()
 
-    model = model_20
+        #sentences = word2vec.Text8Corpus(INPUT_FILE)  # 训练模型，部分参数如下
+        sentences = word2vec.LineSentence(INPUT_FILE)
+        model_20 = word2vec.Word2Vec(sentences, size=20, hs=1, min_count=0, window=5)
+
+        model = model_20
+
+        model.save(file)
+
+    return  word2vec.Word2Vec.load(file)
+
+
+
+@timed()
+@file_cache(overwrite=False)
+def get_app_group():
+    model = get_dict()
     X = model[model.wv.vocab]
 
     from sklearn.cluster import KMeans
@@ -91,7 +108,9 @@ def get_app_group():
 
 if __name__ == '__main__':
     pass
-    all  = get_device_app_sequence()
+    model = get_dict()
+    print(len(model.wv.vocab))
+    # all  = get_device_app_sequence()
     # df = get_app_group()
     # print(df.shape)
     #all.to_csv('del.csv')

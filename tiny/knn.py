@@ -1,0 +1,72 @@
+
+
+from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+
+from xgboost import XGBClassifier
+
+from tiny.lda import *
+from  tiny.util import *
+
+def get_data():
+
+    model = get_dict(False)
+    df = pd.DataFrame(index=list(model.wv.vocab.keys()), data=model[model.wv.vocab])
+    df.index.name = 'package'
+
+    df = df.reset_index()
+
+    df['check'] = df.package.apply(lambda val: len(val))
+
+    df = extend_pkg_label(df)
+    df.sort_values('check', ascending=False)
+    df['tmp__'] = df.p_type
+    df = convert_label_encode(df, ['tmp__', 'package'])
+
+    train = df[ (df.tmp__ != 'Unknown') & (df.tmp__ != np.nan)]
+    test =  df[ (df.tmp__ == 'Unknown') | (df.tmp__ == np.nan)]
+
+    print(train.shape, test.shape)
+    return train, test
+
+def extend_pkg_label_knn(col, feature):
+    app_type = get_app_type_with_knn(col)
+    return pd.merge(feature, app_type, how='left')
+
+
+@file_cache()
+def get_app_type_with_knn(col):
+    train, test = get_data()
+    X = train.iloc[:, 1:21]
+    y = train[col]
+
+    # index=list(model.wv.vocab.keys()), data=model[model.wv.vocab]
+    from sklearn.neighbors import KNeighborsClassifier
+    neigh = KNeighborsClassifier(n_neighbors=3)
+    neigh.fit(X, y)
+
+    #test =
+    test_y = neigh.predict(test.iloc[:, 1:21].values)
+
+    df_train = pd.DataFrame(data ={ 'package':train.package , f'{col}_knn': train[col]} )
+
+    df_test =  pd.DataFrame(data ={ 'package':test.package , f'{col}_knn': test_y, } )
+
+    app_type = pd.concat([df_test, df_train])
+    return app_type
+
+
+
+if __name__ == '__main__':
+
+    #X = [[0], [1], [2], [3]]
+    #y = [0, 0, 1, 1]
+
+    print(get_app_type_with_knn('p_type'))
+    # 'p_type', 'p_sub_type','combine_type'
+    get_app_type_with_knn('p_sub_type')
+    get_app_type_with_knn('combine_type')
+
+    #print(neigh.predict_proba(test))
+
+

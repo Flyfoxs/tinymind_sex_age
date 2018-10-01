@@ -7,11 +7,11 @@ import pandas as pd
 
 
 @timed(logger)
-def convert_label_encode(sample):
+def convert_label_encode(sample, exclude=[]):
     try:
         #Label encode
         obj_col = sample.select_dtypes(include=['object']).columns
-        obj_col = [ item for item in obj_col if item != 'device']
+        obj_col = [ item for item in obj_col if item != 'device' and item not in exclude]
         print(f'{obj_col} will convert to label encode, and fillna with Other')
 
 

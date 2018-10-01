@@ -89,7 +89,7 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
     df = convert_count_to_percent(df)
     #
     #Extend top#n on usage
-    df_label = summary_top_on_usage('p_sub_type',2)
+    df_label = summary_top_on_usage('p_sub_type_knn',2)
     print(f'df_label@summary_top_on_usage:{df_label.shape}, {df_label.columns}')
     df = pd.merge(df, df_label, how='left', on='device')
 
@@ -121,6 +121,13 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
     df.drop(columns=drop_list, inplace=True)
 
     df.replace({np.nan:0, np.inf:0}, inplace=True)
+
+    drop_list = []
+
+    for item in drop_list:
+        if item in df:
+            print('Drop column:%s' % item)
+            del df[item]
 
     return df
 
@@ -271,11 +278,13 @@ def get_summary_weekday(df):
 
     columns = [col for col in merge.columns if 'package_wd_' in col]
     for col in columns:
-        merge[f'{col}'] = merge[col] / merge['pkg_nunique']
+        merge[f'{col}_p'] = merge[col] / merge['pkg_nunique']
+        del merge[col]
 
     columns = [col for col in merge.columns if 'duration_wd_' in col]
     for col in columns:
-        merge[f'{col}'] = merge[col] / merge['dur_sum']
+        merge[f'{col}_p'] = merge[col] / merge['dur_sum']
+        del merge[col]
 
     # 转换为package nunique 的Percentage
     columns = [col for col in merge.columns if f'package_' in col]
