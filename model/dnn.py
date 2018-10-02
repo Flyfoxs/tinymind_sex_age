@@ -79,7 +79,7 @@ def train_dnn(dropout, lr):
                         callbacks=[check_best, early_stop],
                         batch_size=128,
                         #steps_per_epoch= len(X_test)//128,
-                        epochs=5000,
+                        epochs=50000,
                         verbose=1,
                         )
 
@@ -133,9 +133,9 @@ if __name__ == '__main__':
 
 
             save_result_for_ensemble(f'{best_score}_{best_epoch}_dnn',
-                                         classifier.predict_proba(np.concatenate((X_train, X_test))),
+                                         classifier.predict_proba(np.concatenate([X_train, X_test])),
                                          classifier.predict_proba(pre_x.values),
-                                         (y_train, y_test),
+                                         np.concatenate([y_train, y_test]),
                                      )
 
 

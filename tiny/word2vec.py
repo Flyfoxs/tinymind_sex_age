@@ -53,14 +53,14 @@ def get_device_app_sequence():
     all[['apps']].to_csv(app_seq, header=None, index=False)
     return app_seq
 
-
-def get_package_label(package_list=None):
-    package = pd.read_csv('input/package_label.tsv', sep='\t', header=None, )
-    package.columns = ['package', 'p_type', 'p_sub_type']
-    if package_list is None:
-        return package
-    else:
-        return package[package.package.isin(package_list)]
+#
+# def get_package_label(package_list=None):
+#     package = pd.read_csv('input/package_label.tsv', sep='\t', header=None, )
+#     package.columns = ['package', 'p_type', 'p_sub_type']
+#     if package_list is None:
+#         return package
+#     else:
+#         return package[package.package.isin(package_list)]
 
 
 def get_dict(force=False):

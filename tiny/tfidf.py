@@ -1,5 +1,7 @@
 from tiny.util import *
 from tiny.lda import *
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+
 
 #
 # @timed()
@@ -29,6 +31,7 @@ from tiny.lda import *
 @timed()
 def cal_tfidf(cntTf):
     index = cntTf.index
+
     transformer = TfidfTransformer()
     import scipy
     print('Try to sparse cntTF')
@@ -111,7 +114,31 @@ def get_tfidf(summary=True):
         return tfidf
 
 def attach_tfidf(df):
+    import pandas as pd
     return pd.merge(df, get_tfidf(summary=True), how='left', on='device')
+
+
+def get_svd_tfidf(n_components=5):
+
+    cntTf = cntTf = get_cntTf('usage', agg_col='p_sub_type', agg_method='count')
+
+    tfidf = cal_tfidf(cntTf)
+
+
+    logger.debug('Convert df to csr_matrix for svd')
+    import scipy
+    X = scipy.sparse.csr_matrix(tfidf.values)
+
+    import sklearn.decomposition as skd
+    logger.debug("Try to cal svd")
+    trsvd = skd.TruncatedSVD(n_components, random_state=42)
+    transformed = trsvd.fit_transform(X)
+    print(transformed.shape)
+    transformed = pd.DataFrame(transformed, index=tfidf.index)
+    transformed.columns = [f'svd_{n_components}_{item}' for item in transformed.columns]
+    transformed.index.name = 'device'
+    return transformed.reset_index()
+
 
 #
 # @timed()
@@ -126,7 +153,19 @@ if __name__ == '__main__':
 
 
 
-    tfidf = get_tfidf(summary=True)
+    cntTf = cntTf = get_cntTf('app', agg_col='package', agg_method=None)
+
+
+    cntTf = cntTf = get_cntTf('usage', agg_col='package', agg_method='sum')
+
+    cntTf = cntTf = get_cntTf('usage', agg_col='p_sub_type', agg_method='sum')
+
+
+    cntTf = cntTf = get_cntTf('usage', agg_col='package', agg_method='count')
+
+
+
+    #tfidf = cal_tfidf(cntTf);
 
     # for group_level in ['usage']:
     #     for agg_col in ['p_sub_type', 'package']:

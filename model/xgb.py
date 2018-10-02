@@ -18,9 +18,9 @@ except :
 
 
 
-def gen_sub_by_para():
+def gen_sub_by_para(svd_cmp):
     args = locals()
-    feature_label = get_dynamic_feature()
+    feature_label = get_dynamic_feature(svd_cmp)
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
@@ -102,8 +102,8 @@ def gen_sub_by_para():
 
 
 if __name__ == '__main__':
-    #for app_threshold in range(20, 3000, 10):
-        gen_sub_by_para()
+    for svd_cmp in range(2, 20, 2):
+        gen_sub_by_para(svd_cmp)
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
     # par_list.reverse()

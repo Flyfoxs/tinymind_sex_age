@@ -351,14 +351,14 @@ def get_stable_feature(version):
 
 @timed()
 @file_cache(overwrite=True)
-def get_dynamic_feature():
+def get_dynamic_feature(svd_cmp):
     from tiny.lda import get_lda_from_usage
     drop_useless_pkg = True
     drop_long = 0.3
     n_topics = 5
     lda_feature = get_lda_from_usage(n_topics)
     feature = extend_feature(span_no=24, input=lda_feature,
-                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
+                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long, svd_cmp=svd_cmp)
     feature = convert_label_encode(feature)
     feature_label = attach_device_train_label(feature)
     return feature_label
@@ -459,17 +459,16 @@ def save_result_for_ensemble(name, train,  test, label,):
     """"
     name = '{score}_name'
     """
+    from keras.utils import np_utils
     columns = ['1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
     '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']
 
 
-    train = np.concatenate(train)
-    label = np.concatenate(label)
-    from keras.utils import np_utils
     train = pd.DataFrame(train, columns=columns)
     label = pd.DataFrame(np_utils.to_categorical(label), columns=columns)
-
     test = pd.DataFrame(test, columns=columns)
+
+    logger.debug(f'Train:{train.shape} , label:{label.shape} , test: {test.shape}')
 
     file = f'./output/best/{name}.h5'
     store = pd.HDFStore(file)

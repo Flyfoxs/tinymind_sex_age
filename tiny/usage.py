@@ -80,7 +80,7 @@ def convert_count_to_percent(df):
 
 
 #The function merge all the app together, but LDA will view it as different
-def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=False):
+def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=False, svd_cmp=5):
 
     #already merge all the app together
     df = summary_time_trend_on_usage(version=4,  drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
@@ -97,7 +97,6 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
     df_label = summary_top_on_usage('p_sub_type_knn',2)
     print(f'df_label@summary_top_on_usage:{df_label.shape}, {df_label.columns}')
     df = pd.merge(df, df_label, how='left', on='device')
-
 
 
     df_label = summary_top_on_usage('combine_type_knn',2)
@@ -120,7 +119,10 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
         #TODO , join is outer
         df = input.merge(df, on='device', how='left')
 
-        from tiny.tfidf import attach_tfidf
+        from tiny.tfidf import get_svd_tfidf, attach_tfidf
+        svd_feature = get_svd_tfidf(svd_cmp)
+        df = pd.merge(df, svd_feature,  on='device', how='left')
+
         df = attach_tfidf(df)
 
         from tiny.util import extend_device_brand
