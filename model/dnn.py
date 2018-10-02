@@ -5,7 +5,6 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.core import Dense, Activation, Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam
-from keras.utils import np_utils
 from sklearn.cross_validation import train_test_split
 
 from tiny.tfidf import *
@@ -73,7 +72,8 @@ def train_dnn(dropout, lr):
     early_stop = EarlyStopping(monitor='val_loss',verbose=1,
                                patience=300,
                                )
-
+    from keras.utils import np_utils
+    print(y_train.shape)
     history = model.fit(X_train, np_utils.to_categorical(y_train),
                         validation_data=(X_test, np_utils.to_categorical(y_test)),
                         callbacks=[check_best, early_stop],
@@ -87,6 +87,7 @@ def train_dnn(dropout, lr):
 
 
 def get_feature_label_dnn():
+    from tiny.util import get_stable_feature
     feature_label = get_stable_feature('0930')
     feature_label['sex_age'] = feature_label['sex_age'].astype('category')
     return feature_label
@@ -130,8 +131,12 @@ if __name__ == '__main__':
             logger.debug(f'Best:{best}, best_score:{best_score} @ epoch:{best_epoch}')
 
 
-            X_stacking = classifier.predict_proba(np.concatenate((X_train,X_test)))
-            save_result_for_ensemble(f'{best_score}_{best_epoch}_dnn', X_stacking, (y_train, y_test), pre_x)
+
+            save_result_for_ensemble(f'{best_score}_{best_epoch}_dnn',
+                                         classifier.predict_proba(np.concatenate((X_train, X_test))),
+                                         classifier.predict_proba(pre_x.values),
+                                         (y_train, y_test),
+                                     )
 
 
             model_file = f'./model/checkpoint/dnn_best_{best}_{args}_epoch_{best_epoch}.hdf5'
@@ -142,6 +147,8 @@ if __name__ == '__main__':
                 f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
             file = f'./sub/baseline_dnn_{best}_{args}_epoch_{best_epoch}.csv'
+            from tiny.util import replace_invalid_filename_char
+
             file = replace_invalid_filename_char(file)
             logger.info(f'sub file save to {file}')
             sub = round(sub, 10)

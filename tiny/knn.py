@@ -21,7 +21,11 @@ def get_data():
     df = extend_pkg_label(df)
     df.sort_values('check', ascending=False)
     df['tmp__'] = df.p_type
-    df = convert_label_encode(df, ['tmp__', 'package'])
+    df.p_type = df.p_type.astype('category')
+    df.p_sub_type = df.p_sub_type.astype('category')
+    df.combine_type = df.combine_type.astype('category')
+
+    #df = convert_label_encode(df, ['tmp__', 'package'])
 
     train = df[ (df.tmp__ != 'Unknown') & (df.tmp__ != np.nan)]
     test =  df[ (df.tmp__ == 'Unknown') | (df.tmp__ == np.nan)]
@@ -33,8 +37,9 @@ def extend_pkg_label_knn(col, feature):
     app_type = get_app_type_with_knn(col)
     return pd.merge(feature, app_type, how='left')
 
-
-@file_cache()
+from functools import lru_cache
+@lru_cache()
+@file_cache(overwrite=True)
 def get_app_type_with_knn(col):
     train, test = get_data()
     X = train.iloc[:, 1:21]
@@ -43,7 +48,7 @@ def get_app_type_with_knn(col):
     # index=list(model.wv.vocab.keys()), data=model[model.wv.vocab]
     from sklearn.neighbors import KNeighborsClassifier
     neigh = KNeighborsClassifier(n_neighbors=3)
-    neigh.fit(X, y)
+    neigh.fit(X, y.cat.codes)
 
     #test =
     test_y = neigh.predict(test.iloc[:, 1:21].values)
@@ -53,6 +58,11 @@ def get_app_type_with_knn(col):
     df_test =  pd.DataFrame(data ={ 'package':test.package , f'{col}_knn': test_y, } )
 
     app_type = pd.concat([df_test, df_train])
+
+    app_type[f'{col}_knn_raw'] = app_type[f'{col}_knn']
+
+    app_type[f'{col}_knn'].replace(range(0, len(y.cat.categories)), y.cat.categories, inplace=True)
+
     return app_type
 
 

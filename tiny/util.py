@@ -1,4 +1,6 @@
 #from tiny.usage import extend_feature
+from astropy.table import np_utils
+
 from tiny.word2vec import *
 from utils_.util_cache_file import *
 from utils_.util_pandas import convert_label_encode
@@ -453,13 +455,21 @@ def visual_importnance(X, forest):
     plt.show()
 
 
-def save_result_for_ensemble(name, train, label, test, ):
+def save_result_for_ensemble(name, train,  test, label,):
     """"
     name = '{score}_name'
     """
+    columns = ['1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
+    '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']
+
 
     train = np.concatenate(train)
     label = np.concatenate(label)
+    from keras.utils import np_utils
+    train = pd.DataFrame(train, columns=columns)
+    label = pd.DataFrame(np_utils.to_categorical(label), columns=columns)
+
+    test = pd.DataFrame(test, columns=columns)
 
     file = f'./output/best/{name}.h5'
     store = pd.HDFStore(file)

@@ -347,7 +347,7 @@ def get_bottom_app(drop_level='count', limit=18363):
 def drop_bottom_app(df):
     original_len = len(df)
     app_list = get_app_count_sum()
-    app_count_threshold=10
+    app_count_threshold=20
     app_list = app_list[ app_list.sum_ >= app_count_threshold]
 
     df = df[df.package.isin(app_list.package)]
