@@ -473,7 +473,13 @@ def save_result_for_ensemble(name, train,  test, label):
     logger.debug(f"Ensamble file save to file: {file}")
     return file
 
-
+def reduce_low_frequency( words ) :
+    from tiny.usage import get_app_count_sum
+    app_count = get_app_count_sum()
+    impact_list = app_count[app_count.count_ >= 2]
+    mini = [item for item in words if item in impact_list.package]
+    logger.debug(f'{len(words) - len(mini)} words was removed')
+    return mini
 
 
 if __name__ == '__main__':

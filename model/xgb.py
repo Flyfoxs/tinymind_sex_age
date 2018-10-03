@@ -20,8 +20,8 @@ except :
 
 def gen_sub_by_para(svd_cmp):
     args = locals()
-    #feature_label = get_dynamic_feature(svd_cmp)
-    feature_label = get_stable_feature('1002')
+    feature_label = get_dynamic_feature(svd_cmp)
+    #feature_label = get_stable_feature('1002')
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]

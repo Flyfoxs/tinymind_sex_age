@@ -74,7 +74,7 @@
 
 # drop_useless_package 删除
 
-# 再次尝试CNN, LSTM
+# 再次尝试CNN, LSTM(切割后多个样本)
 
 # LDA 依赖 p_sub_type_knn
 

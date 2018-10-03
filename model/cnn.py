@@ -14,6 +14,8 @@ import numpy as np
 import os
 from keras.utils import np_utils
 import pandas as pd
+
+from tiny.util import reduce_low_frequency
 from utils_.util_cache_file import *
 
 MAX_FEATURES = 2000
@@ -47,6 +49,7 @@ def get_lstm_feature():
         if label == '' or label == 'sex_age':
             continue
         words = nltk.word_tokenize(sentence.lower())
+        words = reduce_low_frequency(words)
         if len(words) > maxlen:
             maxlen = len(words)
         for word in words:
@@ -78,6 +81,7 @@ def get_lstm_feature():
         if label == '' or label == 'sex_age':
             continue
         words = nltk.word_tokenize(sentence.lower())
+        words = reduce_low_frequency(words)
         seqs = []
         for word in words:
             # print(type(word2index))
@@ -98,10 +102,10 @@ def get_lstm_feature():
 def train_lstm():
     args = locals()
 
-    dropout = 0.4
+    dropout = 0.95
 
     global MAX_FEATURES
-    MAX_SENTENCE_LENGTH = 400
+    MAX_SENTENCE_LENGTH = 4000
     EMBEDDING_SIZE = 128
     HIDDEN_LAYER_SIZE = 64
     BATCH_SIZE = 32
@@ -125,7 +129,7 @@ def train_lstm():
     ##TODO
     filters = 25
 
-    kernel_size = 3
+    kernel_size = 30
 
     print(kernel_size)
     model = Sequential()
@@ -175,7 +179,6 @@ if __name__ == '__main__':
 
         best_epoch = np.array(history.history['val_loss']).argmin() + 1
         best_score = np.array(history.history['val_loss']).min()
-        import datetime.datetime as dt
         print(f'Best val_loss:{best_score},epoch:{best_epoch} with {args}, {dt.now()}')
 
         # # plot loss and accuracy

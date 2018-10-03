@@ -13,6 +13,8 @@ import numpy as np
 import os
 from keras.utils import np_utils
 import pandas as pd
+
+
 from utils_.util_cache_file import *
 
 def convert2num(category):
@@ -27,6 +29,7 @@ def convert2num(category):
 @timed()
 @file_cache(type='h5')
 def get_lstm_feature():
+    from tiny.util import reduce_low_frequency
     # MAX_SENTENCE_LENGTH, EMBEDDING_SIZE, HIDDEN_LAYER_SIZE, BATCH_SIZE, NUM_EPOCHS, \
     # global vocab_size
     DATA_DIR = "./cache"
@@ -45,6 +48,7 @@ def get_lstm_feature():
         if label == '' or label == 'sex_age':
             continue
         words = nltk.word_tokenize(sentence.lower())
+        words = reduce_low_frequency(words)
         if len(words) > maxlen:
             maxlen = len(words)
         for word in words:
@@ -76,6 +80,7 @@ def get_lstm_feature():
         if label == '' or label == 'sex_age':
             continue
         words = nltk.word_tokenize(sentence.lower())
+        words = reduce_low_frequency(words)
         seqs = []
         for word in words:
             # print(type(word2index))
@@ -92,10 +97,11 @@ def get_lstm_feature():
     return pd.DataFrame({'X':X, 'y':y, 'para':vocab_size})
 
 
+
 @timed()
 def train_lstm(dropout):
     args = locals()
-
+    logger.debug(f"Try to training with paras:{args}")
     #global MAX_SENTENCE_LENGTH, EMBEDDING_SIZE, HIDDEN_LAYER_SIZE, BATCH_SIZE, NUM_EPOCHS, X, y, Xtest, ytest, model, history
     MAX_SENTENCE_LENGTH = 40
     EMBEDDING_SIZE = 128
