@@ -347,7 +347,7 @@ def attach_device_train_label(df):
 @timed()
 @file_cache()
 def get_stable_feature(version):
-    return get_dynamic_feature()
+    return get_dynamic_feature(20)
 
 @timed()
 @file_cache(overwrite=True)
@@ -476,6 +476,7 @@ def save_result_for_ensemble(name, train,  test, label,):
     store["train"] = train
     store["label"] = label
     store["test"] = test
+    store.close()
     return file
 
 

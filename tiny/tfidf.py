@@ -1,7 +1,7 @@
 from tiny.util import *
 from tiny.lda import *
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-
+import pandas as pd
 
 #
 # @timed()
@@ -49,6 +49,7 @@ def cal_tfidf(cntTf):
 @timed()
 @file_cache(type='pkl', overwrite=False)
 def base_on_usage_for_TF(version, mini=False, col='package'):
+    from tiny.util import get_start_closed
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
@@ -69,6 +70,10 @@ def base_on_usage_for_TF(version, mini=False, col='package'):
                 print(f'Try to merge pkg label for col:{col}')
                 df = extend_pkg_label(df)
 
+                from tiny.tfidf import get_svd_tfidf, attach_tfidf
+                svd_feature = get_svd_tfidf(18)
+                df = pd.merge(df, svd_feature, on='device', how='left')
+
             df = split_days_all(df)
             df = extend_package_TF(df, col=col)
             if len(df) > 0 :
@@ -86,6 +91,8 @@ def base_on_usage_for_TF(version, mini=False, col='package'):
 @timed()
 @file_cache(type='pkl')
 def get_cntTf( group_level, agg_col, agg_method):
+    version = 4
+    mini = False
     if group_level == 'app':
         cntTf_app = base_on_package_install_for_TF(agg_col)
         cntTf = cntTf_app
@@ -118,11 +125,26 @@ def attach_tfidf(df):
     return pd.merge(df, get_tfidf(summary=True), how='left', on='device')
 
 
-def get_svd_tfidf(n_components=5):
-
-    cntTf = cntTf = get_cntTf('usage', agg_col='p_sub_type', agg_method='count')
-
+def get_svd_tfidf(n_components):
+    cntTf = get_cntTf('usage', agg_col='p_sub_type_knn', agg_method='count')
     tfidf = cal_tfidf(cntTf)
+    df1 =  get_svd_tfidf_individual('sub_type', tfidf, 18)
+
+
+    cntTf = get_cntTf('usage', agg_col='p_type_knn', agg_method='count')
+    tfidf = cal_tfidf(cntTf)
+    df2 =  get_svd_tfidf_individual('type', tfidf, n_components)
+
+    all = pd.concat([df1, df2], axis=1 ).reset_index()
+    logger.debug("SVD columns:{all.columns}")
+    return all
+
+
+
+
+
+
+def get_svd_tfidf_individual(level, tfidf, n_components):
 
 
     logger.debug('Convert df to csr_matrix for svd')
@@ -135,9 +157,9 @@ def get_svd_tfidf(n_components=5):
     transformed = trsvd.fit_transform(X)
     print(transformed.shape)
     transformed = pd.DataFrame(transformed, index=tfidf.index)
-    transformed.columns = [f'svd_{n_components}_{item}' for item in transformed.columns]
+    transformed.columns = [f'svd_{level}_{n_components}_{item}' for item in transformed.columns]
     transformed.index.name = 'device'
-    return transformed.reset_index()
+    return transformed
 
 
 #

@@ -88,7 +88,7 @@ def train_dnn(dropout, lr):
 
 def get_feature_label_dnn():
     from tiny.util import get_stable_feature
-    feature_label = get_stable_feature('0930')
+    feature_label = get_stable_feature('1002')
     feature_label['sex_age'] = feature_label['sex_age'].astype('category')
     return feature_label
 

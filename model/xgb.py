@@ -102,7 +102,7 @@ def gen_sub_by_para(svd_cmp):
 
 
 if __name__ == '__main__':
-    for svd_cmp in range(2, 20, 2):
+    for svd_cmp in range(5, 100, 2):
         gen_sub_by_para(svd_cmp)
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
