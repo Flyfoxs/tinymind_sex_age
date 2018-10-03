@@ -52,40 +52,46 @@ def base_on_usage_for_TF(version, mini=False, col='package'):
     from tiny.util import get_start_closed
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
-    list = sorted(list, reverse=True)
-    if mini:
-        list =  list[:3]
+    path_list = sorted(list, reverse=True)
+    path_list = [os.path.join(rootdir, item) for item in path_list if item.endswith('csv')]
 
-    tmp_list = []
-    for i in range(0, len(list)):
-        path = os.path.join(rootdir, list[i])
-        if os.path.isfile(path) and 'csv' in path:
-            print(f"Try to summary file:{path}")
-            df = get_start_closed(path)
-            if mini:
-                df = df[:5000]
 
-            #需要packge的类型,就扩展app的类型:p_type, p_sub_type
-            if type != 'package':
-                print(f'Try to merge pkg label for col:{col}')
-                df = extend_pkg_label(df)
+    from multiprocessing import Pool as ThreadPool
+    from functools import partial
+    pool = ThreadPool(processes=8)
+    process_file = partial(cal_tf_for_individual_file, col=col)
 
-                from tiny.tfidf import get_svd_tfidf, attach_tfidf
-                svd_feature = get_svd_tfidf(18)
-                df = pd.merge(df, svd_feature, on='device', how='left')
+    results = pool.map(process_file, path_list)
 
-            df = split_days_all(df)
-            df = extend_package_TF(df, col=col)
-            if len(df) > 0 :
-                tmp_list.append(df)
-            else:
-                print(f'The df is None for file:{path}')
-
-    df = pd.concat(tmp_list)
+    df = pd.concat(results)
     df.fillna(0,inplace=True)
     print(f'Share of device package usage is:{df.shape}')
 
     return df.sort_index()
+
+
+def cal_tf_for_individual_file(path, col,):
+
+    if os.path.isfile(path) and 'csv' in path:
+        print(f"Try to summary file:{path}")
+        df = get_start_closed(path)
+
+        # 需要packge的类型,就扩展app的类型:p_type, p_sub_type
+        if type != 'package':
+            print(f'Try to merge pkg label for col:{col}')
+            from tiny.util import extend_pkg_label
+            df = extend_pkg_label(df)
+
+            from tiny.knn import extend_pkg_label_knn
+            df = extend_pkg_label_knn('p_type', df)
+            df = extend_pkg_label_knn('p_sub_type', df)
+            df = extend_pkg_label_knn('combine_type', df)
+
+        df = split_days_all(df)
+        df = extend_package_TF(df, col=col)
+        return df
+    else:
+        return pd.DataFrame()
 
 
 @timed()
@@ -136,7 +142,7 @@ def get_svd_tfidf(n_components):
     df2 =  get_svd_tfidf_individual('type', tfidf, n_components)
 
     all = pd.concat([df1, df2], axis=1 ).reset_index()
-    logger.debug("SVD columns:{all.columns}")
+    logger.debug(f"SVD columns:{all.columns}")
     return all
 
 
@@ -173,18 +179,10 @@ def get_svd_tfidf_individual(level, tfidf, n_components):
 
 if __name__ == '__main__':
 
+    get_cntTf('usage', agg_col='p_sub_type_knn', agg_method='count')
 
-
-    cntTf = cntTf = get_cntTf('app', agg_col='package', agg_method=None)
-
-
-    cntTf = cntTf = get_cntTf('usage', agg_col='package', agg_method='sum')
-
-    cntTf = cntTf = get_cntTf('usage', agg_col='p_sub_type', agg_method='sum')
-
-
-    cntTf = cntTf = get_cntTf('usage', agg_col='package', agg_method='count')
-
+    # for svd_cmp in range(5, 20, 2):
+    #     get_svd_tfidf(svd_cmp)
 
 
     #tfidf = cal_tfidf(cntTf);

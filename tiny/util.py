@@ -371,6 +371,7 @@ def split_train(df, bal_ratio=0):
     X_train = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
     y_train = train['sex_age']
 
+
     validate = df.drop(train.index)
     X_test  = validate.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
     y_test  = validate['sex_age']
@@ -382,8 +383,7 @@ def split_train(df, bal_ratio=0):
     #
     # print(f'SMOTEENN expend the sample from {len(X_train)} to {len(X_resampled)}')
 
-    return  X_train, X_test, y_train.cat.codes, y_test.cat.codes,
-
+    return  X_train, X_test, y_train.cat.codes, y_test.cat.codes
 
 def balance_train(df, ratio):
     if ratio == 0:
@@ -455,18 +455,11 @@ def visual_importnance(X, forest):
     plt.show()
 
 
-def save_result_for_ensemble(name, train,  test, label,):
+def save_result_for_ensemble(name, train,  test, label):
     """"
     name = '{score}_name'
     """
-    from keras.utils import np_utils
-    columns = ['1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
-    '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']
 
-
-    train = pd.DataFrame(train, columns=columns)
-    label = pd.DataFrame(np_utils.to_categorical(label), columns=columns)
-    test = pd.DataFrame(test, columns=columns)
 
     logger.debug(f'Train:{train.shape} , label:{label.shape} , test: {test.shape}')
 
@@ -477,7 +470,10 @@ def save_result_for_ensemble(name, train,  test, label,):
     store["label"] = label
     store["test"] = test
     store.close()
+    logger.debug(f"Ensamble file save to file: {file}")
     return file
+
+
 
 
 if __name__ == '__main__':

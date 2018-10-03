@@ -20,7 +20,8 @@ except :
 
 def gen_sub_by_para(svd_cmp):
     args = locals()
-    feature_label = get_dynamic_feature(svd_cmp)
+    #feature_label = get_dynamic_feature(svd_cmp)
+    feature_label = get_stable_feature('1002')
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
@@ -100,6 +101,26 @@ def gen_sub_by_para(svd_cmp):
     sub.to_csv(file,index=False)
 
 
+    ###Save result for ensemble
+    train_bk = pd.DataFrame(gbm.predict_proba(train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)),
+                            index=train.device,
+                            columns=Y_CAT.categories
+                            )
+
+    test_bk = pd.DataFrame(gbm.predict_proba(pre_x),
+                           index=test.device,
+                           columns=Y_CAT.categories
+                           )
+
+    label_bk = pd.DataFrame({'label': Y_CAT.codes},
+                            index=train.device,
+                            )
+
+    save_result_for_ensemble(f'{best_score}_{best_epoch}_xgb',
+                             train=train_bk,
+                             test=test_bk,
+                             label=label_bk,
+                             )
 
 if __name__ == '__main__':
     for svd_cmp in range(5, 100, 2):
