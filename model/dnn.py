@@ -131,14 +131,6 @@ if __name__ == '__main__':
             logger.debug(f'Best:{best}, best_score:{best_score} @ epoch:{best_epoch}')
 
 
-
-            save_result_for_ensemble(f'{best_score}_{best_epoch}_dnn',
-                                         classifier.predict_proba(np.concatenate([X_train, X_test])),
-                                         classifier.predict_proba(pre_x.values),
-                                         np.concatenate([y_train, y_test]),
-                                     )
-
-
             model_file = f'./model/checkpoint/dnn_best_{best}_{args}_epoch_{best_epoch}.hdf5'
             model.save(model_file,
                        overwrite=True)
@@ -147,10 +139,29 @@ if __name__ == '__main__':
                 f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
             file = f'./sub/baseline_dnn_{best}_{args}_epoch_{best_epoch}.csv'
-            from tiny.util import replace_invalid_filename_char
+            from tiny.util import replace_invalid_filename_char, save_result_for_ensemble
 
             file = replace_invalid_filename_char(file)
             logger.info(f'sub file save to {file}')
             sub = round(sub, 10)
             sub.to_csv(file, index=False)
 
+            ###Save result for ensemble
+            train_bk = pd.DataFrame(classifier.predict_proba( train.drop(['sex', 'age', 'sex_age', 'device'], axis=1) ),
+                                 index = train.device,
+                                 columns= train.sex_age.cat.categories
+                                 )
+
+            test_bk = pd.DataFrame(classifier.predict_proba(pre_x.values),
+                                 index = test.device,
+                                 columns= test.sex_age.cat.categories
+                                 )
+            label_bk = pd.DataFrame({'label':train.sex_age.cat.codes},
+                                 index = train.device,
+                                 )
+
+            save_result_for_ensemble(f'{best_score}_{best_epoch}_dnn',
+                                         train = train_bk,
+                                         test  = test_bk ,
+                                         label = label_bk,
+                                     )
