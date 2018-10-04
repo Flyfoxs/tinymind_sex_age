@@ -51,7 +51,7 @@ label = label.sort_index()
 
 X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=666)
 
-drop_out = 0.45
+drop_out = 0.1
 patience=50
 lr = 0.0005
 #搭建融合后的模型
