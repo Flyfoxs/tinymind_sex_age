@@ -26,9 +26,14 @@ def get_label_cat():
 
 
 file_list = [
-    './output/best/2.621213_2510_xgb.h5' ,
+    #'./output/best/2.621213_2510_xgb.h5' ,
+    './output/best/baseline_2.614742_2650_xgb_svd_cmp100.h5' ,
+
     './output/best/2.635281090037028_1569_dnn.h5' ,
+
     './output/best/0.608252_2577_xgb_sex.h5' ,
+    './output/best/0.625989340877533_357_v_1002_dnn.h5' ,
+
 ]
 
 train_list =[]
