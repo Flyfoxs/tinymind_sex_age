@@ -364,17 +364,17 @@ def get_dynamic_feature(svd_cmp):
     return feature_label
 
 
-def split_train(df, bal_ratio=0):
-
+def split_train(df, bal_ratio=0, label_col='sex_age'):
+    df.sex = df.sex.astype('category')
     train = df.sample(frac=0.7, random_state=200)
     train = balance_train(train, bal_ratio)
     X_train = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-    y_train = train['sex_age']
+    y_train = train[label_col]
 
 
     validate = df.drop(train.index)
     X_test  = validate.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-    y_test  = validate['sex_age']
+    y_test  = validate[label_col]
 
     # from imblearn.combine import SMOTEENN, SMOTETomek
     # sm = SMOTETomek()
@@ -459,7 +459,8 @@ def save_result_for_ensemble(name, train,  test, label):
 
     logger.debug(f'Train:{train.shape} , label:{label.shape if label is not None else None } , test: {test.shape}')
 
-    file = f'./output/best/{name}.h5'
+    file = f'./sub/baseline_{name}.h5'
+    file = replace_invalid_filename_char(file)
     store = pd.HDFStore(file)
 
     store["train"] = train

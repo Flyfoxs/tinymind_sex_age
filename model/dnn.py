@@ -1,5 +1,5 @@
 from keras import models
-from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from keras.layers import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.core import Dense, Activation, Dropout
@@ -19,6 +19,7 @@ def train_dnn(dropout, lr):
     #dropout = 0.7
 
     args = locals()
+    logger.debug(f'Run train dnn:{args}')
 
 
     feature_label = get_feature_label_dnn(version)
@@ -73,11 +74,14 @@ def train_dnn(dropout, lr):
     early_stop = EarlyStopping(monitor='val_loss',verbose=1,
                                patience=300,
                                )
+    reduce = ReduceLROnPlateau(monitor='val_loss', factor=0.5,
+                               patience=100, verbose=1, mode='min')
+
     from keras.utils import np_utils
     print(y_train.shape)
     history = model.fit(X_train, np_utils.to_categorical(y_train),
                         validation_data=(X_test, np_utils.to_categorical(y_test)),
-                        callbacks=[check_best, early_stop],
+                        callbacks=[check_best, early_stop, reduce],
                         batch_size=128,
                         #steps_per_epoch= len(X_test)//128,
                         epochs=50000,
@@ -90,22 +94,22 @@ def train_dnn(dropout, lr):
 def get_feature_label_dnn(version):
     from tiny.util import get_stable_feature
     feature_label = get_stable_feature(version)
+    feature_label['sex'] = feature_label['sex'].astype('category')
     feature_label['sex_age'] = feature_label['sex_age'].astype('category')
     return feature_label
 
 
 if __name__ == '__main__':
-    for drop in [0.75,0.8, 0.7,] :
-        for lr in [0.0005, 0.0003, 0.0001]:
-
-            _ , history, args = train_dnn(drop, lr)
+    for drop in [ 0.5, 0.6, 0.75,0.8, 0.7,] :
+        #for lr in [0.0005, 0.0003, 0.0001]:
+            _ , history, args = train_dnn(drop, 0.001)
 
             best_epoch = np.array(history.history['val_loss']).argmin()+1
             best_score = np.array(history.history['val_loss']).min()
 
             model = models.load_model(tmp_model)
 
-            feature_label = get_feature_label_dnn()
+            feature_label = get_feature_label_dnn(version)
 
             test = feature_label[feature_label['sex'].isnull()]
             train = feature_label[feature_label['sex'].notnull()]
@@ -119,7 +123,7 @@ if __name__ == '__main__':
             pre_x = test.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
             sub = pd.DataFrame(classifier.predict_proba(pre_x.values))
 
-            sub.columns = test.sex_age.cat.categories
+            sub.columns = train.sex_age.cat.categories
             sub['DeviceID'] = test['device'].values
             sub = sub[
                 ['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
@@ -161,7 +165,7 @@ if __name__ == '__main__':
                                  index = train.device,
                                  )
 
-            save_result_for_ensemble(f'{best_score}_{best_epoch}_v_{version}_dnn',
+            save_result_for_ensemble(f'{best_score}_{best_epoch}_v_{version}_dnn_{args}',
                                          train = train_bk,
                                          test  = test_bk ,
                                          label = label_bk,

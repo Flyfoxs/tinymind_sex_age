@@ -21,6 +21,7 @@ except :
 def gen_sub_by_para(svd_cmp):
     #version = '1002'
     args = locals()
+    logger.debug(f'Run train dnn:{args}')
     feature_label = get_dynamic_feature(svd_cmp)
     #feature_label = get_stable_feature(version)
 
@@ -117,14 +118,14 @@ def gen_sub_by_para(svd_cmp):
                             index=train.device,
                             )
 
-    save_result_for_ensemble(f'{best_score}_{best_epoch}_xgb',
+    save_result_for_ensemble(f'{best_score}_{best_epoch}_xgb_{args}',
                              train=train_bk,
                              test=test_bk,
                              label=label_bk,
                              )
 
 if __name__ == '__main__':
-    for svd_cmp in range(17, 100, 2):
+    for svd_cmp in range(18, 200, 30):
         gen_sub_by_para(svd_cmp)
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))

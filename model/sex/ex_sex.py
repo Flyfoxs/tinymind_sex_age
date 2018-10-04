@@ -5,12 +5,13 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 from tiny.tfidf import *
 from tiny.usage import *
-from tiny.util import replace_invalid_filename_char
+from tiny.util import replace_invalid_filename_char, get_stable_feature
 
 
 @timed()
 def gen_sub_by_para(bal_ratio):
     args = locals()
+    logger.debug(f'Run train dnn:{args}')
 
     drop_useless_pkg = True
     drop_long = 0.3
@@ -52,7 +53,7 @@ def gen_sub_by_para(bal_ratio):
 
     best = log_loss(y_test, classifier.predict_proba(X_test) )
 
-    best = round(best, 4)
+    best_score = round(best, 4)
 
     #lgb.plot_importance(gbm, max_num_features=20)
 
@@ -66,11 +67,26 @@ def gen_sub_by_para(bal_ratio):
 
     print_imp_list(X_train, classifier)
 
+    ###Save result for ensemble
+    train_bk = pd.DataFrame(classifier.predict_proba(train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)),
+                            index=train.device,
+                            columns=Y_CAT.categories
+                            )
+
+    test_bk = pd.DataFrame(classifier.predict_proba(pre_x),
+                           index=test.device,
+                           columns=Y_CAT.categories
+                           )
+
+    save_result_for_ensemble(f'{best_score}__ex_sex_{args}',
+                             train=train_bk,
+                             test=test_bk,
+                             label=None,
+                             )
+
 if __name__ == '__main__':
 
-    for bal_ratio in np.arange(0, 1, 0.1):
-        bal_ratio=round(bal_ratio, 2)
-        gen_sub_by_para(bal_ratio)
+    gen_sub_by_para(0)
     # gen_sub_by_para(True, 0.4)
     # for drop_long in np.arange(0.1, 1.1, 0.1):
     #     for drop_useless_pkg in [True, False]:

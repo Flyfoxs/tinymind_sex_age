@@ -20,6 +20,7 @@ def train_dnn(dropout, lr):
     #dropout = 0.7
 
     args = locals()
+    logger.debug(f'Run train dnn:{args}')
 
 
     feature_label = get_feature_label_dnn(version)
@@ -29,7 +30,7 @@ def train_dnn(dropout, lr):
     train=feature_label[feature_label['sex'].notnull()]
 
 
-    X_train, X_test, y_train, y_test = split_train(train)
+    X_train, X_test, y_train, y_test = split_train(train, label_col = 'sex')
 
 
 
@@ -53,12 +54,12 @@ def train_dnn(dropout, lr):
     model.add(LeakyReLU(alpha=0.01))
 
 
-    model.add(Dense(22, ))
-    model.add(Activation('softmax'))
+    model.add(Dense(2, ))
+    model.add(Activation('sigmoid'))
 
     # model.compile(optimizer="sgd", loss="mse")
     adam = Adam(lr=lr)
-    model.compile(loss='categorical_crossentropy', optimizer=adam,
+    model.compile(loss='binary_crossentropy', optimizer=adam,
                     #metrics=['categorical_crossentropy'],
                   )
     print(model.summary())
@@ -81,11 +82,11 @@ def train_dnn(dropout, lr):
                         callbacks=[check_best, early_stop],
                         batch_size=128,
                         #steps_per_epoch= len(X_test)//128,
-                        epochs=50000,
+                        epochs=2000,
                         verbose=1,
                         )
 
-    best = log_loss(y_test, classifier.predict_proba(X_test))
+    best = log_loss(y_test, model.predict_proba(X_test))
 
     logger.debug(f'Real time best:{best}')
 
@@ -95,6 +96,7 @@ def train_dnn(dropout, lr):
 def get_feature_label_dnn(version):
     from tiny.util import get_stable_feature
     feature_label = get_stable_feature(version)
+    feature_label['sex'] = feature_label['sex'].astype('category')
     feature_label['sex_age'] = feature_label['sex_age'].astype('category')
     return feature_label
 
@@ -102,7 +104,6 @@ def get_feature_label_dnn(version):
 if __name__ == '__main__':
     for drop in [0.75,0.8, 0.7,] :
         for lr in [0.0005, 0.0003, 0.0001]:
-
             _ , history, args = train_dnn(drop, lr)
 
             best_epoch = np.array(history.history['val_loss']).argmin()+1
@@ -110,25 +111,20 @@ if __name__ == '__main__':
 
             model = models.load_model(tmp_model)
 
-            feature_label = get_feature_label_dnn()
+            feature_label = get_feature_label_dnn(version)
 
             test = feature_label[feature_label['sex'].isnull()]
             train = feature_label[feature_label['sex'].notnull()]
 
-            X_train, X_test, y_train, y_test = split_train(train)
-
-
+            X_train, X_test, y_train, y_test = split_train(train, label_col = 'sex')
 
             classifier = model
 
             pre_x = test.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
             sub = pd.DataFrame(classifier.predict_proba(pre_x.values))
 
-            sub.columns = test.sex_age.cat.categories
+            sub.columns = train.sex.cat.categories
             sub['DeviceID'] = test['device'].values
-            sub = sub[
-                ['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
-                 '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
 
 
             best = log_loss(y_test, classifier.predict_proba(X_test))
@@ -154,19 +150,19 @@ if __name__ == '__main__':
             ###Save result for ensemble
             train_bk = pd.DataFrame(classifier.predict_proba( train.drop(['sex', 'age', 'sex_age', 'device'], axis=1) ),
                                  index = train.device,
-                                 columns= train.sex_age.cat.categories
+                                 columns= train.sex.cat.categories
                                  )
 
             test_bk = pd.DataFrame(classifier.predict_proba(pre_x.values),
                                  index = test.device,
-                                 columns= test.sex_age.cat.categories
+                                 columns= test.sex.cat.categories
                                  )
-            label_bk = pd.DataFrame({'label':train.sex_age.cat.codes},
-                                 index = train.device,
-                                 )
+            # label_bk = pd.DataFrame({'label':train.sex_age.cat.codes},
+            #                      index = train.device,
+            #                      )
 
-            save_result_for_ensemble(f'{best_score}_{best_epoch}_v_{version}_dnn',
+            save_result_for_ensemble(f'{best_score}_{best_epoch}_v_{version}_dnn_sex_{args}',
                                          train = train_bk,
                                          test  = test_bk ,
-                                         label = label_bk,
+                                         label = None,
                                      )

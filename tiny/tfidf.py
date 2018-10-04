@@ -3,6 +3,10 @@ from tiny.lda import *
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 import pandas as pd
 
+
+from utils_.util_log import *
+from utils_.util_cache_file import *
+
 #
 # @timed()
 # @file_cache(type='pkl',overwrite=False)
@@ -71,7 +75,7 @@ def base_on_usage_for_TF(version, mini=False, col='package'):
 
 
 def cal_tf_for_individual_file(path, col,):
-
+    from tiny.util import get_start_closed
     if os.path.isfile(path) and 'csv' in path:
         print(f"Try to summary file:{path}")
         df = get_start_closed(path)
@@ -135,12 +139,12 @@ def attach_tfidf(df):
 def get_svd_tfidf(n_components):
     cntTf = get_cntTf('usage', agg_col='p_sub_type_knn', agg_method='count')
     tfidf = cal_tfidf(cntTf)
-    df1 =  get_svd_tfidf_individual('sub_type', tfidf, 18)
+    df1 =  get_svd_tfidf_individual('sub_type', tfidf, n_components)
 
 
     cntTf = get_cntTf('usage', agg_col='package', agg_method='count')
     tfidf = cal_tfidf(cntTf)
-    df2 =  get_svd_tfidf_individual('type', tfidf, n_components)
+    df2 =  get_svd_tfidf_individual('type', tfidf, max(170, n_components) )
 
     all = pd.concat([df1, df2], axis=1 ).reset_index()
     logger.debug(f"SVD columns:{all.columns}")

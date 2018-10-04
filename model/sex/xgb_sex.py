@@ -20,6 +20,7 @@ except :
 
 def gen_sub_by_para():
     args = locals()
+    logger.debug(f'Run train dnn:{args}')
     feature_label = get_stable_feature('1002')
     #feature_label = feature_label[['sex', 'phone_type', 'brand']]
 

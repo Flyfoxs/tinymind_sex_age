@@ -8,6 +8,7 @@ from xgboost import XGBClassifier
 from tiny.lda import *
 from  tiny.util import *
 
+@lru_cache()
 def get_data():
 
     model = get_dict(False)
@@ -30,7 +31,7 @@ def get_data():
     train = df[ (df.tmp__ != 'Unknown') & (df.tmp__ != np.nan)]
     test =  df[ (df.tmp__ == 'Unknown') | (df.tmp__ == np.nan)]
 
-    print(train.shape, test.shape)
+    logger.debug(f'{train.shape}, {test.shape}')
     return train, test
 
 def extend_pkg_label_knn(col, feature):
