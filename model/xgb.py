@@ -19,9 +19,10 @@ except :
 
 
 def gen_sub_by_para(svd_cmp):
+    #version = '1002'
     args = locals()
     feature_label = get_dynamic_feature(svd_cmp)
-    #feature_label = get_stable_feature('1002')
+    #feature_label = get_stable_feature(version)
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
@@ -61,14 +62,14 @@ def gen_sub_by_para(svd_cmp):
                     **gpu_params
                     )
     # print(random_search.grid_scores_)
-    gbm.fit(X_train, y_train,  eval_set=[(X_test, y_test)], early_stopping_rounds=100, verbose=True )
+    gbm.fit(X_train, y_train,  eval_set=[ (X_train, y_train), (X_test, y_test),], early_stopping_rounds=100, verbose=True )
 
     results = gbm.evals_result()
 
     #print(results)
 
-    best_epoch = np.array(results['validation_0']['mlogloss']).argmin() + 1
-    best_score = np.array(results['validation_0']['mlogloss']).min()
+    best_epoch = np.array(results['validation_1']['mlogloss']).argmin() + 1
+    best_score = np.array(results['validation_1']['mlogloss']).min()
 
 
     pre_x=test.drop(['sex','age','sex_age','device'],axis=1)
@@ -123,7 +124,7 @@ def gen_sub_by_para(svd_cmp):
                              )
 
 if __name__ == '__main__':
-    for svd_cmp in range(5, 100, 2):
+    for svd_cmp in range(17, 100, 2):
         gen_sub_by_para(svd_cmp)
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))

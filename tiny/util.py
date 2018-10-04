@@ -350,7 +350,7 @@ def get_stable_feature(version):
     return get_dynamic_feature(20)
 
 @timed()
-@file_cache(overwrite=True)
+
 def get_dynamic_feature(svd_cmp):
     from tiny.lda import get_lda_from_usage
     drop_useless_pkg = True
@@ -391,11 +391,7 @@ def balance_train(df, ratio):
     else:
         small_part_cnt = df.sex.value_counts().min()
         df = df.sort_values('sex')
-        #Merge more sex=2 to train set
-        cut_point = -int(small_part_cnt*ratio)
-        df_plus = df[cut_point:]
-        bal = pd.concat([df, df_plus])
-        print(f"Train set is change from {len(df)} to {len(bal)} by cut_point:{cut_point}, and value_count:\n , {bal.sex.value_counts()}")
+        bal = pd.concat([df[:small_part_cnt], df[-small_part_cnt:]])
         return bal
 
 
@@ -461,13 +457,13 @@ def save_result_for_ensemble(name, train,  test, label):
     """
 
 
-    logger.debug(f'Train:{train.shape} , label:{label.shape} , test: {test.shape}')
+    logger.debug(f'Train:{train.shape} , label:{label.shape if label is not None else None } , test: {test.shape}')
 
     file = f'./output/best/{name}.h5'
     store = pd.HDFStore(file)
 
     store["train"] = train
-    store["label"] = label
+    if label is not None: store["label"] = label
     store["test"] = test
     store.close()
     logger.debug(f"Ensamble file save to file: {file}")

@@ -78,6 +78,10 @@
 
 # LDA 依赖 p_sub_type_knn
 
+# 奇异值分解 基于APP来做
+
+# validate 数据参与training
+
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 
 nohup python -u model/search/xgb.py > search_xgb.log 2>&1 &

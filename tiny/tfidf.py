@@ -97,6 +97,7 @@ def cal_tf_for_individual_file(path, col,):
 @timed()
 @file_cache(type='pkl')
 def get_cntTf( group_level, agg_col, agg_method):
+    from tiny.package import base_on_package_install_for_TF
     version = 4
     mini = False
     if group_level == 'app':
@@ -137,7 +138,7 @@ def get_svd_tfidf(n_components):
     df1 =  get_svd_tfidf_individual('sub_type', tfidf, 18)
 
 
-    cntTf = get_cntTf('usage', agg_col='p_type_knn', agg_method='count')
+    cntTf = get_cntTf('usage', agg_col='package', agg_method='count')
     tfidf = cal_tfidf(cntTf)
     df2 =  get_svd_tfidf_individual('type', tfidf, n_components)
 

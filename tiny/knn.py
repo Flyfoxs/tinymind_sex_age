@@ -39,6 +39,7 @@ def extend_pkg_label_knn(col, feature):
 
 from functools import lru_cache
 @lru_cache()
+@timed()
 @file_cache(overwrite=True)
 def get_app_type_with_knn(col):
     train, test = get_data()

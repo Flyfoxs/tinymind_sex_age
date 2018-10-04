@@ -10,6 +10,7 @@ from sklearn.cross_validation import train_test_split
 from tiny.tfidf import *
 from tiny.usage import *
 
+from sklearn.metrics import log_loss
 tmp_model = './model/checkpoint/dnn_best_tmp.hdf5'
 np.random.seed(47)
 
@@ -28,7 +29,7 @@ def train_dnn(dropout, lr):
     train=feature_label[feature_label['sex'].notnull()]
 
 
-    X_train, X_test, y_train, y_test = split_train(train, 0)
+    X_train, X_test, y_train, y_test = split_train(train)
 
 
 
@@ -84,6 +85,10 @@ def train_dnn(dropout, lr):
                         verbose=1,
                         )
 
+    best = log_loss(y_test, classifier.predict_proba(X_test))
+
+    logger.debug(f'Real time best:{best}')
+
     return model, history, args
 
 
@@ -125,7 +130,6 @@ if __name__ == '__main__':
                 ['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
                  '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
 
-            from sklearn.metrics import log_loss
 
             best = log_loss(y_test, classifier.predict_proba(X_test))
 

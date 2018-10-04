@@ -13,7 +13,9 @@ from utils_.util_log import *
 def read_result_for_ensemble(file):
     #file = f'./output/best/{name}.h5'
     store = pd.HDFStore(file)
-    ensemble = (store["train"], store["label"], store["test"])
+    ensemble = (store["train"],
+                store["label"] if 'label' in store else None,
+                store["test"])
     store.close()
     return ensemble
 
@@ -22,9 +24,11 @@ def get_label_cat():
     return pd.Categorical(label.sex_age).categories
 
 
+
 file_list = [
     './output/best/2.621213_2510_xgb.h5' ,
     './output/best/2.635281090037028_1569_dnn.h5' ,
+    './output/best/0.608252_2577_xgb_sex.h5' ,
 ]
 
 train_list =[]
@@ -34,7 +38,7 @@ for file in file_list:
     train, label, test = read_result_for_ensemble(file)
 
     train_list.append(train)
-    label_list.append(label)
+    if label is not None: label_list.append(label)
     test_list.append(test)
 
 train = pd.concat(train_list, axis=1)
@@ -47,8 +51,9 @@ label = label.sort_index()
 
 X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=666)
 
-drop_out = 0.5
-patience=5
+drop_out = 0.45
+patience=50
+lr = 0.0005
 #搭建融合后的模型
 inputs = Input((X_train.shape[1:]))
 
@@ -63,6 +68,15 @@ model = Model(inputs, x)
 
 
 ########################################
+
+# np.random.seed(1337)
+#
+# import tensorflow as tf
+# tf.set_random_seed(1234)
+#
+# import random as rn
+# rn.seed(12345)
+
 early_stop = EarlyStopping(monitor='val_loss', verbose=1,
                            patience=patience,
                            )
@@ -72,8 +86,10 @@ check_best = ModelCheckpoint(filepath= model_file,
                              monitor='val_loss', verbose=1,
                              save_best_only=True, mode='min')
 
+reduce = ReduceLROnPlateau(monitor='val_loss',factor=0.5,patience=patience//2,verbose=1,mode='min')
+
 from keras.utils import np_utils
-adam = Adam(0.001)
+adam = Adam(lr)
 model.compile(loss='categorical_crossentropy', optimizer=adam,
               # loss="binary_crossentropy", optimizer="adam",
               # metrics=["accuracy"]
@@ -86,11 +102,15 @@ print(np_utils.to_categorical(y_train).shape)
 
 history = model.fit(X_train, np_utils.to_categorical(y_train),
                     validation_data=(X_test, np_utils.to_categorical(y_test)),
-                    callbacks=[check_best, early_stop],
+                    callbacks=[check_best,
+                               early_stop,
+                               reduce,
+                               ],
                     batch_size=128,
                     # steps_per_epoch= len(X_test)//128,
                     epochs=10000,
                     verbose=1,
+
                     )
 
 from keras import models
@@ -108,8 +128,9 @@ sub = sub[
     ['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
      '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
 
-file = f'./sub/ensemble_{best_score}_epoch_{best_epoch}_drop_{drop_out}_patience_{patience}.csv'
+file = f'./sub/ensemble_{best_score}_epoch_{best_epoch}_drop_{drop_out}_patience_{patience}_lr_{lr}.csv'
 file = replace_invalid_filename_char(file)
+logger.debug(f'Input dim is {train.shape}')
 logger.info(f'sub file save to {file}')
 sub = round(sub, 10)
 sub.to_csv(file, index=False)
