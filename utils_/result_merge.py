@@ -28,8 +28,10 @@ def get_label_cat():
 file_list = [
     #'./output/best/2.621213_2510_xgb.h5' ,
     './output/best/baseline_2.614742_2650_xgb_svd_cmp100.h5' ,
+    './output/best/baseline_2.62099_287_lgb_min_data_in_leaf1472.h5' ,
 
     './output/best/2.635281090037028_1569_dnn.h5' ,
+
 
     './output/best/0.608252_2577_xgb_sex.h5' ,
     './output/best/0.625989340877533_357_v_1002_dnn.h5' ,
@@ -54,7 +56,7 @@ label = label_list[0]
 train = train.sort_index()
 label = label.sort_index()
 
-X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=666)
+X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=234)
 
 drop_out = 0.3
 patience=50
