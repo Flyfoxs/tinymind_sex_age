@@ -10,7 +10,9 @@ from tiny.usage import *
 def gen_sub_by_para():
     args = locals()
 
-    feature_label = get_dynamic_feature()
+    logger.debug(f'Run train dnn:{args}')
+    # feature_label = get_dynamic_feature(svd_cmp)
+    feature_label = get_stable_feature('1005')
 
     train=feature_label[feature_label['sex'].notnull()]
     test =feature_label[feature_label['sex'].isnull()]
@@ -40,6 +42,7 @@ def gen_sub_by_para():
         #'num_leaves': 300,
         'reg_alpha': 2,
         'reg_lambda': 4,
+        #'learning_rate' : 0.005,
 
 
     }
@@ -49,39 +52,57 @@ def gen_sub_by_para():
 
         gbm = lgb.train(params,
                 lgb_train,
-                num_boost_round=1000,
-                valid_sets=lgb_eval,
+
+                num_boost_round=2000,
+                valid_sets=[lgb_train, lgb_eval,],
                 early_stopping_rounds=50,)
 
-        print(f"Light GBM:{gbm}")
+        print(f"Light GBM:{str(gbm)}")
     except Exception as error:
         print(f'Model input columns:{list(X.columns)}\n dict({X.dtypes.sort_values()})')
         raise error
 
 
-    best = round(gbm.best_score.get('valid_0').get('multi_logloss'), 5)
-
-    best = "{:.5f}".format(best)
+    best_score = round(gbm.best_score.get('valid_1').get('multi_logloss'), 5)
+    best_epoch = gbm.best_iteration
 
     pre_x=test.drop(['sex','age','sex_age','device'],axis=1)
-    sub=pd.DataFrame(gbm.predict(pre_x.values,num_iteration=gbm.best_iteration))
+    # sub=pd.DataFrame(gbm.predict(pre_x.values,num_iteration=gbm.best_iteration))
+    #
+    # sub.columns=Y_CAT.categories
+    # sub['DeviceID']=test['device'].values
+    # sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8', '1-9', '1-10', '2-0', '2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
+    # from sklearn.metrics import log_loss
+    # loss_best = log_loss(y_test, gbm.predict(X_test,num_iteration=gbm.best_iteration))
+    #
+    # loss_default = log_loss(y_test, gbm.predict(X_test))
+    #
+    # print(f'Loss_best={loss_best}, Loss_default={loss_default}')
+    # #lgb.plot_importance(gbm, max_num_features=20)
+    #
+    # # print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
+    #
+    # file = f'./sub/baseline_lg_{best_score}_{best_epoch}_{args}.csv'
+    # file = replace_invalid_filename_char(file)
+    # print(f'sub file save to {file}')
+    # sub.to_csv(file,index=False)
 
+    train_bk = pd.DataFrame(gbm.predict(train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)),
+                            index=train.device,
+                            columns=Y_CAT.categories
+                            )
 
-    sub.columns=Y_CAT.categories
-    sub['DeviceID']=test['device'].values
-    sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8', '1-9', '1-10', '2-0', '2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
-    from sklearn.metrics import log_loss
-    loss = log_loss(y_test, gbm.predict(X_test,num_iteration=gbm.best_iteration))
+    test_bk = pd.DataFrame(gbm.predict(pre_x),
+                           index=test.device,
+                           columns=Y_CAT.categories
+                           )
 
-    print(f'Loss={loss}')
-    #lgb.plot_importance(gbm, max_num_features=20)
-
-    print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
-
-    file = f'./sub/baseline_lg_{best}_{args}.csv'
-    file = replace_invalid_filename_char(file)
-    print(f'sub file save to {file}')
-    sub.to_csv(file,index=False)
+    from tiny.util import save_result_for_ensemble
+    save_result_for_ensemble(f'{best_score}_{best_epoch}_lgb_{args}',
+                             train=train_bk,
+                             test=test_bk,
+                             label=None,
+                             )
 
 if __name__ == '__main__':
     # for reg_alpha in np.arange(1, 5, 1):
