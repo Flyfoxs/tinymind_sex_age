@@ -101,8 +101,8 @@ def get_feature_label_dnn(version):
 
 if __name__ == '__main__':
     for drop in [ 0.5, 0.6, 0.75,0.8, 0.7,] :
-        #for lr in [0.0005, 0.0003, 0.0001]:
-            _ , history, args = train_dnn(drop, 0.001)
+        for lr in [0.001, 0.0001]:
+            _ , history, args = train_dnn(drop, lr)
 
             best_epoch = np.array(history.history['val_loss']).argmin()+1
             best_score = np.array(history.history['val_loss']).min()

@@ -18,18 +18,18 @@ except :
 
 
 
-def gen_sub_by_para(svd_cmp):
+def gen_sub_by_para():
     #version = '1002'
     args = locals()
     logger.debug(f'Run train dnn:{args}')
-    feature_label = get_dynamic_feature(svd_cmp)
-    #feature_label = get_stable_feature('1005')
+    #feature_label = get_dynamic_feature(svd_cmp)
+    feature_label = get_stable_feature('1005')
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
 
     X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-    Y = train['sex_age']
+    Y = train['age']
     Y_CAT = pd.Categorical(Y)
     X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
 
@@ -74,9 +74,34 @@ def gen_sub_by_para(svd_cmp):
 
 
     pre_x=test.drop(['sex','age','sex_age','device'],axis=1)
+    # sub=pd.DataFrame(gbm.predict_proba(pre_x))
+    #
+    #
+    # sub.columns=Y_CAT.categories
+    # sub['DeviceID']=test['device'].values
+    # sub=sub[['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7','1-8', '1-9', '1-10', '2-0', '2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
+    #
+    #
+    # from sklearn.metrics import log_loss
+    #
+    # best = log_loss(y_test, gbm.predict_proba(X_test) )
+    #
+    # best = round(best, 4)
+    #
+    # #lgb.plot_importance(gbm, max_num_features=20)
+    #
+    # print(f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
     print_imp_list(X_train, gbm)
 
+    # print(f'best_epoch:{best_epoch}_best_score:{best_score}')
+    #
+    # file = f'./sub/baseline_xgb_{best}_{args}_epoch_{best_epoch}.csv'
+    # file = replace_invalid_filename_char(file)
+    # print(f'sub file save to {file}')
+    # sub = round(sub,10)
+    # sub.to_csv(file,index=False)
+    #
 
     ###Save result for ensemble
     train_bk = pd.DataFrame(gbm.predict_proba(train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)),
@@ -93,7 +118,7 @@ def gen_sub_by_para(svd_cmp):
                             index=train.device,
                             )
 
-    save_result_for_ensemble(f'{best_score}_{best_epoch}_xgb_{args}',
+    save_result_for_ensemble(f'{best_score}_{best_epoch}_xgb_age_{args}',
                              train=train_bk,
                              test=test_bk,
                              label=label_bk,
@@ -101,7 +126,7 @@ def gen_sub_by_para(svd_cmp):
 
 if __name__ == '__main__':
     # for svd_cmp in range(50, 200, 30):
-        gen_sub_by_para(0)
+        gen_sub_by_para()
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
     # par_list.reverse()

@@ -137,21 +137,37 @@ def attach_tfidf(df):
 
 
 def get_svd_tfidf(n_components):
+    # cntTf = get_cntTf('usage', agg_col='package', agg_method='sum')
+    #
+    # tfidf = cal_tfidf(cntTf)
+    # df_new =  get_svd_tfidf_individual('tmp', tfidf, n_components )
+    #
+    # df_stable = get_stable_svd_feature()
+    # df_stable.set_index('device', inplace=True)
+    #
+    # all = pd.concat([df_stable, df_new], axis=1 ).reset_index()
+    # logger.debug(f"SVD columns:{all.columns}")
+    # return all
+    return get_stable_svd_feature()
+
+
+@file_cache()
+@timed()
+def get_stable_svd_feature():
     cntTf = get_cntTf('usage', agg_col='p_sub_type_knn', agg_method='count')
     tfidf = cal_tfidf(cntTf)
-    df1 =  get_svd_tfidf_individual('sub_type', tfidf, n_components)
-
+    df1 =  get_svd_tfidf_individual('usg_sub_type', tfidf, 48)
 
     cntTf = get_cntTf('usage', agg_col='package', agg_method='count')
     tfidf = cal_tfidf(cntTf)
-    df2 =  get_svd_tfidf_individual('type', tfidf, max(170, n_components) )
+    df2 =  get_svd_tfidf_individual('usg_pkg', tfidf, 170 )
 
-    all = pd.concat([df1, df2], axis=1 ).reset_index()
-    logger.debug(f"SVD columns:{all.columns}")
-    return all
+    cntTf = get_cntTf('usage', agg_col='package', agg_method='sum')
+    tfidf = cal_tfidf(cntTf)
+    df3 =  get_svd_tfidf_individual('tmp', tfidf, 80 )
 
-
-
+    all = pd.concat([df1, df2, df3], axis=1)
+    return all.reset_index()
 
 
 

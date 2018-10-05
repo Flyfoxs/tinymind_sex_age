@@ -107,7 +107,7 @@ def gen_sub_by_para():
                              )
 
 if __name__ == '__main__':
-        #for num_leaves in range(10, 16, 1):
+        #for min_data_in_leaf in range(1272, 1700, 100):
             gen_sub_by_para()
     # #for limit in range(100, 1300, 100):
     # for drop in np.arange(0.1, 1.1, 0.1):
