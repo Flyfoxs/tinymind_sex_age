@@ -22,8 +22,8 @@ def gen_sub_by_para(svd_cmp):
     #version = '1002'
     args = locals()
     logger.debug(f'Run train dnn:{args}')
-    feature_label = get_dynamic_feature(svd_cmp)
-    #feature_label = get_stable_feature(version)
+    #feature_label = get_dynamic_feature(svd_cmp)
+    feature_label = get_stable_feature('1005')
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
@@ -125,8 +125,8 @@ def gen_sub_by_para(svd_cmp):
                              )
 
 if __name__ == '__main__':
-    for svd_cmp in range(18, 200, 30):
-        gen_sub_by_para(svd_cmp)
+    #for svd_cmp in range(18, 200, 30):
+        gen_sub_by_para(0)
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
     # par_list.reverse()
