@@ -24,7 +24,7 @@ def gen_sub_by_para():
 
     X_train, X_test, y_train, y_test = split_train(train)
 
-    gbm = LGBMClassifier(n_estimators=5000,
+    gbm = LGBMClassifier(n_estimators=20000,
                          boosting_type='gbdt',
                          objective='multiclass',
                          num_class=22,
@@ -42,7 +42,7 @@ def gen_sub_by_para():
                          reg_lambda=4,
 
                          ##########
-                         learning_rate=0.0001,  # 0.1
+                         learning_rate=0.05,  # 0.1
                          colsample_bytree=None,  #1
                          min_child_samples=None,  #20
                          min_child_weight=None,  #0.001
@@ -59,16 +59,21 @@ def gen_sub_by_para():
 
     logger.debug(gbm)
 
-    gbm.fit(X_train, y_train,
+    res=gbm.fit(X_train, y_train,
             eval_set=[(X_train, y_train), (X_test, y_test)],
             early_stopping_rounds=100, verbose=True )
+    print(f'Fit return type:{type(res)}')
 
     print('Feature importances:', list(gbm.feature_importances_))
 
     print_imp_list(train, gbm)
 
     best = round(gbm.best_score_.get('valid_1').get('multi_logloss'), 5)
-    best
+    best_score = best
+    best_epoch = gbm.best_iteration_
+
+    print(gbm)
+
 
     best = "{:.5f}".format(best)
 
