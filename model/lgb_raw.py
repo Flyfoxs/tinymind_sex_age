@@ -31,17 +31,19 @@ def gen_sub_by_para():
         'objective': 'multiclass',
         'random_state': 47,
         'verbose': -1,
+        #'num_leaves':num_leaves,
         'max_depth': 3,
         #"min_data_in_leaf":1000,
 
         'feature_fraction': 0.2,
-        'subsample': 0.5,
+        'subsample': 0.4,
+        'reg_alpha': 6,
+        'reg_lambda': 4,
         # 'min_child_samples': 289,
         #'min_child_weight': 0.1,
         'min_data_in_leaf': 1472,
         #'num_leaves': 300,
-        'reg_alpha': 2,
-        'reg_lambda': 4,
+
         #'learning_rate' : 0.005,
 
 
@@ -53,7 +55,7 @@ def gen_sub_by_para():
         gbm = lgb.train(params,
                 lgb_train,
 
-                num_boost_round=2000,
+                num_boost_round=20000,
                 valid_sets=[lgb_train, lgb_eval,],
                 early_stopping_rounds=50,)
 
@@ -105,8 +107,7 @@ def gen_sub_by_para():
                              )
 
 if __name__ == '__main__':
-    # for reg_alpha in np.arange(1, 5, 1):
-    #     for reg_lambda in np.arange(1, 5, 1):
+        #for num_leaves in range(10, 16, 1):
             gen_sub_by_para()
     # #for limit in range(100, 1300, 100):
     # for drop in np.arange(0.1, 1.1, 0.1):
