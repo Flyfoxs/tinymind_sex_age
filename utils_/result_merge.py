@@ -32,9 +32,13 @@ file_list = [
 
     './output/best/2.635281090037028_1569_dnn.h5' ,
 
-
+    #Sex
     './output/best/0.608252_2577_xgb_sex.h5' ,
     './output/best/0.625989340877533_357_v_1002_dnn.h5' ,
+
+    #Age
+    './output/best/baseline_2.004356_3384_xgb_age_svd_cmp50.h5' ,
+
 
 ]
 
@@ -58,7 +62,7 @@ label = label.sort_index()
 
 X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=234)
 
-drop_out = 0.3
+drop_out = 0.5
 patience=50
 lr = 0.0005
 #搭建融合后的模型
