@@ -37,6 +37,7 @@ def gen_sub_by_para(svd_cmp):
     gbm = XGBClassifier(
                     objective='multi:softprob',
                     eval_metric='mlogloss',
+                    #booster='dart',
                     num_class=22,
                     max_depth=3,
                     reg_alpha=10,
@@ -62,6 +63,7 @@ def gen_sub_by_para(svd_cmp):
 
                     **gpu_params
                     )
+    logger.debug(f"Run the xgb with:{gpu_params}")
     # print(random_search.grid_scores_)
     gbm.fit(X_train, y_train,  eval_set=[ (X_train, y_train), (X_test, y_test),], early_stopping_rounds=100, verbose=True )
 
