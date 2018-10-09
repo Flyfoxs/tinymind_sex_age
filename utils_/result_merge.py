@@ -36,8 +36,8 @@ file_list = [
     # './output/best/baseline_2.620932_2777_xgb_72727_svd_cmp0.h5' ,
 
     #1/2 feature
-    './output/best/baseline_2.619503_2480_xgb_810_sn2.h5',
-    './output/best/baseline_2.621997_2717_xgb_811_sn3.h5',
+    './output/best/baseline_2.631761_2689_xgb_811_sn5.h5',
+    './output/best/baseline_2.62625_2691_xgb_810_sn4.h5',
 
 
     #Sex
