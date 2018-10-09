@@ -153,7 +153,18 @@ def get_lda_docres(cntTf, n_topics):
 
 
 if __name__ == '__main__':
-    get_lda_from_usage(5)
+    # get_lda_from_usage(5)
     #extend_package(version=1)
+    drop = 18363
+    for n_topics in range(5, 30, 5):
+        get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type_knn', agg_method='count', n_topics=n_topics),
+        get_lda_app_and_usage(group_level='usage', drop=0,    agg_col='p_sub_type_knn', agg_method='count', n_topics=n_topics),
+
+        get_lda_app_and_usage(group_level='usage', drop=drop, agg_col='p_sub_type_knn', agg_method='sum', n_topics=n_topics),
+
+
+        #Done
+        get_lda_app_and_usage(group_level='usage', drop=0,    agg_col='p_sub_type_knn', agg_method='sum', n_topics=n_topics),
+
 
 

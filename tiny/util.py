@@ -479,6 +479,17 @@ def reduce_low_frequency( words ) :
     return mini
 
 
+def random_feature(df, ratio, require_list=['sex', 'age', 'sex_age', 'device']):
+    total = len(df.columns)
+    mini_size = round(total*ratio)
+    mini_df = df.sample(mini_size , axis=1)
+    logger.debug(f"Try to convert the column from {total} to {mini_size}")
+    for col in require_list:
+        mini_df[col] = df[col]
+    logger.debug(f"Convert the column from {total} to {mini_size}")
+    return mini_df
+
+
 if __name__ == '__main__':
     drop_useless_pkg = True
     drop_long = 0.3

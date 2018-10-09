@@ -84,6 +84,11 @@
 
 # 模型串接
 
+# 词向量, -> KNN -> packag 分组
+# TFIDF -> KNN -> package 分组
+
+LDA/word2vec/KNN/TFIDF/SVD/Kmeans/Ensamble/DNN
+
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 
 nohup python -u model/search/xgb.py > search_xgb.log 2>&1 &

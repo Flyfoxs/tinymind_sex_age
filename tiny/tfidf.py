@@ -137,18 +137,19 @@ def attach_tfidf(df):
 
 
 def get_svd_tfidf(n_components):
-    # cntTf = get_cntTf('usage', agg_col='package', agg_method='sum')
-    #
-    # tfidf = cal_tfidf(cntTf)
-    # df_new =  get_svd_tfidf_individual('tmp', tfidf, n_components )
-    #
-    # df_stable = get_stable_svd_feature()
-    # df_stable.set_index('device', inplace=True)
-    #
-    # all = pd.concat([df_stable, df_new], axis=1 ).reset_index()
-    # logger.debug(f"SVD columns:{all.columns}")
-    # return all
-    return get_stable_svd_feature()
+
+    if n_components==0 or n_components is None:
+        return get_stable_svd_feature()
+    else:
+        cntTf = get_cntTf('usage', agg_col='p_sub_type_knn', agg_method='count')
+        df_new =  get_svd_tfidf_individual('usg_sub_type', cntTf, 48)
+
+        df_stable = get_stable_svd_feature()
+        df_stable.set_index('device', inplace=True)
+
+        all = pd.concat([df_stable, df_new], axis=1 ).reset_index()
+        logger.debug(f"SVD columns:{all.columns}")
+        return all
 
 
 @file_cache()
