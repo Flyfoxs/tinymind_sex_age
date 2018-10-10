@@ -52,7 +52,7 @@ def cal_tfidf(cntTf):
 
 @timed()
 @file_cache(type='pkl', overwrite=False)
-def base_on_usage_for_TF(version, mini=False, col='package'):
+def base_on_usage_for_TF(version, mini=False, col='package', thres_hold=0):
     from tiny.util import get_start_closed
     rootdir = './output/start_close/'
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -63,7 +63,7 @@ def base_on_usage_for_TF(version, mini=False, col='package'):
     from multiprocessing import Pool as ThreadPool
     from functools import partial
     pool = ThreadPool(processes=8)
-    process_file = partial(cal_tf_for_individual_file, col=col)
+    process_file = partial(cal_tf_for_individual_file, col=col, thres_hold=thres_hold)
 
     results = pool.map(process_file, path_list)
 
@@ -74,8 +74,8 @@ def base_on_usage_for_TF(version, mini=False, col='package'):
     return df.sort_index()
 
 
-def cal_tf_for_individual_file(path, col,):
-    from tiny.util import get_start_closed
+def cal_tf_for_individual_file(path, col, thres_hold):
+    from tiny.util import get_start_closed, split_days_all
     if os.path.isfile(path) and 'csv' in path:
         print(f"Try to summary file:{path}")
         df = get_start_closed(path)
@@ -92,6 +92,7 @@ def cal_tf_for_individual_file(path, col,):
             df = extend_pkg_label_knn('combine_type', df)
 
         df = split_days_all(df)
+        df = df[df.duration >= thres_hold]
         df = extend_package_TF(df, col=col)
         return df
     else:
@@ -100,7 +101,7 @@ def cal_tf_for_individual_file(path, col,):
 
 @timed()
 @file_cache(type='pkl')
-def get_cntTf( group_level, agg_col, agg_method):
+def get_cntTf( group_level, agg_col, agg_method, thres_hold=0):
     from tiny.package import base_on_package_install_for_TF
     version = 4
     mini = False
@@ -108,7 +109,7 @@ def get_cntTf( group_level, agg_col, agg_method):
         cntTf_app = base_on_package_install_for_TF(agg_col)
         cntTf = cntTf_app
     elif group_level =='usage' and agg_method == 'count':
-        cntTf_all = base_on_usage_for_TF(version=version, mini=mini, col=agg_col)
+        cntTf_all = base_on_usage_for_TF(version=version, mini=mini, col=agg_col, thres_hold=thres_hold)
         cntTf_count = cntTf_all[[col for col in cntTf_all.columns if 'count_' in col]]
         cntTf = cntTf_count
     elif group_level =='usage' and agg_method == 'sum':
@@ -142,7 +143,7 @@ def get_svd_tfidf(n_components):
         return get_stable_svd_feature()
     else:
         cntTf = get_cntTf('usage', agg_col='p_sub_type_knn', agg_method='count')
-        df_new =  get_svd_tfidf_individual('usg_sub_type', cntTf, 48)
+        df_new =  get_svd_tfidf_individual('usg_tf_sub_type', cntTf, n_components)
 
         df_stable = get_stable_svd_feature()
         df_stable.set_index('device', inplace=True)

@@ -87,7 +87,10 @@
 # 词向量, -> KNN -> packag 分组
 # TFIDF -> KNN -> package 分组
 
-LDA/word2vec/KNN/TFIDF/SVD/Kmeans/Ensamble/DNN
+# 分组的APP使用频度和没有分组的对比
+
+# 安装使用的APP对比百分比(使用超过n小时的占比多少百分比,个数是多少)
+# 使用0.1天以内的count/duration 百分比是多少?
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 
