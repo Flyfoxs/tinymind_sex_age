@@ -114,9 +114,9 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
         svd_feature = get_svd_tfidf(n_components=None)
         df = pd.merge(df, svd_feature,  on='device', how='left')
 
-        app_used_percent =get_app_used_percent()
-        app_used_percent.fillna(0, inplace=True)
-        df = pd.merge(df, app_used_percent, on='device', how='left')
+        bins = [-1, 4/24, 8/24, 16/24, 1]
+        break_sess = breakdown_session(bins)
+        df = pd.merge(df, break_sess, on='device', how='left')
 
         df = attach_tfidf(df)
 
@@ -185,6 +185,31 @@ def reduce_time_span(df, prefix, span_no=4):
 
 
 
+def breakdown_session(bins):
+    rootdir = './output/start_close/'
+    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
+    path_list = sorted(list, reverse=True)
+    path_list = [os.path.join(rootdir, item) for item in path_list if item.endswith('csv')]
+
+    # from multiprocessing.dummy import Pool as ThreadPool
+
+    from multiprocessing import Pool as ThreadPool
+
+    pool = ThreadPool(processes=4)
+
+    process_file = partial(breakdown_session_individual_file, bins=bins)
+    results = pool.map(process_file, path_list)
+
+    pool.close()
+    pool.join()
+
+    results = [item for item in results if len(item) > 0]
+
+    all = pd.concat(results)
+    all.index.name = 'device'
+    return all.reset_index()
+
+
 @timed()
 @file_cache(overwrite=False, type='h5')
 def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
@@ -209,6 +234,31 @@ def summary_time_trend_on_usage(version,drop_useless_pkg=False,drop_long=False):
 
     all = pd.concat(results)
     return all.reset_index()
+
+
+def breakdown_session_individual_file(path, bins ):
+    print(f"Try to summary file:{path}")
+    bins = [round(item, 5) for item in bins]
+    df = cal_duration_for_partition(path)
+
+    df['bins'] = pd.cut(df.duration, bins)
+    level0 = df.groupby(['device']).agg({'duration': ['sum','count'], 'package': ['nunique']})
+    level0.columns = level0.columns.droplevel(0)
+
+    level1 = df.groupby(['device', 'bins']).agg({'duration': ['sum','count'], 'package': ['nunique']})
+    level1 = level1.reset_index()
+    level1.bins = level1.bins.cat.codes
+    level1 = level1.pivot(index='device', columns='bins')
+    level1.columns = ['_'.join( [ str(value) for value in item]) for item in  level1.columns]
+
+    all = pd.concat([level0, level1], axis=1)
+
+    for item in ['sum', 'count', 'nunique']:
+        for col in [col for col in all.columns if f'_{item}_' in col]:
+            all[f'{col}_percent'] = all[col]/all[item]
+            del all[col]
+    all.fillna(0, inplace=True)
+    return all
 
 
 def summary_individual_file(path, drop_long, drop_useless_pkg, ):
@@ -416,7 +466,7 @@ if __name__ == '__main__':
     #print(app_count.shape)
 
     # print(get_app_usage_percent().shape)
-    print(get_app_usage_percent().columns)
+    print(get_app_used_percent().columns)
     # for drop_useless_pkg in [True, False]:
     #     for drop_long in [1, 0.9, 0.7, 0.5, 0.3, 0.1]:
     #         summary_time_trend_on_usage(version=version,

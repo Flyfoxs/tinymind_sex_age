@@ -18,14 +18,19 @@ except :
 
 
 
-def gen_sub_by_para(svd_cmp):
+def gen_sub_by_para(drop_feature):
+
     #version = '1002'
     args = locals()
+
     logger.debug(f'Run train dnn:{args}')
-    feature_label = get_dynamic_feature(svd_cmp)
-    #feature_label = get_stable_feature('1006')
+    #feature_label = get_dynamic_feature(None)
+    feature_label = get_stable_feature('1011')
 
     #feature_label = random_feature(feature_label, 1/2)
+
+    from tiny.feature_group import get_cut_feature
+    feature_label = get_cut_feature(feature_label, drop_feature)
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
@@ -105,7 +110,7 @@ def gen_sub_by_para(svd_cmp):
 
 if __name__ == '__main__':
     # for svd_cmp in range(50, 200, 30):
-    for arg1 in range(0, 200, 20):
+    for arg1 in range(99, 1000, 100):
         gen_sub_by_para(arg1)
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))

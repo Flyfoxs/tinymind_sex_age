@@ -36,7 +36,7 @@ file_list = [
     # './output/best/baseline_2.620932_2777_xgb_72727_svd_cmp0.h5' ,
 
     #1/2 feature
-    './output/best/baseline_2.631761_2689_xgb_811_sn5.h5',
+    './output/best/baseline_2.64143_3374_xgb_1530_drop_feature100.h5',
     './output/best/baseline_2.62625_2691_xgb_810_sn4.h5',
 
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=234)
 
-    drop_list = list(np.arange(0.5, 0.7, 0.03))
+    drop_list = list(np.arange(0.45, 0.7, 0.03))
     drop_list.reverse()
     for drop_out in drop_list:
         drop_out = round(drop_out, 2)
