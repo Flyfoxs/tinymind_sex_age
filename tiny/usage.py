@@ -111,11 +111,12 @@ def extend_feature( span_no=6, input=None, drop_useless_pkg=False, drop_long=Fal
         df = input.merge(df, on='device', how='left')
 
         from tiny.tfidf import get_svd_tfidf, attach_tfidf
-        svd_feature = get_svd_tfidf(svd_cmp=None)
+        svd_feature = get_svd_tfidf(n_components=None)
         df = pd.merge(df, svd_feature,  on='device', how='left')
 
         app_used_percent =get_app_used_percent()
-        df = df.merge(df, app_used_percent, on='device', how='left')
+        app_used_percent.fillna(0, inplace=True)
+        df = pd.merge(df, app_used_percent, on='device', how='left')
 
         df = attach_tfidf(df)
 
@@ -388,24 +389,25 @@ def get_app_count_sum():
 
 
 @timed()
-@file_cache(overwrite=True)
+@file_cache(overwrite=False)
 def get_app_used_percent():
     from tiny.tfidf import get_cntTf
     install = get_cntTf('app', 'package', None)
     install_cnt = np.sum(np.where(install.values > 0, 1, 0), axis=1)
     install = pd.DataFrame({'app_count':install_cnt},   index=install.index)
 
-    for thres_hold in [10/1440 ,30/1440 , 60/1440, 4/24, 8/24]:
+    for thres_hold in [2/1440, 10/1440 ,30/1440 , 60/1440, 4/24, 8/24]:
         thres_hold = round(thres_hold,2)
         col_cnt = f'used_{thres_hold}_count'
         usage = get_cntTf('usage', agg_col='package', agg_method='count', thres_hold=thres_hold)
         usage_cnt = np.sum(np.where(usage.values > 0, 1, 0), axis=1)
-        usage = pd.DataFrame({col_cnt:usage_cnt},  index=usage.index)
 
+        usage = pd.DataFrame({col_cnt:usage_cnt},  index=usage.index)
         install = pd.concat([install, usage], axis=1)
         install[f'used_{thres_hold}_percent'] = install[col_cnt]/install.app_count
 
     install.index.name = 'device'
+    install.fillna(0,inplace=True)
     return install.reset_index()
 
 

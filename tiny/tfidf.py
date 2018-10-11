@@ -76,6 +76,7 @@ def base_on_usage_for_TF(version, mini=False, col='package', thres_hold=0):
 
 def cal_tf_for_individual_file(path, col, thres_hold):
     from tiny.util import get_start_closed, split_days_all
+    from tiny.package import extend_package_TF
     if os.path.isfile(path) and 'csv' in path:
         print(f"Try to summary file:{path}")
         df = get_start_closed(path)
