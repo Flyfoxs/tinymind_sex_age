@@ -75,9 +75,10 @@ if __name__ == '__main__':
 
     X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=234)
 
-    drop_list = list(np.arange(0.61, 0.7, 0.03))
+    #drop_list = list(np.arange(0.65, 0.7, 0.03))
    # drop_list.reverse()
-    for drop_out in drop_list:
+    for dense in [128, 138, 148]:
+      for drop_out in [0.64]:
         drop_out = round(drop_out, 2)
         patience=50
         lr = 0.0005
@@ -86,7 +87,7 @@ if __name__ == '__main__':
 
         x = Dropout(drop_out)(inputs)
 
-        x = Dense(128, activation='relu')(x)
+        x = Dense(dense, activation='relu')(x)
 
         x = Dropout(drop_out)(x)
 
@@ -155,7 +156,7 @@ if __name__ == '__main__':
             ['DeviceID', '1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
              '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
 
-        file = f'./sub/ensemble_{best_score}_epoch_{best_epoch}_drop_{drop_out}_patience_{patience}_lr_{lr}.csv'
+        file = f'./sub/ensemble_{best_score}_epoch_{best_epoch}_drop_{drop_out}_dense_{dense}_patience_{patience}_lr_{lr}.csv'
         file = replace_invalid_filename_char(file)
         logger.debug(f'Input dim is {train.shape}')
         logger.info(f'sub file save to {file}')
