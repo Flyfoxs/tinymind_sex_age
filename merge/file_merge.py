@@ -26,8 +26,9 @@ if __name__ == '__main__':
 
     #Best
     file_list = [
-        (0.5, 'd59453', './sub/ensemble_2.4256239612579344_epoch_55_drop_0.59_patience_50_lr_0.0005.csv'),
-        (0.5, 'xg', './output/best/baseline_2.614742_2650_xgb_svd_cmp100.h5',),
+        (0.5, 'd59044', './sub/ensemble_2.4139496899922688_epoch_110_drop_0.64_patience_50_lr_0.0005.csv'),
+        (0.5, 'd5905', './sub/ensemble_2.423202401351929_epoch_168_drop_0.66_patience_50_lr_0.0005.csv'),
+        #(0.5, 'xg', './output/best/baseline_2.614742_2650_xgb_svd_cmp100.h5',),
         #(0.2, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
         #(0.5, 'd59488',  './sub/ensemble_2.44306288172404_epoch_79_drop_0.62_patience_50_lr_0.0005.csv'),
 
