@@ -29,8 +29,8 @@ file_list = [
     #'./output/best/2.621213_2510_xgb.h5' ,
     './output/best/baseline_2.613028_2631_xgb_1615_svd_cmp0.h5' ,
     './output/best/baseline_2.62099_287_lgb_min_data_in_leaf1472.h5' ,
-    './output/best/baseline_2.6243436072031656_1388_v_1011_dnn_ensembleFalselr0.0001dropout0.75.h5',
-    #'./output/best/baseline_2.569205629603068_1461_v_1011_dnn_ensembleTruelr0.0001dropout0.75.h5'
+    #'./output/best/baseline_2.6243436072031656_1388_v_1011_dnn_ensembleFalselr0.0001dropout0.75.h5',
+    './output/best/baseline_2.569205629603068_1461_v_1011_dnn_ensembleTruelr0.0001dropout0.75.h5',
     #'./output/best/baseline_2.634297458902995_1433_v_1002_dnn_lr0.0001dropout0.75.h5' ,
 
     # #2/3 feature
