@@ -27,17 +27,21 @@ def get_label_cat():
 
 file_list = [
     #'./output/best/2.621213_2510_xgb.h5' ,
-    './output/best/baseline_2.614742_2650_xgb_svd_cmp100.h5' ,
+    './output/best/baseline_2.613028_2631_xgb_1615_svd_cmp0.h5' ,
     './output/best/baseline_2.62099_287_lgb_min_data_in_leaf1472.h5' ,
-    './output/best/2.635281090037028_1569_dnn.h5' ,
+    './output/best/baseline_2.6243436072031656_1388_v_1011_dnn_ensembleFalselr0.0001dropout0.75.h5',
+    #'./output/best/baseline_2.569205629603068_1461_v_1011_dnn_ensembleTruelr0.0001dropout0.75.h5'
+    #'./output/best/baseline_2.634297458902995_1433_v_1002_dnn_lr0.0001dropout0.75.h5' ,
 
     # #2/3 feature
     # './output/best/baseline_2.618598_2727_xgb_72727_svd_cmp0.h5' ,
     # './output/best/baseline_2.620932_2777_xgb_72727_svd_cmp0.h5' ,
 
-    #1/2 feature
-    './output/best/baseline_2.64143_3374_xgb_1530_drop_feature100.h5',
-    './output/best/baseline_2.62625_2691_xgb_810_sn4.h5',
+    #drop columns
+    './output/best/baseline_2.620313_2482_xgb_831_drop_feature799.h5',
+     #'./output/best/baseline_2.617977_2619_xgb_1031_drop_feature599.h5',
+   './output/best/baseline_2.614679_2596_xgb_1231_drop_feature399.h5',
+
 
 
     #Sex
@@ -71,7 +75,7 @@ if __name__ == '__main__':
 
     X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=234)
 
-    drop_list = list(np.arange(0.45, 0.7, 0.03))
+    drop_list = list(np.arange(0.55, 0.7, 0.03))
     drop_list.reverse()
     for drop_out in drop_list:
         drop_out = round(drop_out, 2)
