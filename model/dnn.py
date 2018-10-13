@@ -89,6 +89,12 @@ def train_dnn(dropout, lr, ensemble):
                         verbose=1,
                         )
 
+    from sklearn.metrics import log_loss
+
+    best = log_loss(y_test, model.predict_proba(X_test))
+
+    logger.debug(f'Current_Best:{best}, best_score:{best_score} @ epoch:{best_epoch}')
+
     return model, history, args
 
 
@@ -109,8 +115,8 @@ def get_feature_label_dnn(version, ensemble):
 
 
 if __name__ == '__main__':
-    for drop in [ 0.75,0.8, 0.7,0.6,] :
-        for lr in [ 0.0001]:
+    for drop in [0.65, 0.75,0.8, 0.7,0.6,] :
+        for lr in [ 0.01, 0.001]:
             for ensemble in [True, False]:
                 _ , history, args = train_dnn(drop, lr, ensemble)
 
