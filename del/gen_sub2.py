@@ -1,6 +1,6 @@
 #import seaborn as sns
 import xgboost as xgb
-from sklearn.cross_validation import train_test_split
+
 
 from tiny.lda import *
 from  tiny.util import *
@@ -24,7 +24,7 @@ test=deviceid_train[deviceid_train['sex'].isnull()]
 X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
 Y = train['sex_age']
 Y_CAT = pd.Categorical(Y)
-X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
+X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes)
 
 
 dtrain = xgb.DMatrix(X_train, y_train)

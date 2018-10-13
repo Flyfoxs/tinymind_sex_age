@@ -461,6 +461,75 @@ def get_app_used_percent():
     return install.reset_index()
 
 
+
+def summary_daily_usage_individual_file(path):
+    import numpy as np
+
+    print(f"Try to summary file:{path}")
+
+    df = cal_duration_for_partition(path)
+
+    df['weekend'] = df.weekday // 5
+
+    df['start_h'] = df.start.dt.hour
+    df['close_h'] = df.close.dt.hour
+
+    df['start_h_awake'] = df.start.dt.hour.replace({0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan})
+    df['close_h_sleep'] = df.close.dt.hour.replace({0: 24, 1: 25, 2: 26})
+
+    ### Cal daily usage hours
+    usage_hour = df[(df.duration > 0) & ((df.duration <= 6 / 24))]
+
+    usage_hour = usage_hour.groupby(['device', 'start_base', 'weekend'])[[col for col in df.columns if 'span24_' in col]].count()
+
+    usage_hour = pd.DataFrame({'hours_count': np.sum(np.where(usage_hour >= 1, 1, 0), axis=1)}, index=usage_hour.index)
+
+    usage_hour = usage_hour.reset_index()
+    usage_hour = usage_hour.groupby('device')['hours_count'].mean()
+
+
+    ####Cal daily max gap
+    df = df.sort_values(['device', 'start', 'weekend'])
+    df['previous_close'] = df.groupby(['device'])['close'].shift(1)
+
+    df['gap'] = 24 * (df['start'] - df['previous_close']) / np.timedelta64(1, 'D')
+    max_gap = df[['device', 'start_base', 'previous_close', 'start', 'close', 'weekend', 'gap']]
+    max_gap = max_gap.sort_values(['device', 'start_base', 'weekend', 'gap'], ascending=False)
+
+    max_gap = max_gap[(0 < max_gap.gap) & (max_gap.gap < 24)]
+    max_gap = max_gap.groupby(['device', 'start_base', 'weekend'], ).nth(0).reset_index()
+    max_gap = max_gap.groupby('device')['gap'].mean()
+
+    all = pd.concat([usage_hour.to_frame(), max_gap.to_frame()], axis=1)
+
+    return all.fillna(0)
+
+@timed()
+@file_cache(overwrite=False)
+def summary_daily_usage():
+    rootdir = './output/start_close/'
+    list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
+    path_list = sorted(list, reverse=True)
+    path_list = [os.path.join(rootdir, item) for item in path_list if item.endswith('csv')]
+
+    # from multiprocessing.dummy import Pool as ThreadPool
+
+    from multiprocessing import Pool as ThreadPool
+
+    pool = ThreadPool(processes=4)
+
+    results = pool.map(summary_daily_usage_individual_file, path_list)
+
+    pool.close()
+    pool.join()
+
+    results = [item for item in results if len(item) > 0]
+
+    all = pd.concat(results)
+    all.index.name = 'device'
+    return all.reset_index()
+
+
 if __name__ == '__main__':
     #app_count = get_app_count_sum()
     #print(app_count.shape)

@@ -91,6 +91,10 @@
 
 # 安装使用的APP对比百分比(使用超过n小时的占比多少百分比,个数是多少)
 # 使用0.1天以内的count/duration 百分比是多少?
+# 按照Session时间段,统计count,sum, 和app nunique()
+# feature 安装imp group分组
+# KNN 个数调整
+# 时间重新分桶
 
 Ref: https://github.com/neuronblack/yiguan/blob/master/Untitled1.ipynb
 

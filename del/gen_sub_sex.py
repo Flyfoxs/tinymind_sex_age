@@ -1,6 +1,5 @@
 #import seaborn as sns
 import lightgbm as lgb
-from sklearn.cross_validation import train_test_split
 
 from tiny.tfidf import *
 from tiny.usage import *
@@ -23,7 +22,7 @@ def gen_sub_by_para(drop_useless_pkg, drop_long):
     X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
     Y = train['sex']
     Y_CAT = pd.Categorical(Y)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels, test_size=0.3, random_state=666)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels)
     lgb_train = lgb.Dataset(X_train, label=y_train)
     lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
     params = {

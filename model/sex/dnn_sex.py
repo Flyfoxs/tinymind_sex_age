@@ -5,7 +5,6 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.core import Dense, Activation, Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam
-from sklearn.cross_validation import train_test_split
 
 from tiny.tfidf import *
 from tiny.usage import *

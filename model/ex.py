@@ -1,7 +1,3 @@
-#import seaborn as sns
-import lightgbm as lgb
-from sklearn.cross_validation import train_test_split
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 from tiny.tfidf import *
 from tiny.usage import *

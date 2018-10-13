@@ -1,9 +1,5 @@
 from lightgbm.sklearn import LGBMRegressor, LGBMClassifier
 
-from xgboost.sklearn import XGBRegressor
-import lightgbm as lgb
-from sklearn.cross_validation import train_test_split
-
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV

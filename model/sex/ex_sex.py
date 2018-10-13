@@ -1,6 +1,6 @@
 #import seaborn as sns
 import lightgbm as lgb
-from sklearn.cross_validation import train_test_split
+
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 from tiny.tfidf import *
@@ -26,7 +26,7 @@ def gen_sub_by_para(bal_ratio):
     X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1, errors='ignore')
     Y = train['sex']
     Y_CAT = pd.Categorical(Y)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes, test_size=0.3, random_state=666)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes)
 
     classifier = ExtraTreesClassifier(n_estimators=1000,
                                       max_depth=15,

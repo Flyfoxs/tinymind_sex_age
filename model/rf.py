@@ -1,6 +1,6 @@
 #import seaborn as sns
 import lightgbm as lgb
-from sklearn.cross_validation import train_test_split
+
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 #from imblearn.ensemble import BalancedRandomForestClassifier
 from tiny.tfidf import *
@@ -25,7 +25,7 @@ def gen_sub_by_para(class_weight):
 
     Y = train['sex_age']
     Y_CAT = pd.Categorical(Y)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels, test_size=0.3, random_state=666)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.labels)
 
     # X_train.fillna(0, inplace=True)
     # X_test.fillna(0, inplace=True)

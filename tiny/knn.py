@@ -1,9 +1,5 @@
 
 
-from sklearn.model_selection import StratifiedKFold, train_test_split
-from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-
-from xgboost import XGBClassifier
 
 from tiny.lda import *
 from  tiny.util import *

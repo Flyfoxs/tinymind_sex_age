@@ -2,7 +2,6 @@ from keras import Input, Model
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from keras.layers import Dropout, Dense, LeakyReLU
 from keras.optimizers import Adam
-from sklearn.model_selection import train_test_split
 
 import numpy as np
 import pandas as pd
@@ -73,11 +72,11 @@ if __name__ == '__main__':
     train = train.sort_index()
     label = label.sort_index()
 
-    X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0], test_size=0.3, random_state=234)
+    X_train, X_test, y_train, y_test = train_test_split(train, label.iloc[:,0])
 
     #drop_list = list(np.arange(0.65, 0.7, 0.03))
    # drop_list.reverse()
-    for dense in [128, 138, 148]:
+    for dense in [128]:
       for drop_out in [0.64]:
         drop_out = round(drop_out, 2)
         patience=50

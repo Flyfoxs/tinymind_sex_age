@@ -1,9 +1,9 @@
 #import seaborn as sns
-import lightgbm as lgb
-from sklearn.cross_validation import train_test_split
+
 
 from tiny.tfidf import *
 from tiny.usage import *
+from tiny.util import get_stable_feature
 
 
 @timed()

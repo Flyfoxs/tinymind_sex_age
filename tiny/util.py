@@ -361,29 +361,27 @@ def get_dynamic_feature(svd_cmp):
                              drop_useless_pkg=drop_useless_pkg, drop_long=drop_long, svd_cmp=svd_cmp)
     feature = convert_label_encode(feature)
     feature_label = attach_device_train_label(feature)
+    feature_label = feature_label.sort_values('device')
     return feature_label
 
 
-def split_train(df, bal_ratio=0, label_col='sex_age'):
-    df.sex = df.sex.astype('category')
-    train = df.sample(frac=0.7, random_state=200)
-    train = balance_train(train, bal_ratio)
-    X_train = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-    y_train = train[label_col]
+@timed()
+def split_train(df,  label_col='sex_age'):
 
 
-    validate = df.drop(train.index)
-    X_test  = validate.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
-    y_test  = validate[label_col]
+    #df['sex'] = df['sex'].astype('category')
 
-    # from imblearn.combine import SMOTEENN, SMOTETomek
-    # sm = SMOTETomek()
-    #
-    # X_resampled, y_resampled = sm.fit_sample(X_train, y_train.cat.codes)
-    #
-    # print(f'SMOTEENN expend the sample from {len(X_train)} to {len(X_resampled)}')
+    X= df.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+    y= df[label_col]
 
-    return  X_train, X_test, y_train.cat.codes, y_test.cat.codes
+    X_train, X_test, y_train, y_test = train_test_split(X, y.cat.codes)
+
+    return  X_train, X_test, y_train, y_test
+
+def train_test_split(X, y):
+    from sklearn.model_selection import train_test_split
+    return train_test_split(X, y, test_size=0.2, random_state=666)
+
 
 def balance_train(df, ratio):
     if ratio == 0:
@@ -489,9 +487,41 @@ def random_feature(df, ratio, require_list=['sex', 'age', 'sex_age', 'device']):
     logger.debug(f"Convert the column from {total} to {mini_size}")
     return mini_df
 
+def ensemble_feature_other_model(df, files):
+    from merge.dnn_merge import read_result_for_ensemble
+    feature_list = []
+    for name, file in files:
+        train, _, test = read_result_for_ensemble(file)
+        feature = pd.concat([train, test])
+        feature.columns = [f'{name}_{col}' for col in feature.columns]
+        feature_list.append(feature)
+    all = pd.concat(feature_list, axis=1)
+    all.index.name = 'device'
+    all = all.reset_index()
+    logger.debug(f"Ensemble column_name:{all.columns}")
+    if df is not None:
+        all = pd.merge(df, all, on='device', how='left')
+
+
+    return all
+
+
 
 if __name__ == '__main__':
-    drop_useless_pkg = True
-    drop_long = 0.3
-    feature = extend_feature(span_no=24, input=None,
-                             drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
+    # drop_useless_pkg = True
+    # drop_long = 0.3
+    # feature = extend_feature(span_no=24, input=None,
+    #                          drop_useless_pkg=drop_useless_pkg, drop_long=drop_long)
+
+
+    file_list = [
+
+        ('lgb', './output/best/baseline_2.62099_287_lgb_min_data_in_leaf1472.h5'),
+        ('dnn', './output/best/2.6337418931325276_1303_dnn.h5'),
+
+    ]
+
+
+    tmp = ensemble_feature_other_model(None, file_list)
+
+    logger.debug(tmp.shape)
