@@ -1,5 +1,5 @@
-
-
+from sklearn.metrics import log_loss
+from sklearn.model_selection import StratifiedKFold
 from xgboost import XGBClassifier
 
 from tiny.feature_filter import get_cut_feature
@@ -13,7 +13,75 @@ except :
     gpu_params = {}
 
 
+def learning(model ,Xtrain ,y ,Xtest, number_of_folds= 5, seed = 777, nb_class =22):
+    print( 'Model: %s' % model)
 
+    """ Each model iteration """
+    train_predict_y = np.zeros((len(y), nb_class))
+    test_predict_y = np.zeros((Xtest.shape[0], nb_class))
+    ll = 0.
+    """ Important to set seed """
+    skf = StratifiedKFold(n_splits = number_of_folds ,shuffle=True, random_state=seed)
+    """ Each fold cross validation """
+    for i, (train_idx, val_idx) in enumerate(skf.split(Xtrain, y)):
+        print('Fold ', i + 1)
+
+        model.fit(Xtrain[train_idx], y[train_idx], eval_set=[(Xtrain[val_idx],  y[val_idx])],
+                  early_stopping_rounds=50, verbose=True)
+
+        scoring = model.predict_proba(Xtrain[val_idx])
+        """ Out of fold prediction """
+        train_predict_y[val_idx] = scoring
+        l_score = log_loss(y[val_idx], scoring)
+        ll += l_score
+        print('    Fold %d score: %f' % (i + 1, l_score))
+
+        test_predict_y = test_predict_y + model.predict_proba(Xtest)
+
+    test_predict_y = test_predict_y / number_of_folds
+
+    print('average val log_loss: %f' % (ll / number_of_folds))
+    """ Fit Whole Data and predict """
+    print('training whole data for test prediction...')
+
+    np.save('./output/xgb_train.np', train_predict_y)
+    np.save('./output/xgb__test.np', test_predict_y)
+
+
+def get_model():
+
+
+    gbm = XGBClassifier(
+                    objective='multi:softprob',
+                    eval_metric='mlogloss',
+                    #booster='dart',
+                    num_class=22,
+                    max_depth=3,
+                    reg_alpha=10,
+                    reg_lambda=10,
+                    subsample=0.7,
+                    colsample_bytree=0.6,
+                    n_estimators=2,
+
+
+                    learning_rate=0.01,
+
+
+                    seed=1,
+                    missing=None,
+
+                    #Useless Paras
+                    silent=True,
+                    gamma=0,
+                    max_delta_step=0,
+                    min_child_weight=1,
+                    colsample_bylevel=1,
+                    scale_pos_weight=1,
+
+                    **gpu_params
+                    )
+
+    return gbm
 
 def gen_sub_by_para(drop_feature):
 
@@ -42,36 +110,7 @@ def gen_sub_by_para(drop_feature):
     Y_CAT = pd.Categorical(Y)
     X_train, X_test, y_train, y_test = train_test_split(X, Y_CAT.codes)
 
-
-    gbm = XGBClassifier(
-                    objective='multi:softprob',
-                    eval_metric='mlogloss',
-                    #booster='dart',
-                    num_class=22,
-                    max_depth=3,
-                    reg_alpha=10,
-                    reg_lambda=10,
-                    subsample=0.7,
-                    colsample_bytree=0.6,
-                    n_estimators=20000,
-
-
-                    learning_rate=0.01,
-
-
-                    seed=1,
-                    missing=None,
-
-                    #Useless Paras
-                    silent=True,
-                    gamma=0,
-                    max_delta_step=0,
-                    min_child_weight=1,
-                    colsample_bylevel=1,
-                    scale_pos_weight=1,
-
-                    **gpu_params
-                    )
+    gbm = get_model()
     logger.debug(f"Run the xgb with:{gpu_params}")
     # print(random_search.grid_scores_)
     gbm.fit(X_train, y_train,  eval_set=[ (X_train, y_train), (X_test, y_test),], early_stopping_rounds=100, verbose=True )
@@ -111,9 +150,29 @@ def gen_sub_by_para(drop_feature):
                              )
 
 if __name__ == '__main__':
+
+
+    feature_label = get_stable_feature('1011')
+
+    feature_label = get_cut_feature(feature_label, False)
+
+    # feature_label = get_best_feautre(feature_label)
+
+
+    # daily_info = summary_daily_usage()
+    # feature_label  = feature_label.merge(daily_info, on='device', how='left')
+
+    train = feature_label[feature_label['sex'].notnull()]
+    test = feature_label[feature_label['sex'].isnull()]
+
+    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+    Y = train['sex_age']
+    Y_CAT = pd.Categorical(Y)
+
+    learning(get_model(), train, Y_CAT.codes, test )
     # for svd_cmp in range(50, 200, 30):
-    for arg1 in [ 800]:
-        gen_sub_by_para(arg1)
+    # for arg1 in [ 800]:
+    #     gen_sub_by_para(arg1)
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
     # par_list.reverse()
