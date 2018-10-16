@@ -509,6 +509,28 @@ def ensemble_feature_other_model(df, files):
 
 
 
+
+def reorder_train(df):
+    df = df.set_index('device')
+    train = pd.read_csv("./input/deviceid_train.tsv", encoding='utf8', sep='\t',header=None)
+    train.columns=['device','sex','age'] ;
+    train=train.set_index('device');
+    train=train.drop(['sex','age'],axis=1)
+    return train.join(df)
+
+
+
+def reorder_test(df):
+    print(df.columns)
+    df = df.set_index('device')
+    test = pd.read_csv("./input/deviceid_test.tsv", encoding='utf8', sep='\t', header=None)
+    test.columns = ['device'];
+    test = test.set_index('device');
+    return test.join(df)
+
+
+
+
 if __name__ == '__main__':
     # drop_useless_pkg = True
     # drop_long = 0.3

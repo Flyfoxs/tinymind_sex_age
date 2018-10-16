@@ -14,6 +14,10 @@ except :
 
 
 def learning(model ,Xtrain ,y ,Xtest, number_of_folds= 5, seed = 777, nb_class =22):
+
+    Xtrain = Xtrain.reset_index()
+    Xtest  = Xtest.reset_index()
+
     print( 'Model: %s' % model)
 
     """ Each model iteration """
@@ -23,7 +27,8 @@ def learning(model ,Xtrain ,y ,Xtest, number_of_folds= 5, seed = 777, nb_class =
     """ Important to set seed """
     skf = StratifiedKFold(n_splits = number_of_folds ,shuffle=True, random_state=seed)
     """ Each fold cross validation """
-    for i, (train_idx, val_idx) in enumerate(skf.split(Xtrain, y)):
+
+    for i, (train_idx, val_idx) in enumerate(skf.split(Xtrain.values, y)):
         print('Fold ', i + 1)
 
         model.fit(Xtrain[train_idx], y[train_idx], eval_set=[(Xtrain[val_idx],  y[val_idx])],
@@ -45,7 +50,7 @@ def learning(model ,Xtrain ,y ,Xtest, number_of_folds= 5, seed = 777, nb_class =
     print('training whole data for test prediction...')
 
     np.save('./output/xgb_train.np', train_predict_y)
-    np.save('./output/xgb__test.np', test_predict_y)
+    np.save('./output/xgb_test.np', test_predict_y)
 
 
 def get_model():
@@ -154,7 +159,7 @@ if __name__ == '__main__':
 
     feature_label = get_stable_feature('1011')
 
-    feature_label = get_cut_feature(feature_label, False)
+    #feature_label = get_cut_feature(feature_label, False)
 
     # feature_label = get_best_feautre(feature_label)
 
@@ -163,9 +168,12 @@ if __name__ == '__main__':
     # feature_label  = feature_label.merge(daily_info, on='device', how='left')
 
     train = feature_label[feature_label['sex'].notnull()]
-    test = feature_label[feature_label['sex'].isnull()]
+    train  = reorder_train(train)
 
-    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+    test = feature_label[feature_label['sex'].isnull()]
+    test = reorder_test(test)
+
+    X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1, errors='ignore' )
     Y = train['sex_age']
     Y_CAT = pd.Categorical(Y)
 

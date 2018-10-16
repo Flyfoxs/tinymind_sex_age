@@ -44,7 +44,7 @@ def gen_sub_by_para():
         'min_data_in_leaf': 1472,
         #'num_leaves': 300,
 
-        'learning_rate' : 0.01,
+        'learning_rate' : 0.01#,
 
 
     }
