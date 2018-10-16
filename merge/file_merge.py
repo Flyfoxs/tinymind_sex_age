@@ -1,6 +1,6 @@
 
 import pandas as pd
-from merge.dnn_merge import *
+from merge.utils import *
 def merge_score(file_list):
     df_merge = None
     for  weight, name, file  in file_list:
@@ -25,15 +25,26 @@ def merge_score(file_list):
 if __name__ == '__main__':
 
     #Best
-    file_list = [
-        (0.5, 'd59044', './sub/ensemble_2.4139496899922688_epoch_110_drop_0.64_patience_50_lr_0.0005.csv'),
-        (0.5, 'd5905', './sub/ensemble_2.423202401351929_epoch_168_drop_0.66_patience_50_lr_0.0005.csv'),
-        #(0.5, 'xg', './output/best/baseline_2.614742_2650_xgb_svd_cmp100.h5',),
-        #(0.2, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
-        #(0.5, 'd59488',  './sub/ensemble_2.44306288172404_epoch_79_drop_0.62_patience_50_lr_0.0005.csv'),
+    # file_list = [
+    #     (0.25, 'd59044', './sub/ensemble_2.4139496899922688_epoch_110_drop_0.64_patience_50_lr_0.0005.csv'),
+    #     (0.25, 'd5905', './sub/ensemble_2.423202401351929_epoch_168_drop_0.66_patience_50_lr_0.0005.csv'),
+    #     (0.25, 'd1', './sub/_ensemble_2.5822630012512207_epoch_16_drop_0.63_dense_128_patience_50_lr_0.0005.csv'),
+    #     (0.25, 'd2', './sub/_ensemble_2.5819819229125978_epoch_13_drop_0.6_dense_128_patience_50_lr_0.0005.csv'),
+    #
+    #
+    #
+    #     #(0.5, 'xg', './output/best/baseline_2.614742_2650_xgb_svd_cmp100.h5',),
+    #     #(0.2, 'lg' , './sub/baseline_lg_sci_2.64374_learning_rate 0.02.csv'),
+    #     #(0.5, 'd59488',  './sub/ensemble_2.44306288172404_epoch_79_drop_0.62_patience_50_lr_0.0005.csv'),
+    #
+    #     #(0.2, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
+    # ]
 
-        #(0.2, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
-    ]
+    file_list = [
+        (0.5, 'Fred', './output/best/neural_network_stacked_1test_include_v2.csv'),
+        (0.5, 'd58664', './sub/merge_score_d59044_0.25_d5905_0.25_d1_0.25_d2_0.25.csv'),
+        ]
+
 
 
 

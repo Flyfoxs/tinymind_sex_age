@@ -9,20 +9,33 @@ from keras.optimizers import Adam
 from tiny.tfidf import *
 from tiny.usage import *
 
+from utils_.util_log import logger
+
 
 def get_feature_label_dnn(version, ensemble):
     from tiny.util import get_stable_feature
     feature_label = get_stable_feature(version)
-    #feature_label['sex'] = feature_label['sex'].astype('category')
-    feature_label['sex_age'] = feature_label['sex_age'].astype('category')
 
     if ensemble:
         file_list = [
-            ('lgb', './output/best/baseline_2.62099_287_lgb_min_data_in_leaf1472.h5'),
-            ('dnn', './output/best/baseline_2.613028_2631_xgb_1615_svd_cmp0.h5'),
+            #0.2
+            ('xgb_age', './sub/baseline_1.999298_3194_xgb_age_.h5'),
+            ('xgb',     './sub/baseline_2.606958_2666_xgb_1632_.h5'),
+            ('lgb',     './sub/baseline_2.61447_294_lgb_.h5'),
+
+            #('sex_xgb',  './output/best/baseline_0.653098_2794_xgb_sex_0.95.h5'),
+            #
+            # # #
+            # ('lgb', './output/best/baseline_2.62099_287_lgb_min_data_in_leaf1472.h5'),
+            # ('dnn', './output/best/baseline_2.613028_2631_xgb_1615_svd_cmp0.h5'),
         ]
         feature_label = ensemble_feature_other_model(feature_label, file_list)
 
+    feature_label['sex'] = feature_label['sex'].astype('category')
+    feature_label['age'] = feature_label['age'].astype('category')
+    feature_label['sex_age'] = feature_label['sex_age'].astype('category')
+
+    logger.debug(f"type of sex is {feature_label['sex'].dtype}")
     return feature_label
 
 
@@ -42,12 +55,13 @@ def train_dnn(dropout, lr, ensemble):
     test = feature_label[feature_label['sex'].isnull()]
     train= feature_label[feature_label['sex'].notnull()]
 
+    logger.debug(f"type of sex is {feature_label['sex'].dtype}")
     X_train, X_test, y_train, y_test = split_train(train)
 
-
-
-    print(X_train.shape, y_train.shape)
     input_dim = X_train.shape[1]
+
+    logger.debug(f'X_train:{X_train.shape}, y_train:{y_train.shape}, score:{test.shape}, input_dim:{input_dim}')
+
 
     model = Sequential()
     model.add(Dense(1200, input_shape=(input_dim,)))
@@ -74,7 +88,7 @@ def train_dnn(dropout, lr, ensemble):
     model.compile(loss='categorical_crossentropy', optimizer=adam,
                     #metrics=['categorical_crossentropy'],
                   )
-    print(model.summary())
+    model.summary()
     #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[categorical_accuracy])
 
 
@@ -84,20 +98,19 @@ def train_dnn(dropout, lr, ensemble):
                                 save_best_only=True, mode='min')
 
     early_stop = EarlyStopping(monitor='val_loss',verbose=1,
-                               patience=300,
+                               patience=100,
                                )
-    reduce = ReduceLROnPlateau(monitor='val_loss', factor=0.5,
-                               patience=100, verbose=1, mode='min')
-
+    reduce = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
+                               patience=30, verbose=1, mode='min')
 
     from keras.utils import np_utils
-    print(y_train.shape)
+    logger.debug(f'y_train.shape:{y_train.shape}')
     history = model.fit(X_train, np_utils.to_categorical(y_train),
                         validation_data=(X_test, np_utils.to_categorical(y_test)),
                         callbacks=[check_best, early_stop, reduce],
                         batch_size=128,
                         #steps_per_epoch= len(X_test)//128,
-                        epochs=5000,
+                        epochs=50000,
                         verbose=1,
                         )
 
@@ -109,6 +122,9 @@ def train_dnn(dropout, lr, ensemble):
     classifier = models.load_model(tmp_model)
 
     pre_x = test.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
+    logger.debug(f'Test:{test.shape}, pre_x:{pre_x.shape}')
+
+    logger.debug(f'pre_x.values:{pre_x.values.shape}')
     sub = pd.DataFrame(classifier.predict_proba(pre_x.values))
 
     sub.columns = train.sex_age.cat.categories
@@ -128,13 +144,13 @@ def train_dnn(dropout, lr, ensemble):
     print(
         f'=============Final train feature({len(feature_label.columns)}):\n{list(feature_label.columns)} \n {len(feature_label.columns)}')
 
-    file = f'./sub/baseline_dnn_{best_score}_{args}_epoch_{best_epoch}.csv'
-    from tiny.util import replace_invalid_filename_char, save_result_for_ensemble
+    # file = f'./sub/baseline_dnn_{best_score}_{args}_epoch_{best_epoch}.csv'
 
-    file = replace_invalid_filename_char(file)
-    logger.info(f'sub file save to {file}')
-    sub = round(sub, 10)
-    sub.to_csv(file, index=False)
+    #
+    # file = replace_invalid_filename_char(file)
+    # logger.info(f'sub file save to {file}')
+    # sub = round(sub, 10)
+    # sub.to_csv(file, index=False)
 
     ###Save result for ensemble
     train_bk = pd.DataFrame(classifier.predict_proba( train.drop(['sex', 'age', 'sex_age', 'device'], axis=1) ),
@@ -150,7 +166,8 @@ def train_dnn(dropout, lr, ensemble):
                          index = train.device,
                          )
 
-    save_result_for_ensemble(f'{best_score}_{best_epoch}_v_{version}_dnn_{args}',
+    from tiny.util import save_result_for_ensemble
+    save_result_for_ensemble(f'{round(best_score,5)}_{best_epoch}_v_{version}_dnn_{args}',
                                  train = train_bk,
                                  test  = test_bk ,
                                  label = label_bk,
@@ -158,8 +175,8 @@ def train_dnn(dropout, lr, ensemble):
 
 
 if __name__ == '__main__':
-    for drop in [0.65, 0.75,0.8, 0.7,0.6,] :
-        for lr in [ 0.01, 0.001]:
-            for ensemble in [True, False]:
+    for drop in [0.6, 0.7, 0.6,0.75,0.8,0.65,] :
+        for lr in [ 0.01]:
+            for ensemble in [True]:
                 train_dnn(drop, lr, ensemble)
-                exit(0)
+                #exit(0)

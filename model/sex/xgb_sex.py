@@ -21,12 +21,10 @@ except :
 def gen_sub_by_para():
     args = locals()
     logger.debug(f'Run train dnn:{args}')
-    feature_label = get_stable_feature('1002')
+    feature_label = get_stable_feature('1011')
     #feature_label = feature_label[['sex', 'phone_type', 'brand']]
 
     train = feature_label[feature_label['sex'].notnull()]
-
-    train = balance_train(train, 0.5)
     test = feature_label[feature_label['sex'].isnull()]
 
     X = train.drop(['sex', 'age', 'sex_age', 'device'], axis=1, errors='ignore')

@@ -6,17 +6,10 @@ from keras.optimizers import Adam
 import numpy as np
 import pandas as pd
 
-from tiny.util import attach_device_train_label, replace_invalid_filename_char
+from tiny.util import attach_device_train_label, replace_invalid_filename_char, train_test_split
 from utils_.util_log import *
 
-def read_result_for_ensemble(file):
-    #file = f'./output/best/{name}.h5'
-    store = pd.HDFStore(file)
-    ensemble = (store["train"],
-                store["label"] if 'label' in store else None,
-                store["test"])
-    store.close()
-    return ensemble
+from merge.utils import *
 
 def get_label_cat():
     label =  attach_device_train_label(None)
@@ -26,29 +19,47 @@ def get_label_cat():
 
 file_list = [
     #'./output/best/2.621213_2510_xgb.h5' ,
-    './output/best/baseline_2.613028_2631_xgb_1615_svd_cmp0.h5' ,
-    './output/best/baseline_2.62099_287_lgb_min_data_in_leaf1472.h5' ,
-    './output/best/baseline_2.6243436072031656_1388_v_1011_dnn_ensembleFalselr0.0001dropout0.75.h5',
-    './output/best/baseline_2.569205629603068_1461_v_1011_dnn_ensembleTruelr0.0001dropout0.75.h5',
-    #'./output/best/baseline_2.634297458902995_1433_v_1002_dnn_lr0.0001dropout0.75.h5' ,
+
+
+    './output/best/baseline_2.606958_2666_xgb_1632_.h5',
+    './output/best/baseline_2.61447_294_lgb_.h5',
+    './output/best/baseline_2.606412010192871_783_v_1011_dnn_version1011ensembleTruelr0.01dropout0.65.h5',
+    './output/best/baseline_2.6187269142150877_770_v_1011_dnn_version1011ensembleFalselr0.01dropout0.65.h5',
+
+    #Age
+    './output/best/baseline_1.999298_3194_xgb_age_.h5',
+
+    #Sex(nan loss issue)
+    #'./output/best/baseline_0.653098_2794_xgb_sex_0.95.h5'
+    
+    #Drop col
+    './output/best/baseline_2.607383_2865_xgb_col_1430_drop_feature200.h5',
+    './output/best/baseline_2.608196_2860_xgb_col_1230_drop_feature400.h5', #Last col
+    
+    
+    # './output/best/baseline_2.613028_2631_xgb_1615_svd_cmp0.h5' ,
+    # './output/best/baseline_2.62099_287_lgb_min_data_in_leaf1472.h5' ,
+    # './output/best/baseline_2.6243436072031656_1388_v_1011_dnn_ensembleFalselr0.0001dropout0.75.h5',
+    # './output/best/baseline_2.569205629603068_1461_v_1011_dnn_ensembleTruelr0.0001dropout0.75.h5',
+    # #'./output/best/baseline_2.634297458902995_1433_v_1002_dnn_lr0.0001dropout0.75.h5' ,
 
     # #2/3 feature
     # './output/best/baseline_2.618598_2727_xgb_72727_svd_cmp0.h5' ,
     # './output/best/baseline_2.620932_2777_xgb_72727_svd_cmp0.h5' ,
 
-    #drop columns
-    './output/best/baseline_2.620313_2482_xgb_831_drop_feature799.h5',
-     #'./output/best/baseline_2.617977_2619_xgb_1031_drop_feature599.h5',
-   './output/best/baseline_2.614679_2596_xgb_1231_drop_feature399.h5',
+   #  #drop columns
+   #  './output/best/baseline_2.620313_2482_xgb_831_drop_feature799.h5',
+   #   #'./output/best/baseline_2.617977_2619_xgb_1031_drop_feature599.h5',
+   # './output/best/baseline_2.614679_2596_xgb_1231_drop_feature399.h5',
 
 
 
-    #Sex
-    './output/best/0.608252_2577_xgb_sex.h5' ,
-    './output/best/0.625989340877533_357_v_1002_dnn.h5' ,
-
-    #Age
-    './output/best/baseline_2.004356_3384_xgb_age_svd_cmp50.h5' ,
+    # #Sex
+    # './output/best/0.608252_2577_xgb_sex.h5' ,
+    # './output/best/0.625989340877533_357_v_1002_dnn.h5' ,
+    #
+    # #Age
+    # './output/best/baseline_2.004356_3384_xgb_age_svd_cmp50.h5' ,
 
 
 ]
@@ -76,8 +87,8 @@ if __name__ == '__main__':
 
     #drop_list = list(np.arange(0.65, 0.7, 0.03))
    # drop_list.reverse()
-    for dense in [128]:
-      for drop_out in [0.64]:
+    for dense in [100, 128,  148]:
+      for drop_out in [0.65, 0.7]:
         drop_out = round(drop_out, 2)
         patience=50
         lr = 0.0005

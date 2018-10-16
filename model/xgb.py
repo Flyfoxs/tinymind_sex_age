@@ -2,8 +2,9 @@
 
 from xgboost import XGBClassifier
 
+from tiny.feature_filter import get_cut_feature
 from tiny.lda import *
-from  tiny.util import get_stable_feature, save_result_for_ensemble, summary_daily_usage
+from  tiny.util import get_stable_feature, save_result_for_ensemble, summary_daily_usage, train_test_split
 
 try:
     from tiny.conf import gpu_params
@@ -14,7 +15,7 @@ except :
 
 
 
-def gen_sub_by_para():
+def gen_sub_by_para(drop_feature):
 
     args = locals()
 
@@ -25,13 +26,13 @@ def gen_sub_by_para():
     #feature_label = random_feature(feature_label, 1/2)
 
     from tiny.feature_filter import get_best_feautre
-    # feature_label = get_cut_feature(feature_label, drop_feature)
+    feature_label = get_cut_feature(feature_label, drop_feature)
 
     #feature_label = get_best_feautre(feature_label)
 
 
-    daily_info = summary_daily_usage()
-    feature_label  = feature_label.merge(daily_info, on='device', how='left')
+    # daily_info = summary_daily_usage()
+    # feature_label  = feature_label.merge(daily_info, on='device', how='left')
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
@@ -103,7 +104,7 @@ def gen_sub_by_para():
                             index=train.device,
                             )
 
-    save_result_for_ensemble(f'{best_score}_{best_epoch}_xgb_{len(feature_label.columns)}_{args}',
+    save_result_for_ensemble(f'{best_score}_{best_epoch}_xgb_col_{len(feature_label.columns)}_{args}',
                              train=train_bk,
                              test=test_bk,
                              label=label_bk,
@@ -111,8 +112,8 @@ def gen_sub_by_para():
 
 if __name__ == '__main__':
     # for svd_cmp in range(50, 200, 30):
-    #for arg1 in range(99, 1000, 100):
-        gen_sub_by_para()
+    for arg1 in [ 800]:
+        gen_sub_by_para(arg1)
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
     # par_list.reverse()

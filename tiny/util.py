@@ -369,19 +369,21 @@ def get_dynamic_feature(svd_cmp):
 def split_train(df,  label_col='sex_age'):
 
 
+
     #df['sex'] = df['sex'].astype('category')
 
     X= df.drop(['sex', 'age', 'sex_age', 'device'], axis=1)
     y= df[label_col]
-
+    logger.debug(f'type is {y.dtype}')
     X_train, X_test, y_train, y_test = train_test_split(X, y.cat.codes)
 
     return  X_train, X_test, y_train, y_test
 
 def train_test_split(X, y):
     from sklearn.model_selection import train_test_split
-    return train_test_split(X, y, test_size=0.2, random_state=666)
-
+    X_train, X_test, y_train, y_test =  train_test_split(X, y, test_size=0.2, random_state=666)
+    logger.debug(f'X_train:{X_train.shape}, X_test:{y_train.shape}')
+    return X_train, X_test, y_train, y_test
 
 def balance_train(df, ratio):
     if ratio == 0:
@@ -498,11 +500,11 @@ def ensemble_feature_other_model(df, files):
     all = pd.concat(feature_list, axis=1)
     all.index.name = 'device'
     all = all.reset_index()
-    logger.debug(f"Ensemble column_name:{all.columns}")
+    logger.debug(f"Ensemble {len(all.columns)} column_name for {name}:{all.columns}")
     if df is not None:
+        logger.debug("try to merge ensemble columns")
         all = pd.merge(df, all, on='device', how='left')
-
-
+        logger.debug("End to merge ensemble columns")
     return all
 
 
