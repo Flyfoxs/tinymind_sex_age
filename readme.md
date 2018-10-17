@@ -71,8 +71,8 @@
  
     code_felix/
     ├── merge
-    │   ├── dnn_merge.py
-    │   ├── file_merge.py
+    │   ├── dnn_merge.py  :使用DNN对各个模型输出的h5文件做融合
+    │   ├── file_merge.py :直接对输出结果做简单的加权融合 
     │   └── utils.py
     ├── model
     │   ├── dnn.py
