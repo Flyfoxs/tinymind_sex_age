@@ -66,3 +66,39 @@
 
 做的比较简单,就是把之前模型中每一个跳出比较好的一个,使用DNN来融合.
 
+
+## 文件结构
+ 
+    code_felix/
+    ├── merge
+    │   ├── dnn_merge.py
+    │   ├── file_merge.py
+    │   └── utils.py
+    ├── model
+    │   ├── dnn.py
+    │   ├── lgb_raw.py
+    │   ├── search
+    │   │   ├── lgb.py : 对LGB模型参数做随机搜索
+    │   │   └── xgb.py :对XGB模型参数做随机搜索
+    │   ├── sex
+    │   │   ├── dnn_sex.py :使用DNN模型对sex 和age很不预测
+    │   │   ├── lgb_age.py :使用LGB 对age做单独预测
+    │   │   ├── lgb_sex.py :使用LGB 对sex做单独预测
+    │   │   ├── xgb_age.py :使用XGB 对age做单独预测
+    │   │   └── xgb_sex.py :使用XGB 对age做单独预测
+    │   └── xgb.py
+    ├── tiny
+    │   ├── feature_filter.py :随机的过滤一些不重要的维度
+    │   ├── group_label.py    :对APP分组做各种统计
+    │   ├── knn.py            :使用KNN算法补齐APP缺失的分组  
+    │   ├── lda.py            :使用LDA算法对APP和分组做降维
+    │   ├── package.py        :对APP的信息做各种汇总
+    │   ├── tfidf.py          :对APP和分组计算TFIDF
+    │   ├── usage.py          :对APP的使用做汇总
+    │   ├── util.py
+    │   └── word2vec.py       :针对APP的使用信息, 对APP向量化
+    └── utils_
+        ├── util_cache_file.py
+        ├── util_date.py
+        ├── util_log.py
+        └── util_pandas.py
