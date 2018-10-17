@@ -1,11 +1,11 @@
-from tiny.lda import *
-from  tiny.util import get_stable_feature, save_result_for_ensemble, train_test_split
+from code_felix.tiny.lda import *
+from  code_felix.tiny.util import get_stable_feature, save_result_for_ensemble, train_test_split, print_imp_list
 from xgboost import XGBClassifier
 
 from code_felix.tiny.feature_filter import get_cut_feature
 
 try:
-    from tiny.conf import gpu_params
+    from code_felix.tiny.conf import gpu_params
 except :
     # GPU support
     gpu_params = {}

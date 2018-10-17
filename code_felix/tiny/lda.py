@@ -1,6 +1,6 @@
 from sklearn.decomposition import LatentDirichletAllocation
-from tiny.package import *
-from tiny.util import *
+from code_felix.tiny.package import *
+from code_felix.tiny.util import *
 
 from code_felix.utils_.util_cache_file import *
 

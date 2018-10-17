@@ -5,8 +5,11 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.core import Dense, Activation, Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam
-from tiny.usage import *
+import numpy as np
+import pandas as pd
+from code_felix.tiny.usage import *
 
+from code_felix.tiny.util import ensemble_feature_other_model, split_train
 from code_felix.utils_.util_log import logger
 
 

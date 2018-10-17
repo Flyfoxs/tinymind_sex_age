@@ -1,15 +1,18 @@
 #from tiny.usage import extend_feature
-
-from utils_.util_cache_file import *
+from code_felix.tiny.usage import extend_feature
+from code_felix.utils_.util_cache_file import *
 
 from code_felix.utils_.util_pandas import convert_label_encode
+import pandas as pd
+import numpy as np
 
 try:
-    from tiny.conf import *
+    from code_felix.tiny.conf import *
 except :
     mini=False
     version=4
 
+import matplotlib as plt
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -490,7 +493,7 @@ def random_feature(df, ratio, require_list=['sex', 'age', 'sex_age', 'device']):
     return mini_df
 
 def ensemble_feature_other_model(df, files):
-    from merge.dnn_merge import read_result_for_ensemble
+    from code_felix.merge.dnn_merge import read_result_for_ensemble
     feature_list = []
     for name, file in files:
         train, _, test = read_result_for_ensemble(file)

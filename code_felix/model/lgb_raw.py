@@ -1,10 +1,12 @@
 #import seaborn as sns
+import lightgbm as lgb
 
-
-from tiny.usage import *
-from tiny.util import get_stable_feature, train_test_split
+from code_felix.tiny.usage import *
+from code_felix.tiny.util import get_stable_feature, train_test_split
 
 from code_felix.tiny.tfidf import *
+import numpy as np
+import pandas as pd
 
 
 @timed()

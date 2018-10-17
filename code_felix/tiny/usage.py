@@ -1,8 +1,7 @@
 
-from functools import partial
-
-from tiny.group_label import *
-from tiny.util import *
+from code_felix.tiny.group_label import *
+from code_felix.tiny.util import *
+import numpy as np
 
 
 @file_cache()

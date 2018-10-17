@@ -2,14 +2,18 @@
 
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import StratifiedKFold
-from tiny.lda import *
+from code_felix.tiny.lda import *
 from xgboost import XGBClassifier
+
+import numpy as np
+import pandas as pd
 
 from  code_felix.tiny.util import *
 
 try:
-    from tiny.conf import gpu_params
+    from code_felix.tiny.conf import gpu_params
 except :
+    #gpu_params = {'tree_method': 'gpu_hist', 'predictor': 'gpu_predictor'}
     # GPU support
     gpu_params = {}
 

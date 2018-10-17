@@ -1,7 +1,7 @@
 from lightgbm.sklearn import LGBMClassifier
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import StratifiedKFold
-from tiny.lda import *
+from code_felix.tiny.lda import *
 
 from  code_felix.tiny.util import *
 

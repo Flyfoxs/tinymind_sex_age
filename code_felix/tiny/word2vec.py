@@ -1,6 +1,6 @@
 #import seaborn as sns
 
-from tiny.usage import *
+from code_felix.tiny.usage import *
 
 from code_felix.tiny.tfidf import *
 

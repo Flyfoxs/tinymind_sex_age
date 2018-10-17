@@ -1,8 +1,8 @@
 from functools import partial
 from multiprocessing import Pool as ThreadPool
 
-from tiny.usage import *
-from tiny.util import *
+from code_felix.tiny.usage import *
+from code_felix.tiny.util import *
 
 from code_felix.utils_.util_cache_file import *
 

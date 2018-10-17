@@ -1,10 +1,13 @@
 
 
 
-from tiny.lda import *
+from code_felix.tiny.lda import *
 
 from  code_felix.tiny.util import *
-
+from code_felix.tiny.word2vec import *
+from code_felix.utils_.util_cache_file import *
+from functools import lru_cache
+import numpy as np
 
 @lru_cache()
 def get_data():
@@ -36,7 +39,9 @@ def extend_pkg_label_knn(col, feature):
     app_type = get_app_type_with_knn(col)
     return pd.merge(feature, app_type, how='left')
 
-from functools import lru_cache
+from functools import lru_cache, lru_cache
+
+
 @lru_cache()
 @timed()
 @file_cache(overwrite=True)

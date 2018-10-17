@@ -1,8 +1,11 @@
 #import seaborn as sns
 import lightgbm as lgb
-from tiny.usage import *
+
+from code_felix.tiny.lda import get_lda_from_usage
+from code_felix.tiny.usage import *
 
 from code_felix.tiny.tfidf import *
+from code_felix.tiny.util import extend_device_brand, attach_device_train_label, train_test_split
 
 
 def gen_sub_by_para(drop_useless_pkg, drop_long):

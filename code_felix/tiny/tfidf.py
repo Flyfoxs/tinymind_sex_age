@@ -1,6 +1,6 @@
 from sklearn.feature_extraction.text import TfidfTransformer
-from tiny.lda import *
-from tiny.util import *
+from code_felix.tiny.lda import *
+from code_felix.tiny.util import *
 
 from code_felix.utils_.util_cache_file import *
 

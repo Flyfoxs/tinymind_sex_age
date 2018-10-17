@@ -1,9 +1,10 @@
 #import seaborn as sns
 from lightgbm import LGBMClassifier
-from tiny.lda import *
-from tiny.usage import *
+from code_felix.tiny.lda import *
+from code_felix.tiny.usage import *
 
 from code_felix.tiny.tfidf import *
+from code_felix.tiny.util import split_train
 
 
 @timed()

@@ -1,13 +1,14 @@
-## Data Des
-# Event
-Total: 36720940
+# Data Des
 
-# APP
-Total: 35000, but only 10368 of them has type info
+## Event
+Total: 36,720,940
 
-# Train
-Device: 50000
+## APP
+Total: 35,000, but only 10,368 of them has type info
 
-# Score
-Device: 22727
+## Train
+Device: 50,000
+
+## Score
+Device: 22,727
     

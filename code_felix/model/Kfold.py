@@ -1,3 +1,10 @@
+from sklearn.metrics import log_loss
+from sklearn.model_selection import StratifiedKFold
+import numpy as np
+
+from code_felix.tiny.util import get_stable_feature, reorder_train, reorder_test
+
+
 def learning(model ,Xtrain ,y ,Xtest, number_of_folds= 5, seed = 777, nb_class =22):
 
     Xtrain = Xtrain.reset_index(drop=True)
