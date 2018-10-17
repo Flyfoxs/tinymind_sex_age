@@ -21,7 +21,8 @@ file_list = [
     #'./output/best/2.621213_2510_xgb.h5' ,
 
 
-    './output/best/baseline_2.606958_2666_xgb_1632_.h5',
+    #'./output/best/baseline_2.606958_2666_xgb_1632_.h5',
+    './output/best/baseline_all_xgb_col_830_drop_feature800.h5',
     './output/best/baseline_2.61447_294_lgb_.h5',
     './output/best/baseline_2.606412010192871_783_v_1011_dnn_version1011ensembleTruelr0.01dropout0.65.h5',
     './output/best/baseline_2.6187269142150877_770_v_1011_dnn_version1011ensembleFalselr0.01dropout0.65.h5',
@@ -87,8 +88,8 @@ if __name__ == '__main__':
 
     #drop_list = list(np.arange(0.65, 0.7, 0.03))
    # drop_list.reverse()
-    for dense in [100, 128,  148]:
-      for drop_out in [0.65, 0.7]:
+    for dense in [128]:
+      for drop_out in [0.63]:
         drop_out = round(drop_out, 2)
         patience=50
         lr = 0.0005

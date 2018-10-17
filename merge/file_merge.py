@@ -1,5 +1,6 @@
 
 import pandas as pd
+import numpy as np
 from merge.utils import *
 def merge_score(file_list):
     df_merge = None
@@ -24,7 +25,7 @@ def merge_score(file_list):
 
 if __name__ == '__main__':
 
-    #Best
+    # #Best
     # file_list = [
     #     (0.25, 'd59044', './sub/ensemble_2.4139496899922688_epoch_110_drop_0.64_patience_50_lr_0.0005.csv'),
     #     (0.25, 'd5905', './sub/ensemble_2.423202401351929_epoch_168_drop_0.66_patience_50_lr_0.0005.csv'),
@@ -39,21 +40,22 @@ if __name__ == '__main__':
     #
     #     #(0.2, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
     # ]
+    for weight in np.arange(0.63, 0.68, 0.01):
+        file_list = [
+            #(weight, 'Fred', './output/best/neural_network_stacked_1test_include_v2.csv'),
+            (weight, 'Fred', './sub/neural_network_stacked_team_v1_1test_huge.csv'),
+            (round(1-weight, 2), 'd58664', './sub/merge_score_d59044_0.25_d5905_0.25_d1_0.25_d2_0.25.csv'),
+            ]
 
-    file_list = [
-        (0.5, 'Fred', './output/best/neural_network_stacked_1test_include_v2.csv'),
-        (0.5, 'd58664', './sub/merge_score_d59044_0.25_d5905_0.25_d1_0.25_d2_0.25.csv'),
-        ]
 
 
 
-
-    score = merge_score(file_list)
-    score = round(score, 10)
-    weight=[str(f'{file[1]}_{file[0]}') for file in file_list]
-    file = f'./sub/merge_score_{"_".join(weight)}.csv'
-    score.to_csv(file)
-    print(file)
+        score = merge_score(file_list)
+        score = round(score, 10)
+        weight=[str(f'{file[1]}_{file[0]}') for file in file_list]
+        file = f'./sub/merge_score_{"_".join(weight)}.csv'
+        score.to_csv(file)
+        print(file)
 
 
 
