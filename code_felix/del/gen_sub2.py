@@ -1,9 +1,8 @@
 #import seaborn as sns
 import xgboost as xgb
-
-
 from tiny.lda import *
-from  tiny.util import *
+
+from  code_felix.tiny.util import *
 
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)

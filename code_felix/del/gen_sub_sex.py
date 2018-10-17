@@ -1,9 +1,8 @@
 #import seaborn as sns
 import lightgbm as lgb
-
-from tiny.tfidf import *
 from tiny.usage import *
 
+from code_felix.tiny.tfidf import *
 
 
 def gen_sub_by_para(drop_useless_pkg, drop_long):

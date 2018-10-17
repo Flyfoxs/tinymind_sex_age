@@ -1,11 +1,9 @@
 #import seaborn as sns
-import lightgbm as lgb
 from lightgbm import LGBMClassifier
-
-from tiny.tfidf import *
-from tiny.usage import *
 from tiny.lda import *
+from tiny.usage import *
 
+from code_felix.tiny.tfidf import *
 
 
 @timed()
@@ -13,7 +11,7 @@ def gen_sub_by_para():
     args = locals()
     logger.debug(f'Run train dnn:{args}')
 
-    from tiny.util import get_stable_feature
+    from code_felix.tiny.util import get_stable_feature
     feature_label = get_stable_feature('1003')
     #feature_label = get_dynamic_feature()
     logger.debug(f'The input feature:{feature_label.shape}')
@@ -109,7 +107,7 @@ def gen_sub_by_para():
                            columns=train.sex_age.cat.categories
                            )
 
-    from tiny.util import save_result_for_ensemble
+    from code_felix.tiny.util import save_result_for_ensemble
     save_result_for_ensemble(f'{best_score}_{best_epoch}_lgb_{args}',
                              train=train_bk,
                              test=test_bk,

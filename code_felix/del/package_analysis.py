@@ -1,4 +1,4 @@
-from tiny.util import *
+from code_felix.tiny.util import *
 
 tmp = pd.read_csv('input/deviceid_packages.tsv', sep='\t', header=None, nrows=None)
 tmp.columns = ['device', 'package_list']

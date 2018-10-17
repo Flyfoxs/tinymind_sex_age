@@ -1,5 +1,6 @@
-from tiny.tfidf import *
 from tiny.usage import *
+
+from code_felix.tiny.tfidf import *
 
 age = pd.read_csv("./sub/baseline_age_2.03974.csv",index_col='DeviceID')
 

@@ -1,12 +1,11 @@
 
 
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-
+from tiny.lda import *
 from xgboost import XGBClassifier
 
-from tiny.lda import *
-from  tiny.util import *
+from  code_felix.tiny.util import *
 
 # New add
 # deviceid_train.rename({'device_id':'device'}, axis=1, inplace=True)
