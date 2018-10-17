@@ -110,3 +110,6 @@ venv.bak/
 Untitled.ipynb
 .*checkpoint.ipynb
 **/*.pkl
+output
+input
+.idea
