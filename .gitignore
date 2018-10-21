@@ -113,3 +113,5 @@ Untitled.ipynb
 output
 input
 .idea
+bin/*.sh
+../*.docx

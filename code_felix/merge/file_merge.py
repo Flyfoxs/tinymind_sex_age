@@ -1,8 +1,7 @@
 import numpy as np
-from code_felix.merge.utils import *
-import numpy as np
 
 from code_felix.merge.utils import *
+from code_felix.tiny.util import get_score_column, get_category
 
 
 def merge_score(file_list):
@@ -10,6 +9,7 @@ def merge_score(file_list):
     for  weight, name, file  in file_list:
         if file.endswith('.h5'):
             _, _, df = read_result_for_ensemble(file)
+            df.index.name = 'DeviceID'
         else:
             df = pd.read_csv(file, index_col ='DeviceID')
 
@@ -20,9 +20,9 @@ def merge_score(file_list):
         else:
            df_merge = df_merge+df
 
-    df_merge = df_merge[
-        ['1-0', '1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10', '2-0', '2-1', '2-2',
-         '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10']]
+    #df_merge.columns = get_category().categories
+
+    df_merge = df_merge[get_score_column()]
     #
     return df_merge
 
@@ -43,14 +43,13 @@ if __name__ == '__main__':
     #
     #     #(0.2, 'rfex', './sub/baseline_rf_ex_2.6577_label rf01, n_estimators 10000, max_depth 15.csv'),
     # ]
-    for weight in np.arange(0.63, 0.68, 0.01):
+    for weight in [1]:
         file_list = [
             #(weight, 'Fred', './output/best/neural_network_stacked_1test_include_v2.csv'),
-            (weight, 'Fred', './sub/neural_network_stacked_team_v1_1test_huge.csv'),
-            (round(1-weight, 2), 'd58664', './sub/merge_score_d59044_0.25_d5905_0.25_d1_0.25_d2_0.25.csv'),
+            #(weight, 'Kfold', './output/best/baseline_kfold_xgb.h5'),
+            (weight, 'Kfold', './output/best/baseline_all_xgb_col_1630_.h5'),
+
             ]
-
-
 
 
         score = merge_score(file_list)

@@ -6,7 +6,7 @@ from xgboost import XGBClassifier
 from  code_felix.tiny.util import *
 
 try:
-    from tiny.conf import gpu_params
+    from code_felix.tiny.conf import gpu_params
 except :
     # GPU support
     gpu_params = {}

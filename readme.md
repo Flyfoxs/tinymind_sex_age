@@ -102,3 +102,20 @@
         ├── util_date.py
         ├── util_log.py
         └── util_pandas.py
+        
+        
+## 运行方法
+
+1. 运行第一层基础模型
+* code_felix/model/dnn.py, 
+* code_felix/model/xgb.py, 
+* code_felix/model/lgb_raw.py
+* code_felix/model/sex/*.py
+
+2. 挑选出第一步的运行结果手工放入如下code 
+* 运行code_felix/merge_dnn_merge.py
+
+3. 挑选出比较高分的结果,运行下列程序进行加权融合
+* file_merge.py
+
+

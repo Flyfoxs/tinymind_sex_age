@@ -8,12 +8,13 @@ try:
     from code_felix.tiny.conf import gpu_params
 except :
     # GPU support
+    #gpu_params = {'tree_method': 'gpu_hist', 'predictor': 'gpu_predictor'}
     gpu_params = {}
 
 
 
 
-def gen_sub_by_para(drop_feature):
+def gen_sub_by_para():
 
     args = locals()
 
@@ -21,15 +22,7 @@ def gen_sub_by_para(drop_feature):
     #feature_label = get_dynamic_feature(None)
     feature_label = get_stable_feature('1011')
 
-    #feature_label = random_feature(feature_label, 1/2)
-
-    feature_label = get_cut_feature(feature_label, drop_feature)
-
-    #feature_label = get_best_feautre(feature_label)
-
-
-    # daily_info = summary_daily_usage()
-    # feature_label  = feature_label.merge(daily_info, on='device', how='left')
+    #feature_label = get_cut_feature(feature_label, drop_feature)
 
     train = feature_label[feature_label['sex'].notnull()]
     test = feature_label[feature_label['sex'].isnull()]
@@ -42,15 +35,18 @@ def gen_sub_by_para(drop_feature):
     gbm = get_model()
     logger.debug(f"Run the xgb with:{gpu_params}")
     # print(random_search.grid_scores_)
-    gbm.fit(X, Y_CAT.codes,  verbose=True )
+    gbm.fit(X_train, y_train,
+                  eval_set=[(X_train , y_train ),  (X_test ,  y_test )],
+                  early_stopping_rounds=50,verbose=True )
 
-    #results = gbm.evals_result()
+    results = gbm.evals_result()
 
-    #print(results)
-    #
-    # best_epoch = np.array(results['validation_0']['mlogloss']).argmin() + 1
-    # best_score = np.array(results['validation_1']['mlogloss']).min()
-    #
+    logger.debug(results)
+
+    best_epoch = np.array(results['validation_1']['mlogloss']).argmin() + 1
+    best_score = np.array(results['validation_1']['mlogloss']).min()
+
+    logger.debug(f"Xgb arrive {best_score} at {best_epoch}")
 
     pre_x=test.drop(['sex','age','sex_age','device'],axis=1)
 
@@ -60,26 +56,26 @@ def gen_sub_by_para(drop_feature):
     ###Save result for ensemble
     train_bk = pd.DataFrame(gbm.predict_proba(train.drop(['sex', 'age', 'sex_age', 'device'], axis=1)),
                             index=train.device,
-                            columns=Y_CAT.categories
+                            columns=get_category().categories
                             )
 
     test_bk = pd.DataFrame(gbm.predict_proba(pre_x),
                            index=test.device,
-                           columns=Y_CAT.categories
+                           columns=get_category().categories
                            )
 
     label_bk = pd.DataFrame({'label': Y_CAT.codes},
                             index=train.device,
                             )
 
-    save_result_for_ensemble(f'all_xgb_col_{len(feature_label.columns)}_{args}',
+    save_result_for_ensemble(f'all_xgb_{args}',
                              train=train_bk,
                              test=test_bk,
                              label=label_bk,
                              )
 
 
-def get_model():
+def get_model(n_estimators=2700):
     gbm = XGBClassifier(
         objective='multi:softprob',
         eval_metric='mlogloss',
@@ -90,7 +86,7 @@ def get_model():
         reg_lambda=10,
         subsample=0.7,
         colsample_bytree=0.6,
-        n_estimators=2700,
+        n_estimators=n_estimators,
 
         learning_rate=0.01,
 
@@ -113,7 +109,7 @@ def get_model():
 if __name__ == '__main__':
     # for svd_cmp in range(50, 200, 30):
 
-        gen_sub_by_para(800)
+        gen_sub_by_para()
     #
     # par_list = list(np.round(np.arange(0, 0.01, 0.001), 5))
     # par_list.reverse()
