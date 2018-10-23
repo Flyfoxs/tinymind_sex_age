@@ -1,12 +1,22 @@
 
-from code_felix.tiny.group_label import *
-from code_felix.tiny.util import *
+#from code_felix.tiny.group_label import *
+from code_felix.tiny.group_label import summary_top_on_usage
+
 import numpy as np
+
+from code_felix.utils_.util_cache_file import file_cache
+from code_felix.utils_.util_log import timed
+import pandas as pd
+import numpy as np
+import os
+from  functools import partial
+from code_felix.utils_.util_log import *
 
 
 @file_cache()
 @timed()
 def cal_duration_for_partition(path='./output/start_close/deviceid_package_start_close_40_09_8474059_9415641.csv'):
+    from code_felix.tiny.util import get_start_closed, split_days_all
     df = get_start_closed(path)
     df = split_days_all(df)
     df = cal_duration_for_span(df, span_no=24)
@@ -382,8 +392,6 @@ def get_bottom_app(drop_level='count', limit=18363):
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     list = sorted(list, reverse=True)
 
-    if mini:
-        list =  list[:3]
 
     duration_list = []
     for i in range(0, len(list)):

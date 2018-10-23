@@ -10,9 +10,7 @@ from keras.utils.np_utils import to_categorical
 from keras.layers.advanced_activations import PReLU
 import os
 
-import model_set
-
-
+from code_fred import model_set
 
 features_location='./features/'
 layer1_train_output_location = './layer1_train_output/'
@@ -66,7 +64,7 @@ bag_of_predictions = np.zeros((test_stacked.shape[0], 22))
 for j in range(number_of_bagging):
 #for j in range(1):
 
-    print '------------- bagging round %d ------------' % j
+    print ('------------- bagging round %d ------------' % j)
     skf = StratifiedKFold(n_splits= number_of_folds ,shuffle=True)
 
     y_dummy = to_categorical(y.tolist())
@@ -77,9 +75,10 @@ for j in range(number_of_bagging):
     test_predict_list = []
     for i, (train_idx, val_idx) in enumerate(skf.split(train_stacked,y)):
     	
-        print '------------- fold round %d ------------' % i
+        print ('------------- fold round %d ------------' % i)
         
-        model = build_model(features)
+        #model = build_model(features)
+
         model=model_set.model_set.nn_3layer_for_stacking(nb_input,22,88,44)
 
         model.fit(train_stacked[train_idx], y_dummy[train_idx],batch_size=32, epochs=6, verbose=1 ,**{'validation_data': (train_stacked[val_idx], y_dummy[val_idx])})
@@ -89,13 +88,13 @@ for j in range(number_of_bagging):
         scoring = model.predict_proba(train_stacked[val_idx])
         train_predict_y[val_idx] = scoring
         l_score = log_loss(y[val_idx], scoring)
-        print '    Fold %d loss: %f' % (i, l_score)
+        print ('    Fold %d loss: %f' % (i, l_score))
 
         tresult = model.predict_proba(test_stacked)
         test_predict_y = test_predict_y + tresult
 
     l_score = log_loss(y, train_predict_y)
-    print 'Final Fold loss: %f' % (l_score)
+    print ('Final Fold loss: %f' % (l_score) )
 
     test_predict_y = test_predict_y / number_of_folds
     bag_of_predictions = bag_of_predictions + test_predict_y
